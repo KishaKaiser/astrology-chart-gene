@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react'
 import { ChartData, TransitData, PLANET_SYMBOLS, ASPECT_TYPES, ZodiacSign, ZODIAC_SYMBOLS } from '@/lib/astrology-types'
 import { calculateCurrentTransits } from '@/lib/astrology-calc'
-import { ZODIAC_INFO, PLANETARY_DIGNITIES, getPlanetaryDignity, getDignityDescription, getDignityColor } from '@/lib/zodiac-info'
+import { ZODIAC_INFO, PLANETARY_DIGNITIES, getPlanetaryDignity, getDignityDescription, getDignityColor, HOUSE_INFO, getHouseCategoryDescription } from '@/lib/zodiac-info'
 import { ChartWheel } from './ChartWheel'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -348,9 +348,10 @@ Write each section with depth and nuance. Be specific about how energies manifes
       </div>
 
       <Tabs defaultValue="planets" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
+        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-9">
           <TabsTrigger value="planets">Planetary Positions</TabsTrigger>
           <TabsTrigger value="houses">House Cusps</TabsTrigger>
+          <TabsTrigger value="house-meanings">House Meanings</TabsTrigger>
           <TabsTrigger value="aspects">Major Aspects</TabsTrigger>
           <TabsTrigger value="zodiac">Zodiac Signs</TabsTrigger>
           <TabsTrigger value="dignities">Planetary Dignities</TabsTrigger>
@@ -443,6 +444,140 @@ Write each section with depth and nuance. Be specific about how energies manifes
                   ))}
                 </TableBody>
               </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="house-meanings">
+          <Card>
+            <CardHeader>
+              <CardTitle>House Meanings & Life Areas</CardTitle>
+              <CardDescription>Comprehensive information about each of the 12 astrological houses</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((houseNum) => {
+                const houseInfo = HOUSE_INFO[houseNum]
+                const userHouse = chart.houses.find(h => h.number === houseNum)
+                return (
+                  <div key={houseNum} className="border border-border rounded-lg p-5 space-y-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-baseline gap-3 mb-2">
+                          <h3 className="text-xl font-semibold">{houseInfo.name}</h3>
+                          {userHouse && (
+                            <span className="text-sm text-muted-foreground font-mono">
+                              {ZODIAC_SYMBOLS[userHouse.sign as ZodiacSign]} {userHouse.sign} at {userHouse.cusp.toFixed(2)}°
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          <Badge 
+                            variant="outline" 
+                            style={{ 
+                              borderColor: houseInfo.category === 'Angular' ? 'oklch(0.70 0.20 150)' : 
+                                          houseInfo.category === 'Succedent' ? 'oklch(0.78 0.15 85)' : 
+                                          'oklch(0.60 0.22 40)',
+                              color: houseInfo.category === 'Angular' ? 'oklch(0.70 0.20 150)' : 
+                                     houseInfo.category === 'Succedent' ? 'oklch(0.78 0.15 85)' : 
+                                     'oklch(0.60 0.22 40)'
+                            }}
+                          >
+                            {houseInfo.category}
+                          </Badge>
+                          <Badge variant="outline" style={{ borderColor: getDignityColor('Domicile'), color: getDignityColor('Domicile') }}>
+                            {houseInfo.element}
+                          </Badge>
+                          <Badge variant="secondary" className="text-xs">
+                            Natural Sign: {ZODIAC_SYMBOLS[houseInfo.naturalSign]} {houseInfo.naturalSign}
+                          </Badge>
+                          <Badge variant="secondary" className="text-xs">
+                            Natural Ruler: {PLANET_SYMBOLS[houseInfo.naturalRuler]} {houseInfo.naturalRuler}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {houseInfo.description}
+                    </p>
+
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground mb-2">KEY THEMES:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {houseInfo.keywords.map((keyword) => (
+                          <Badge key={keyword} variant="secondary" className="text-xs">
+                            {keyword}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-muted-foreground">LIFE AREAS GOVERNED:</p>
+                      <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                        {houseInfo.lifeAreas.map((area, idx) => (
+                          <li key={idx} className="list-disc">{area}</li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="p-3 bg-muted/30 rounded-md border border-border">
+                      <p className="text-xs font-semibold text-muted-foreground mb-1">PSYCHOLOGICAL THEME:</p>
+                      <p className="text-sm text-muted-foreground italic leading-relaxed">
+                        {houseInfo.psychologicalTheme}
+                      </p>
+                    </div>
+                  </div>
+                )
+              })}
+
+              <div className="mt-8 p-5 bg-muted/30 rounded-lg border border-border space-y-4">
+                <h4 className="font-semibold text-base">Understanding House Categories:</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Badge 
+                        variant="outline" 
+                        style={{ borderColor: 'oklch(0.70 0.20 150)', color: 'oklch(0.70 0.20 150)' }}
+                      >
+                        Angular Houses
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {getHouseCategoryDescription('Angular')}
+                    </p>
+                    <p className="text-xs font-mono text-muted-foreground">Houses 1, 4, 7, 10</p>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Badge 
+                        variant="outline" 
+                        style={{ borderColor: 'oklch(0.78 0.15 85)', color: 'oklch(0.78 0.15 85)' }}
+                      >
+                        Succedent Houses
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {getHouseCategoryDescription('Succedent')}
+                    </p>
+                    <p className="text-xs font-mono text-muted-foreground">Houses 2, 5, 8, 11</p>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Badge 
+                        variant="outline" 
+                        style={{ borderColor: 'oklch(0.60 0.22 40)', color: 'oklch(0.60 0.22 40)' }}
+                      >
+                        Cadent Houses
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {getHouseCategoryDescription('Cadent')}
+                    </p>
+                    <p className="text-xs font-mono text-muted-foreground">Houses 3, 6, 9, 12</p>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
