@@ -396,7 +396,7 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
       content: (
         <div className="space-y-4">
           <div className="p-4 bg-muted/30 rounded-lg">
-            <p className="text-sm mb-3">
+            <p className="text-sm mb-3 text-white">
               Library errors typically show messages like:
             </p>
             <ul className="text-xs space-y-1 ml-4 list-disc text-white font-mono">
@@ -405,7 +405,7 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
               <li>"Failed to initialize astrology engine"</li>
             </ul>
           </div>
-          <p className="text-sm">Let's try some solutions in order:</p>
+          <p className="text-sm text-white">Let's try some solutions in order:</p>
         </div>
       ),
       nextStep: 'lib-reset'
