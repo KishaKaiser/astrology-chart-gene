@@ -13,11 +13,12 @@ This is a sophisticated tool requiring astronomical calculations, data visualiza
 ## Essential Features
 
 **Chart Generation**
-- Functionality: Calculate and display natal chart based on birth date, time, and location with planetary positions, houses, and aspects
-- Purpose: Core feature that provides the foundational astrological data for readings
+- Functionality: Calculate and display natal chart based on birth date, time, and location with planetary positions, houses, and aspects using Swiss Ephemeris for professional-grade accuracy
+- Purpose: Core feature that provides the foundational astrological data for readings with industry-standard precision
 - Trigger: User inputs birth details (date, time, location) and clicks generate
-- Progression: Input form → Location validation → Astronomical calculation → Visual chart rendering → Display chart with data tables
-- Success criteria: Chart displays accurate planetary positions (within 1° accuracy), correct house cusps for selected system, and major aspects with orbs
+- Progression: Input form → Location validation → Swiss Ephemeris astronomical calculation → Visual chart rendering → Display chart with data tables
+- Success criteria: Chart displays accurate planetary positions using Swiss Ephemeris calculations, correct house cusps for Placidus system, and major aspects with orbs
+- Technical Note: Integrated @swisseph/browser WebAssembly library for precise ephemeris calculations, providing accuracy comparable to professional astrology software
 
 **Transit Tracking**
 - Functionality: Calculate and display current planetary positions overlaid on natal charts with visual distinction between natal and transit positions

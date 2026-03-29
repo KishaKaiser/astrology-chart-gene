@@ -32,10 +32,17 @@ export function ChartView({ chart, onBack, onEdit, onUpdateChart }: ChartViewPro
   const [isGeneratingInterpretation, setIsGeneratingInterpretation] = useState(false)
 
   useEffect(() => {
-    if (showTransits) {
-      const currentTransits = calculateCurrentTransits(chart)
-      setTransits(currentTransits)
+    const loadTransits = async () => {
+      if (showTransits) {
+        try {
+          const currentTransits = await calculateCurrentTransits(chart)
+          setTransits(currentTransits)
+        } catch (error) {
+          console.error('Error calculating transits:', error)
+        }
+      }
     }
+    loadTransits()
   }, [showTransits, chart])
 
   useEffect(() => {
@@ -104,7 +111,7 @@ export function ChartView({ chart, onBack, onEdit, onUpdateChart }: ChartViewPro
         if (['Gemini', 'Virgo', 'Sagittarius', 'Pisces'].includes(p.sign)) modalityCount.Mutable++
       })
 
-      const promptText = window.spark.llmPrompt`You are an expert professional astrologer with deep knowledge of psychological astrology, providing comprehensive chart interpretations. Write in a warm, insightful, and professional tone.
+      const promptText = (window.spark.llmPrompt as any)`You are an expert professional astrologer with deep knowledge of psychological astrology, providing comprehensive chart interpretations. Write in a warm, insightful, and professional tone.
 
 Generate an in-depth astrological interpretation for the following natal chart:
 

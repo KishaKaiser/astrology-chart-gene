@@ -6,6 +6,7 @@ import { ChartForm, ChartFormData } from '@/components/ChartForm'
 import { ChartLibrary } from '@/components/ChartLibrary'
 import { ChartView } from '@/components/ChartView'
 import { Toaster } from '@/components/ui/sonner'
+import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 import psychicLogo from './assets/images/psychic-logo.png'
 
@@ -14,21 +15,26 @@ function App() {
   const [selectedChart, setSelectedChart] = useState<ChartData | null>(null)
   const [view, setView] = useState<'library' | 'chart'>('library')
 
-  const handleGenerateChart = (formData: ChartFormData) => {
-    const newChart = generateChartData(
-      formData.name,
-      formData.date,
-      formData.time,
-      formData.location,
-      formData.latitude,
-      formData.longitude,
-      formData.timezone,
-      formData.notes
-    )
+  const handleGenerateChart = async (formData: ChartFormData) => {
+    try {
+      const newChart = await generateChartData(
+        formData.name,
+        formData.date,
+        formData.time,
+        formData.location,
+        formData.latitude,
+        formData.longitude,
+        formData.timezone,
+        formData.notes
+      )
 
-    setCharts((currentCharts) => [...(currentCharts || []), newChart])
-    setSelectedChart(newChart)
-    setView('chart')
+      setCharts((currentCharts) => [...(currentCharts || []), newChart])
+      setSelectedChart(newChart)
+      setView('chart')
+    } catch (error) {
+      console.error('Error generating chart:', error)
+      toast.error('Failed to generate chart. Please try again.')
+    }
   }
 
   const handleSelectChart = (chart: ChartData) => {
