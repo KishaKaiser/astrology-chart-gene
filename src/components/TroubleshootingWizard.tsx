@@ -273,23 +273,23 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-medium">Quick Fixes:</p>
-            <ol className="text-sm space-y-2 ml-4 list-decimal text-muted-foreground">
+            <p className="text-sm font-medium text-white">Quick Fixes:</p>
+            <ol className="text-sm space-y-2 ml-4 list-decimal text-white">
               <li>
                 <strong>Refresh the page</strong> (Ctrl+R or Cmd+R)
-                <p className="text-xs mt-1">This reinitializes the astrology engine</p>
+                <p className="text-xs mt-1 text-white">This reinitializes the astrology engine</p>
               </li>
               <li>
                 <strong>Clear browser cache</strong>
-                <p className="text-xs mt-1">Old cached files might be causing issues</p>
+                <p className="text-xs mt-1 text-white">Old cached files might be causing issues</p>
               </li>
               <li>
                 <strong>Disable browser extensions</strong>
-                <p className="text-xs mt-1">Ad blockers or privacy extensions can interfere with WebAssembly</p>
+                <p className="text-xs mt-1 text-white">Ad blockers or privacy extensions can interfere with WebAssembly</p>
               </li>
               <li>
                 <strong>Try Incognito/Private mode</strong>
-                <p className="text-xs mt-1">This rules out extension or cache issues</p>
+                <p className="text-xs mt-1 text-white">This rules out extension or cache issues</p>
               </li>
             </ol>
           </div>
@@ -299,8 +299,8 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
           <div className="flex items-start gap-3 p-3 bg-accent/10 border border-accent/30 rounded-lg">
             <Info weight="fill" className="text-accent mt-0.5" />
             <div className="space-y-1">
-              <p className="text-sm font-medium">Use the Diagnostics Tool</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm font-medium text-white">Use the Diagnostics Tool</p>
+              <p className="text-xs text-white">
                 Click the "Diagnostics" button in the header to run a complete system check 
                 and see exactly what's working and what isn't.
               </p>
@@ -318,34 +318,34 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
       content: (
         <div className="space-y-4">
           <div className="p-4 bg-accent/10 border border-accent/30 rounded-lg">
-            <p className="text-sm font-medium mb-3">Use the Form Controls</p>
-            <div className="space-y-2 text-sm text-muted-foreground">
+            <p className="text-sm font-medium mb-3 text-white">Use the Form Controls</p>
+            <div className="space-y-2 text-sm text-white">
               <div className="flex items-start gap-2">
                 <Calendar weight="bold" className="mt-0.5 text-accent" />
                 <div>
-                  <p className="font-medium text-foreground">Date Field:</p>
-                  <p className="text-xs">Click the calendar icon to select a date visually, which ensures correct formatting</p>
+                  <p className="font-medium text-white">Date Field:</p>
+                  <p className="text-xs text-white">Click the calendar icon to select a date visually, which ensures correct formatting</p>
                 </div>
               </div>
               <div className="flex items-start gap-2">
                 <Sparkle weight="fill" className="mt-0.5 text-accent" />
                 <div>
-                  <p className="font-medium text-foreground">Time Field:</p>
-                  <p className="text-xs">Enter time as HH:MM (24-hour format). Examples: 09:30, 14:45, 23:15</p>
+                  <p className="font-medium text-white">Time Field:</p>
+                  <p className="text-xs text-white">Enter time as HH:MM (24-hour format). Examples: 09:30, 14:45, 23:15</p>
                 </div>
               </div>
             </div>
           </div>
 
           <div className="space-y-3">
-            <p className="text-sm font-medium">Common Mistakes:</p>
+            <p className="text-sm font-medium text-white">Common Mistakes:</p>
             <div className="space-y-2">
               <div className="p-3 bg-muted/30 rounded-lg">
                 <div className="flex items-center gap-2 mb-1">
                   <XCircle weight="fill" className="text-red-500" size={16} />
-                  <span className="text-sm font-medium">Wrong Date Format</span>
+                  <span className="text-sm font-medium text-white">Wrong Date Format</span>
                 </div>
-                <p className="text-xs text-muted-foreground ml-6">
+                <p className="text-xs text-white ml-6">
                   Entering dates like "5/15/1990" instead of "1990-05-15"
                 </p>
               </div>
@@ -353,9 +353,9 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
               <div className="p-3 bg-muted/30 rounded-lg">
                 <div className="flex items-center gap-2 mb-1">
                   <XCircle weight="fill" className="text-red-500" size={16} />
-                  <span className="text-sm font-medium">12-Hour Time Format</span>
+                  <span className="text-sm font-medium text-white">12-Hour Time Format</span>
                 </div>
-                <p className="text-xs text-muted-foreground ml-6">
+                <p className="text-xs text-white ml-6">
                   Using "2:30 PM" instead of "14:30"
                 </p>
               </div>
@@ -363,9 +363,9 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
               <div className="p-3 bg-muted/30 rounded-lg">
                 <div className="flex items-center gap-2 mb-1">
                   <XCircle weight="fill" className="text-red-500" size={16} />
-                  <span className="text-sm font-medium">Wrong Timezone</span>
+                  <span className="text-sm font-medium text-white">Wrong Timezone</span>
                 </div>
-                <p className="text-xs text-muted-foreground ml-6">
+                <p className="text-xs text-white ml-6">
                   Not matching timezone to birth location (e.g., using EST for a California birth)
                 </p>
               </div>
@@ -375,8 +375,8 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
           <Separator />
 
           <div className="p-3 bg-muted/30 rounded-lg">
-            <p className="text-sm font-medium mb-2">Pro Tip:</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm font-medium mb-2 text-white">Pro Tip:</p>
+            <p className="text-xs text-white">
               If you don't know the exact birth time, you can use 12:00 (noon) for a solar chart, 
               but note that house positions and angles (Ascendant, MC) won't be accurate.
             </p>
@@ -399,7 +399,7 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
             <p className="text-sm mb-3">
               Library errors typically show messages like:
             </p>
-            <ul className="text-xs space-y-1 ml-4 list-disc text-muted-foreground font-mono">
+            <ul className="text-xs space-y-1 ml-4 list-disc text-white font-mono">
               <li>"Swiss Ephemeris library failed to load"</li>
               <li>"Astrology calculation engine failed"</li>
               <li>"Failed to initialize astrology engine"</li>
@@ -417,7 +417,7 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
       type: 'action',
       content: (
         <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-white">
             This will reinitialize the Swiss Ephemeris library and clear any corrupted state.
           </p>
         </div>
@@ -458,8 +458,8 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
           <div className="flex items-start gap-3 p-4 bg-accent/10 border border-accent/30 rounded-lg">
             <CheckCircle weight="fill" className="text-accent" size={24} />
             <div className="space-y-2">
-              <p className="text-sm font-medium">The library error has been resolved!</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm font-medium text-white">The library error has been resolved!</p>
+              <p className="text-xs text-white">
                 You can now generate charts normally. If the error returns, 
                 try the reset process again or refresh the page.
               </p>
