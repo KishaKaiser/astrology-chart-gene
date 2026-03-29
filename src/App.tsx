@@ -66,7 +66,7 @@ function App() {
               className="flex items-center gap-3"
             >
               <div className="relative">
-                <img src={logoImage} alt="Psychic Link Charts Logo" className="w-10 h-10 rounded-lg object-cover shadow-lg" />
+                <img src={logoImage} alt="Psychic Link Charts Logo" className="w-16 h-16 rounded-lg object-cover shadow-lg" />
               </div>
               <div>
                 <h1 className="text-3xl font-semibold">Psychic Link Charts</h1>
