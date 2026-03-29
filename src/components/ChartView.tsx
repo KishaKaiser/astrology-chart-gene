@@ -3,6 +3,7 @@ import { ChartData, TransitData, PLANET_SYMBOLS, ASPECT_TYPES, ZodiacSign, ZODIA
 import { calculateCurrentTransits } from '@/lib/astrology-calc'
 import { ZODIAC_INFO, PLANETARY_DIGNITIES, getPlanetaryDignity, getDignityDescription, getDignityColor, HOUSE_INFO, getHouseCategoryDescription } from '@/lib/zodiac-info'
 import { detectAspectPatterns } from '@/lib/aspect-patterns'
+import { getAspectInterpretation } from '@/lib/aspect-interpretations'
 import { ChartWheel } from './ChartWheel'
 import { AspectPatternDiagram } from './AspectPatternDiagram'
 import { DailyHoroscope } from './DailyHoroscope'
@@ -601,7 +602,7 @@ Write each section with depth and nuance. Be specific about how energies manifes
           <Card>
             <CardHeader>
               <CardTitle>Major Aspects</CardTitle>
-              <CardDescription>Significant angular relationships between planets</CardDescription>
+              <CardDescription>Significant angular relationships between planets with interpretations</CardDescription>
             </CardHeader>
             <CardContent>
               {chart.aspects.length === 0 ? (
@@ -609,40 +610,44 @@ Write each section with depth and nuance. Be specific about how energies manifes
                   No major aspects found within orb
                 </p>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Planet 1</TableHead>
-                      <TableHead>Aspect</TableHead>
-                      <TableHead>Planet 2</TableHead>
-                      <TableHead>Orb</TableHead>
-                      <TableHead>Angle</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {chart.aspects.map((aspect, index) => {
-                      const aspectInfo = Object.values(ASPECT_TYPES).find(
-                        (t) => t.name === aspect.type
-                      )
-                      return (
-                        <TableRow key={index}>
-                          <TableCell className="font-medium">{aspect.planet1}</TableCell>
-                          <TableCell>
+                <div className="space-y-4">
+                  {chart.aspects.map((aspect, index) => {
+                    const aspectInfo = Object.values(ASPECT_TYPES).find(
+                      (t) => t.name === aspect.type
+                    )
+                    const interpretation = getAspectInterpretation(aspect.planet1, aspect.planet2, aspect.type)
+                    return (
+                      <div key={index} className="border border-border rounded-lg p-4 space-y-3">
+                        <div className="flex items-center justify-between flex-wrap gap-3">
+                          <div className="flex items-center gap-3">
+                            <span className="text-lg font-medium">
+                              <span className="text-xl mr-1.5">{PLANET_SYMBOLS[aspect.planet1]}</span>
+                              {aspect.planet1}
+                            </span>
                             <Badge
                               variant="outline"
                               style={{ borderColor: aspect.color, color: aspect.color }}
+                              className="text-sm"
                             >
                               {aspectInfo?.symbol} {aspect.type}
                             </Badge>
-                          </TableCell>
-                          <TableCell className="font-medium">{aspect.planet2}</TableCell>
-                          <TableCell className="font-mono">{aspect.orb.toFixed(2)}°</TableCell>
-                          <TableCell className="font-mono">{aspect.angle}°</TableCell>
-                        </TableRow>
-                      )
-                    })}
-                  </TableBody>
-                </Table>
+                            <span className="text-lg font-medium">
+                              <span className="text-xl mr-1.5">{PLANET_SYMBOLS[aspect.planet2]}</span>
+                              {aspect.planet2}
+                            </span>
+                          </div>
+                          <div className="flex gap-3 text-xs text-muted-foreground font-mono">
+                            <span>Orb: {aspect.orb.toFixed(2)}°</span>
+                            <span>Angle: {aspect.angle}°</span>
+                          </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          {interpretation}
+                        </p>
+                      </div>
+                    )
+                  })}
+                </div>
               )}
             </CardContent>
           </Card>
