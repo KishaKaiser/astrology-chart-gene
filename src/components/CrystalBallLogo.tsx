@@ -12,8 +12,8 @@ export function CrystalBallLogo({ className = "w-12 h-12" }: { className?: strin
           <stop offset="100%" stopColor="oklch(0.20 0.15 295)" stopOpacity="1" />
         </radialGradient>
         <radialGradient id="innerGlow" cx="45%" cy="40%">
-          <stop offset="0%" stopColor="oklch(0.75 0.15 295)" stopOpacity="0.6" />
-          <stop offset="40%" stopColor="oklch(0.50 0.18 295)" stopOpacity="0.3" />
+          <stop offset="0%" stopColor="oklch(0.80 0.20 295)" stopOpacity="0.9" />
+          <stop offset="40%" stopColor="oklch(0.55 0.22 295)" stopOpacity="0.5" />
           <stop offset="100%" stopColor="transparent" stopOpacity="0" />
         </radialGradient>
         <linearGradient id="standGradient" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -21,11 +21,14 @@ export function CrystalBallLogo({ className = "w-12 h-12" }: { className?: strin
           <stop offset="100%" stopColor="oklch(0.20 0.15 295)" />
         </linearGradient>
         <filter id="glow">
-          <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+          <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
           <feMerge>
             <feMergeNode in="coloredBlur"/>
             <feMergeNode in="SourceGraphic"/>
           </feMerge>
+        </filter>
+        <filter id="shadow">
+          <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="oklch(0.20 0.15 295)" floodOpacity="0.8"/>
         </filter>
       </defs>
       
@@ -34,7 +37,7 @@ export function CrystalBallLogo({ className = "w-12 h-12" }: { className?: strin
         cy="45"
         r="30"
         fill="url(#ballGradient)"
-        filter="url(#glow)"
+        filter="url(#glow) url(#shadow)"
         opacity="0.95"
       />
       
@@ -43,6 +46,7 @@ export function CrystalBallLogo({ className = "w-12 h-12" }: { className?: strin
         cy="45"
         r="30"
         fill="url(#innerGlow)"
+        opacity="0.85"
       />
       
       <ellipse
