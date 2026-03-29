@@ -82,8 +82,8 @@ function App() {
                 <img src={psychicLogo} alt="Psychic Link Charts Logo" className="w-10 h-10 rounded-lg object-cover ring-2 ring-accent/20 shadow-md shadow-accent/10" />
               </div>
               <div className="flex flex-col gap-0.5">
-                <h1 className="text-3xl font-semibold leading-none">Psychic Link Charts</h1>
-                <p className="text-sm text-muted-foreground leading-none">Professional Astrology Software</p>
+                <h1 className="text-3xl font-semibold leading-none" style={{ fontFamily: 'Corinthia, cursive' }}>Psychic Link Charts</h1>
+                <p className="text-sm text-muted-foreground leading-none" style={{ fontFamily: 'IBM Plex Sans, sans-serif' }}>Professional Astrology Software</p>
               </div>
             </motion.div>
             
