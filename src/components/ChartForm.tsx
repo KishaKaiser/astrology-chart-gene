@@ -91,15 +91,15 @@ export function ChartForm({ onSubmit }: ChartFormProps) {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl">Generate Natal Chart</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-2xl text-foreground">Generate Natal Chart</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
               Enter birth details to generate an accurate astrology chart
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-6 mt-4">
             <div className="space-y-2">
-              <Label htmlFor="chart-name">Name *</Label>
+              <Label htmlFor="chart-name" className="text-foreground">Name *</Label>
               <Input
                 id="chart-name"
                 value={formData.name}
@@ -111,7 +111,7 @@ export function ChartForm({ onSubmit }: ChartFormProps) {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="chart-date">Birth Date *</Label>
+                <Label htmlFor="chart-date" className="text-foreground">Birth Date *</Label>
                 <Input
                   id="chart-date"
                   type="date"
@@ -123,7 +123,7 @@ export function ChartForm({ onSubmit }: ChartFormProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="chart-time">Birth Time *</Label>
+                <Label htmlFor="chart-time" className="text-foreground">Birth Time *</Label>
                 <div className="flex gap-2">
                   <Input
                     id="chart-time"
@@ -148,7 +148,7 @@ export function ChartForm({ onSubmit }: ChartFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="chart-location">Birth Location *</Label>
+              <Label htmlFor="chart-location" className="text-foreground">Birth Location *</Label>
               <Input
                 id="chart-location"
                 value={formData.location}
@@ -174,7 +174,7 @@ export function ChartForm({ onSubmit }: ChartFormProps) {
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="chart-latitude">Latitude *</Label>
+                <Label htmlFor="chart-latitude" className="text-foreground">Latitude *</Label>
                 <Input
                   id="chart-latitude"
                   type="number"
@@ -188,7 +188,7 @@ export function ChartForm({ onSubmit }: ChartFormProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="chart-longitude">Longitude *</Label>
+                <Label htmlFor="chart-longitude" className="text-foreground">Longitude *</Label>
                 <Input
                   id="chart-longitude"
                   type="number"
@@ -202,7 +202,7 @@ export function ChartForm({ onSubmit }: ChartFormProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="chart-timezone">Timezone *</Label>
+                <Label htmlFor="chart-timezone" className="text-foreground">Timezone *</Label>
                 <Input
                   id="chart-timezone"
                   value={formData.timezone}
@@ -215,7 +215,7 @@ export function ChartForm({ onSubmit }: ChartFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="chart-notes">Notes</Label>
+              <Label htmlFor="chart-notes" className="text-foreground">Notes</Label>
               <Textarea
                 id="chart-notes"
                 value={formData.notes}
