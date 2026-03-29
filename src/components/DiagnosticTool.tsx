@@ -372,6 +372,7 @@ export function DiagnosticTool() {
                 variant="ghost"
                 size="sm"
                 onClick={copyToClipboard}
+                className="text-white"
               >
                 <Copy className="mr-2" />
                 Copy Report
@@ -382,6 +383,7 @@ export function DiagnosticTool() {
               size="sm"
               onClick={runDiagnostics}
               disabled={isRunning}
+              className="text-white"
             >
               <ArrowsClockwise className={`mr-2 ${isRunning ? 'animate-spin' : ''}`} />
               {isRunning ? 'Running...' : 'Rerun'}

@@ -1280,7 +1280,7 @@ export function TroubleshootingWizard() {
                 {currentStep.type === 'action' && currentStep.action && (
                   <Button 
                     onClick={handleAction} 
-                    className="w-full"
+                    className="w-full text-white"
                     size="lg"
                   >
                     {currentStep.actionLabel || 'Continue'}
@@ -1300,6 +1300,7 @@ export function TroubleshootingWizard() {
             size="sm"
             onClick={goBack}
             disabled={!selectedCategory}
+            className="text-white"
           >
             <ArrowLeft className="mr-2" />
             Back
@@ -1314,6 +1315,7 @@ export function TroubleshootingWizard() {
                   setIsOpen(false)
                   reset()
                 }}
+                className="text-white"
               >
                 <CheckCircle className="mr-2" weight="fill" />
                 Done
@@ -1324,6 +1326,7 @@ export function TroubleshootingWizard() {
                   variant="ghost"
                   size="sm"
                   onClick={reset}
+                  className="text-white"
                 >
                   Start Over
                 </Button>
@@ -1332,6 +1335,7 @@ export function TroubleshootingWizard() {
                     variant="default"
                     size="sm"
                     onClick={goToNextStep}
+                    className="text-white"
                   >
                     Continue
                     <ArrowRight className="ml-2" weight="bold" />
@@ -1343,6 +1347,7 @@ export function TroubleshootingWizard() {
                     size="sm"
                     onClick={goToNextStep}
                     disabled={!selectedChoice}
+                    className="text-white"
                   >
                     Continue
                     <ArrowRight className="ml-2" weight="bold" />
