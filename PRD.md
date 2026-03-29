@@ -27,6 +27,13 @@ This is a sophisticated tool requiring astronomical calculations, data visualiza
 - Progression: Chart view → Enable transits → Calculate current positions → Overlay on chart wheel → Display transit table
 - Success criteria: Transit planets appear in distinct color/style, correct house placement relative to natal chart, timestamp shows calculation time, seamless toggle on/off
 
+**Daily Horoscope Predictions**
+- Functionality: Generate personalized daily horoscope readings based on current planetary transits to the user's natal chart with AI-powered interpretation
+- Purpose: Provides daily guidance and predictions by analyzing how current transiting planets interact with natal positions
+- Trigger: User navigates to "Daily Horoscope" tab in chart view
+- Progression: Chart view → Daily Horoscope tab → Calculate current transits → Generate horoscope button → AI analyzes transit aspects → Display personalized reading with transit details
+- Success criteria: Horoscope considers current Sun/Moon positions, significant transit aspects to natal planets, provides practical guidance for emotions/relationships/work/growth, includes current date and active transit count, allows regeneration for fresh perspectives
+
 **Chart Library Management**
 - Functionality: Save generated charts with client names and notes, view all saved charts, search and filter charts
 - Purpose: Enables astrologers to build a client database for ongoing readings and reference

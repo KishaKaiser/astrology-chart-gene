@@ -5,6 +5,7 @@ import { ZODIAC_INFO, PLANETARY_DIGNITIES, getPlanetaryDignity, getDignityDescri
 import { detectAspectPatterns } from '@/lib/aspect-patterns'
 import { ChartWheel } from './ChartWheel'
 import { AspectPatternDiagram } from './AspectPatternDiagram'
+import { DailyHoroscope } from './DailyHoroscope'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
@@ -357,7 +358,7 @@ Write each section with depth and nuance. Be specific about how energies manifes
       </div>
 
       <Tabs defaultValue="planets" className="w-full">
-        <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10">
+        <TabsList className="grid w-full grid-cols-5 lg:grid-cols-11">
           <TabsTrigger value="planets">Planetary Positions</TabsTrigger>
           <TabsTrigger value="houses">House Cusps</TabsTrigger>
           <TabsTrigger value="house-meanings">House Meanings</TabsTrigger>
@@ -368,6 +369,10 @@ Write each section with depth and nuance. Be specific about how energies manifes
           <TabsTrigger value="interpretation">
             <Sparkle className="mr-1.5" size={16} weight="fill" />
             Interpretation
+          </TabsTrigger>
+          <TabsTrigger value="horoscope">
+            <Sparkle className="mr-1.5" size={16} weight="fill" />
+            Daily Horoscope
           </TabsTrigger>
           <TabsTrigger value="transits" disabled={!showTransits}>Current Transits</TabsTrigger>
           <TabsTrigger value="transit-aspects" disabled={!showTransits}>Transit Aspects</TabsTrigger>
@@ -938,6 +943,10 @@ Write each section with depth and nuance. Be specific about how energies manifes
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="horoscope">
+          <DailyHoroscope chart={chart} />
         </TabsContent>
 
         <TabsContent value="transits">
