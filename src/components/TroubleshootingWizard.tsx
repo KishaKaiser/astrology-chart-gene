@@ -89,7 +89,7 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
         <div className="space-y-4">
           <div className="p-4 bg-muted/30 rounded-lg space-y-2">
             <p className="text-sm">This usually happens when:</p>
-            <ul className="text-sm space-y-1 ml-4 list-disc text-muted-foreground">
+            <ul className="text-sm space-y-1 ml-4 list-disc text-white">
               <li>WebAssembly is not supported in your browser</li>
               <li>The library files failed to download</li>
               <li>There's a browser compatibility issue</li>
@@ -116,7 +116,7 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
             <CheckCircle weight="fill" className="text-accent mt-0.5" size={20} />
             <div className="space-y-2 flex-1">
               <p className="text-sm font-medium">Next Steps:</p>
-              <ol className="text-sm space-y-2 ml-4 list-decimal text-muted-foreground">
+              <ol className="text-sm space-y-2 ml-4 list-decimal text-white">
                 <li>Wait 3-5 seconds for the engine to fully reinitialize</li>
                 <li>Close this troubleshooting wizard</li>
                 <li>Try generating a chart again</li>
@@ -127,10 +127,10 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
           <Separator />
           <div className="space-y-2">
             <p className="text-sm font-medium">Still Having Issues?</p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-white">
               If the problem continues after refreshing:
             </p>
-            <ul className="text-sm space-y-1 ml-4 list-disc text-muted-foreground">
+            <ul className="text-sm space-y-1 ml-4 list-disc text-white">
               <li>Try using a different browser (Chrome, Firefox, or Edge recommended)</li>
               <li>Check that your browser is up to date</li>
               <li>Disable browser extensions that might block WebAssembly</li>
@@ -157,13 +157,13 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
                 </div>
               </AccordionTrigger>
               <AccordionContent>
-                <div className="space-y-2 text-sm text-muted-foreground pt-2">
+                <div className="space-y-2 text-sm text-white pt-2">
                   <p>Dates should be in YYYY-MM-DD format:</p>
-                  <div className="p-3 bg-muted/30 rounded font-mono text-xs">
+                  <div className="p-3 bg-muted/30 rounded font-mono text-xs text-white">
                     ✓ Correct: 1990-05-15<br/>
                     ✗ Wrong: 05/15/1990 or 15-05-1990
                   </div>
-                  <p className="text-xs mt-2">Use the date picker to avoid format errors.</p>
+                  <p className="text-xs mt-2 text-white">Use the date picker to avoid format errors.</p>
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -176,13 +176,13 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
                 </div>
               </AccordionTrigger>
               <AccordionContent>
-                <div className="space-y-2 text-sm text-muted-foreground pt-2">
+                <div className="space-y-2 text-sm text-white pt-2">
                   <p>Time should be in 24-hour HH:MM format:</p>
-                  <div className="p-3 bg-muted/30 rounded font-mono text-xs">
+                  <div className="p-3 bg-muted/30 rounded font-mono text-xs text-white">
                     ✓ Correct: 14:30 (2:30 PM)<br/>
                     ✗ Wrong: 2:30 PM or 14:30:00
                   </div>
-                  <p className="text-xs mt-2">Enter time in the local time of birth, not UTC.</p>
+                  <p className="text-xs mt-2 text-white">Enter time in the local time of birth, not UTC.</p>
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -195,15 +195,15 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
                 </div>
               </AccordionTrigger>
               <AccordionContent>
-                <div className="space-y-2 text-sm text-muted-foreground pt-2">
+                <div className="space-y-2 text-sm text-white pt-2">
                   <p>Make sure:</p>
-                  <ul className="space-y-1 ml-4 list-disc">
+                  <ul className="space-y-1 ml-4 list-disc text-white">
                     <li>You selected a location from the search dropdown</li>
                     <li>The timezone matches the birth location</li>
                     <li>Coordinates are in decimal format (e.g., 51.5074, -0.1278)</li>
                   </ul>
                   <div className="p-3 bg-accent/10 border border-accent/30 rounded mt-3">
-                    <p className="text-xs">
+                    <p className="text-xs text-white">
                       <strong>Tip:</strong> If birth location isn't available in search, 
                       choose the nearest major city and manually adjust coordinates if needed.
                     </p>
@@ -220,9 +220,9 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
                 </div>
               </AccordionTrigger>
               <AccordionContent>
-                <div className="space-y-2 text-sm text-muted-foreground pt-2">
+                <div className="space-y-2 text-sm text-white pt-2">
                   <p>Locations very close to the poles (above 66°N or below 66°S) may cause calculation issues.</p>
-                  <p className="text-xs mt-2">
+                  <p className="text-xs mt-2 text-white">
                     House systems may fail at extreme latitudes. Try using Whole Sign or Equal houses instead of Placidus.
                   </p>
                 </div>
@@ -233,8 +233,8 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
           <Separator />
 
           <div className="p-4 bg-muted/30 rounded-lg">
-            <p className="text-sm font-medium mb-2">Still seeing incorrect data?</p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm font-medium mb-2 text-white">Still seeing incorrect data?</p>
+            <p className="text-sm text-white">
               Double-check that your timezone offset matches the birth location. 
               Daylight Saving Time adjustments should be included in the timezone offset.
             </p>
@@ -251,23 +251,23 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
       content: (
         <div className="space-y-4">
           <div className="p-4 bg-muted/30 rounded-lg space-y-3">
-            <p className="text-sm font-medium">Recommended Browsers:</p>
+            <p className="text-sm font-medium text-white">Recommended Browsers:</p>
             <div className="grid grid-cols-2 gap-3">
               <div className="flex items-center gap-2 p-2 bg-background/50 rounded">
                 <CheckCircle weight="fill" className="text-green-500" />
-                <span className="text-sm">Chrome 90+</span>
+                <span className="text-sm text-white">Chrome 90+</span>
               </div>
               <div className="flex items-center gap-2 p-2 bg-background/50 rounded">
                 <CheckCircle weight="fill" className="text-green-500" />
-                <span className="text-sm">Firefox 88+</span>
+                <span className="text-sm text-white">Firefox 88+</span>
               </div>
               <div className="flex items-center gap-2 p-2 bg-background/50 rounded">
                 <CheckCircle weight="fill" className="text-green-500" />
-                <span className="text-sm">Edge 90+</span>
+                <span className="text-sm text-white">Edge 90+</span>
               </div>
               <div className="flex items-center gap-2 p-2 bg-background/50 rounded">
                 <CheckCircle weight="fill" className="text-green-500" />
-                <span className="text-sm">Safari 14+</span>
+                <span className="text-sm text-white">Safari 14+</span>
               </div>
             </div>
           </div>

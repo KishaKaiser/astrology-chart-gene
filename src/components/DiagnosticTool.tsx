@@ -352,15 +352,15 @@ export function DiagnosticTool() {
           <div className="flex items-center gap-2">
             {results.length > 0 && (
               <>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm text-white">
                   {results.filter(r => r.status === 'success').length} passed
                 </span>
-                <span className="text-sm text-muted-foreground">•</span>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm text-white">•</span>
+                <span className="text-sm text-white">
                   {results.filter(r => r.status === 'error').length} failed
                 </span>
-                <span className="text-sm text-muted-foreground">•</span>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm text-white">•</span>
+                <span className="text-sm text-white">
                   {results.filter(r => r.status === 'warning').length} warnings
                 </span>
               </>
@@ -396,14 +396,14 @@ export function DiagnosticTool() {
             <div className="flex items-center justify-center py-12">
               <div className="text-center space-y-3">
                 <ArrowsClockwise className="animate-spin mx-auto text-accent" size={32} />
-                <p className="text-sm text-muted-foreground">Running diagnostics...</p>
+                <p className="text-sm text-white">Running diagnostics...</p>
               </div>
             </div>
           ) : results.length === 0 ? (
             <div className="flex items-center justify-center py-12">
               <div className="text-center space-y-3">
                 <Wrench className="mx-auto text-muted-foreground" size={32} />
-                <p className="text-sm text-muted-foreground">Click "Run Diagnostics" to begin</p>
+                <p className="text-sm text-white">Click "Run Diagnostics" to begin</p>
               </div>
             </div>
           ) : (
