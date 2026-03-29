@@ -340,3 +340,52 @@ export async function calculateCurrentTransits(natalChart: ChartData): Promise<T
     calculatedAt: now
   }
 }
+
+export async function calculateTransitsForDate(natalChart: ChartData, date: Date): Promise<TransitData> {
+  const swe = await getSwissEph()
+  
+  const PLANET_MAP: Record<string, any> = {
+    'Sun': Planet.Sun,
+    'Moon': Planet.Moon,
+    'Mercury': Planet.Mercury,
+    'Venus': Planet.Venus,
+    'Mars': Planet.Mars,
+    'Jupiter': Planet.Jupiter,
+    'Saturn': Planet.Saturn,
+    'Uranus': Planet.Uranus,
+    'Neptune': Planet.Neptune,
+    'Pluto': Planet.Pluto
+  }
+  
+  const jd = swe.dateToJulianDay(date)
+  
+  const planetNames = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto']
+  const transitPlanets: PlanetInfo[] = []
+  
+  for (const planetName of planetNames) {
+    const planetId = PLANET_MAP[planetName]
+    const position = swe.calculatePosition(jd, planetId)
+    
+    const planetLong = normalizeAngle(position.longitude)
+    const sign = getZodiacSign(planetLong)
+    const degree = getDegreeInSign(planetLong)
+    const house = calculateHouseForPlanet(planetLong, natalChart.houses)
+    
+    transitPlanets.push({
+      name: planetName,
+      symbol: planetName,
+      longitude: planetLong,
+      sign,
+      degree,
+      house
+    })
+  }
+  
+  const transitAspects = calculateTransitAspects(transitPlanets, natalChart.planets)
+  
+  return {
+    planets: transitPlanets,
+    aspects: transitAspects,
+    calculatedAt: date
+  }
+}

@@ -7,6 +7,7 @@ import { getAspectInterpretation } from '@/lib/aspect-interpretations'
 import { ChartWheel } from './ChartWheel'
 import { AspectPatternDiagram } from './AspectPatternDiagram'
 import { DailyHoroscope } from './DailyHoroscope'
+import { LifeEventsTimeline } from './LifeEventsTimeline'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
@@ -359,7 +360,7 @@ Write each section with depth and nuance. Be specific about how energies manifes
       </div>
 
       <Tabs defaultValue="planets" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-11">
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-12">
           <TabsTrigger value="planets">Planetary Positions</TabsTrigger>
           <TabsTrigger value="houses">House Cusps</TabsTrigger>
           <TabsTrigger value="house-meanings">House Meanings</TabsTrigger>
@@ -375,6 +376,7 @@ Write each section with depth and nuance. Be specific about how energies manifes
             <Sparkle className="mr-1.5" size={16} weight="fill" />
             Horoscopes
           </TabsTrigger>
+          <TabsTrigger value="timeline">Life Events</TabsTrigger>
           <TabsTrigger value="transits" disabled={!showTransits}>Current Transits</TabsTrigger>
           <TabsTrigger value="transit-aspects" disabled={!showTransits}>Transit Aspects</TabsTrigger>
         </TabsList>
@@ -952,6 +954,10 @@ Write each section with depth and nuance. Be specific about how energies manifes
 
         <TabsContent value="horoscope">
           <DailyHoroscope chart={chart} />
+        </TabsContent>
+
+        <TabsContent value="timeline">
+          <LifeEventsTimeline chart={chart} />
         </TabsContent>
 
         <TabsContent value="transits">
