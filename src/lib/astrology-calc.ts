@@ -1,4 +1,4 @@
-import { ChartData, Planet, House, Aspect, ZODIAC_SIGNS, ASPECT_TYPES } from './astrology-types'
+import { ChartData, Planet, House, Aspect, TransitData, ZODIAC_SIGNS, ASPECT_TYPES } from './astrology-types'
 
 function normalizeAngle(angle: number): number {
   angle = angle % 360
@@ -311,5 +311,45 @@ export function generateChartData(
     houseSystem: 'Placidus',
     createdAt: Date.now(),
     updatedAt: Date.now()
+  }
+}
+
+export function calculateCurrentTransits(natalChart: ChartData): TransitData {
+  const now = new Date()
+  const jd = julianDate(now)
+  
+  const planetNames = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto']
+  const transitPlanets: Planet[] = []
+  
+  for (const planetName of planetNames) {
+    let planetLong: number
+    
+    if (planetName === 'Sun') {
+      planetLong = calculateSunPosition(jd)
+    } else if (planetName === 'Moon') {
+      planetLong = calculateMoonPosition(jd)
+    } else if (['Uranus', 'Neptune', 'Pluto'].includes(planetName)) {
+      planetLong = calculateOuterPlanet(planetName, jd)
+    } else {
+      planetLong = calculatePlanetPosition(planetName, jd)
+    }
+    
+    const sign = getZodiacSign(planetLong)
+    const degree = getDegreeInSign(planetLong)
+    const house = calculateHouseForPlanet(planetLong, natalChart.houses)
+    
+    transitPlanets.push({
+      name: planetName,
+      symbol: planetName,
+      longitude: planetLong,
+      sign,
+      degree,
+      house
+    })
+  }
+  
+  return {
+    planets: transitPlanets,
+    calculatedAt: now
   }
 }

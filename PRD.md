@@ -19,6 +19,13 @@ This is a sophisticated tool requiring astronomical calculations, data visualiza
 - Progression: Input form → Location validation → Astronomical calculation → Visual chart rendering → Display chart with data tables
 - Success criteria: Chart displays accurate planetary positions (within 1° accuracy), correct house cusps for selected system, and major aspects with orbs
 
+**Transit Tracking**
+- Functionality: Calculate and display current planetary positions overlaid on natal charts with visual distinction between natal and transit positions
+- Purpose: Allows astrologers to analyze current planetary influences on natal chart positions for predictive readings
+- Trigger: User toggles "Show Transits" switch on chart view
+- Progression: Chart view → Enable transits → Calculate current positions → Overlay on chart wheel → Display transit table
+- Success criteria: Transit planets appear in distinct color/style, correct house placement relative to natal chart, timestamp shows calculation time, seamless toggle on/off
+
 **Chart Library Management**
 - Functionality: Save generated charts with client names and notes, view all saved charts, search and filter charts
 - Purpose: Enables astrologers to build a client database for ongoing readings and reference

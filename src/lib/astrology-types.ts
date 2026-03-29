@@ -22,6 +22,11 @@ export interface Aspect {
   color: string
 }
 
+export interface TransitData {
+  planets: Planet[]
+  calculatedAt: Date
+}
+
 export interface ChartData {
   id: string
   name: string

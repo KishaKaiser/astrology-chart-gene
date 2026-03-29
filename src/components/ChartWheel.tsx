@@ -1,16 +1,18 @@
-import { ChartData, ZODIAC_SIGNS, ZODIAC_SYMBOLS, PLANET_SYMBOLS } from '@/lib/astrology-types'
+import { ChartData, TransitData, ZODIAC_SIGNS, ZODIAC_SYMBOLS, PLANET_SYMBOLS } from '@/lib/astrology-types'
 
 interface ChartWheelProps {
   chart: ChartData
+  transits?: TransitData
   size?: number
 }
 
-export function ChartWheel({ chart, size = 500 }: ChartWheelProps) {
+export function ChartWheel({ chart, transits, size = 500 }: ChartWheelProps) {
   const center = size / 2
   const outerRadius = size / 2 - 10
   const innerRadius = outerRadius * 0.35
   const houseRadius = outerRadius * 0.75
-  const planetRadius = outerRadius * 0.85
+  const natalPlanetRadius = outerRadius * 0.85
+  const transitPlanetRadius = outerRadius * 0.65
 
   const polarToCartesian = (angle: number, radius: number) => {
     const angleInRadians = ((angle - 90) * Math.PI) / 180
@@ -148,8 +150,8 @@ export function ChartWheel({ chart, size = 500 }: ChartWheelProps) {
         strokeWidth="2"
       />
 
-      {chart.planets.map((planet, index) => {
-        const pos = polarToCartesian(planet.longitude, planetRadius)
+      {chart.planets.map((planet) => {
+        const pos = polarToCartesian(planet.longitude, natalPlanetRadius)
         
         return (
           <g key={planet.name}>
@@ -176,14 +178,52 @@ export function ChartWheel({ chart, size = 500 }: ChartWheelProps) {
         )
       })}
 
+      {transits && transits.planets.map((planet) => {
+        const pos = polarToCartesian(planet.longitude, transitPlanetRadius)
+        
+        return (
+          <g key={`transit-${planet.name}`}>
+            <circle
+              cx={pos.x}
+              cy={pos.y}
+              r="14"
+              fill="oklch(0.60 0.22 40)"
+              stroke="oklch(0.75 0.25 45)"
+              strokeWidth="2"
+              opacity="0.9"
+            />
+            <text
+              x={pos.x}
+              y={pos.y}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fill="oklch(0.98 0 0)"
+              fontSize="14"
+            >
+              {PLANET_SYMBOLS[planet.name]}
+            </text>
+            <line
+              x1={pos.x}
+              y1={pos.y}
+              x2={polarToCartesian(planet.longitude, natalPlanetRadius).x}
+              y2={polarToCartesian(planet.longitude, natalPlanetRadius).y}
+              stroke="oklch(0.65 0.20 42)"
+              strokeWidth="1"
+              strokeDasharray="3 2"
+              opacity="0.5"
+            />
+          </g>
+        )
+      })}
+
       {chart.aspects.map((aspect, index) => {
         const planet1 = chart.planets.find((p) => p.name === aspect.planet1)
         const planet2 = chart.planets.find((p) => p.name === aspect.planet2)
 
         if (!planet1 || !planet2) return null
 
-        const pos1 = polarToCartesian(planet1.longitude, planetRadius)
-        const pos2 = polarToCartesian(planet2.longitude, planetRadius)
+        const pos1 = polarToCartesian(planet1.longitude, natalPlanetRadius)
+        const pos2 = polarToCartesian(planet2.longitude, natalPlanetRadius)
 
         return (
           <line
