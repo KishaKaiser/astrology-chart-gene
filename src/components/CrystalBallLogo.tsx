@@ -7,18 +7,18 @@ export function CrystalBallLogo({ className = "w-12 h-12" }: { className?: strin
     >
       <defs>
         <radialGradient id="ballGradient" cx="40%" cy="35%">
-          <stop offset="0%" stopColor="oklch(0.85 0.12 280)" stopOpacity="0.9" />
-          <stop offset="50%" stopColor="oklch(0.65 0.15 270)" stopOpacity="0.8" />
-          <stop offset="100%" stopColor="oklch(0.45 0.18 260)" stopOpacity="1" />
+          <stop offset="0%" stopColor="oklch(0.55 0.18 295)" stopOpacity="0.9" />
+          <stop offset="50%" stopColor="oklch(0.35 0.20 295)" stopOpacity="0.8" />
+          <stop offset="100%" stopColor="oklch(0.20 0.15 295)" stopOpacity="1" />
         </radialGradient>
         <radialGradient id="innerGlow" cx="45%" cy="40%">
-          <stop offset="0%" stopColor="oklch(0.95 0.08 85)" stopOpacity="0.6" />
-          <stop offset="40%" stopColor="oklch(0.80 0.12 280)" stopOpacity="0.3" />
+          <stop offset="0%" stopColor="oklch(0.75 0.15 295)" stopOpacity="0.6" />
+          <stop offset="40%" stopColor="oklch(0.50 0.18 295)" stopOpacity="0.3" />
           <stop offset="100%" stopColor="transparent" stopOpacity="0" />
         </radialGradient>
         <linearGradient id="standGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="oklch(0.35 0.08 280)" />
-          <stop offset="100%" stopColor="oklch(0.25 0.10 270)" />
+          <stop offset="0%" stopColor="oklch(0.30 0.15 295)" />
+          <stop offset="100%" stopColor="oklch(0.20 0.15 295)" />
         </linearGradient>
         <filter id="glow">
           <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
@@ -50,7 +50,7 @@ export function CrystalBallLogo({ className = "w-12 h-12" }: { className?: strin
         cy="38"
         rx="12"
         ry="15"
-        fill="oklch(0.95 0.05 280)"
+        fill="oklch(0.75 0.10 295)"
         opacity="0.3"
       />
       
@@ -74,7 +74,7 @@ export function CrystalBallLogo({ className = "w-12 h-12" }: { className?: strin
         cy="68"
         rx="12"
         ry="3"
-        fill="oklch(0.20 0.08 275)"
+        fill="oklch(0.18 0.15 295)"
         opacity="0.8"
       />
       
