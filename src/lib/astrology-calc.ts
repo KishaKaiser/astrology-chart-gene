@@ -6,6 +6,8 @@ let Planet: any = null
 let HouseSystem: any = null
 let isInitializing = false
 let initPromise: Promise<void> | null = null
+let initAttempts = 0
+const MAX_INIT_ATTEMPTS = 3
 
 async function loadSwissEph() {
   if (SwissEphemeris && Planet && HouseSystem) {
@@ -21,68 +23,124 @@ async function loadSwissEph() {
     Planet = swissephCore.Planet
     HouseSystem = swissephCore.HouseSystem
     
-    console.log('Modules loaded successfully')
+    console.log('Modules loaded successfully:', {
+      hasSwissEphemeris: !!SwissEphemeris,
+      hasPlanet: !!Planet,
+      hasHouseSystem: !!HouseSystem
+    })
   } catch (error) {
     console.error('Failed to load Swiss Ephemeris modules:', error)
-    throw new Error('Swiss Ephemeris library failed to load. Please refresh and try again.')
+    throw new Error('Swiss Ephemeris library modules failed to import. Please refresh and try again.')
   }
 }
 
+async function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
 async function getSwissEph(): Promise<any> {
-  if (swissEph) return swissEph
+  if (swissEph) {
+    console.log('Returning existing Swiss Ephemeris instance')
+    return swissEph
+  }
   
   if (isInitializing && initPromise) {
+    console.log('Waiting for ongoing initialization...')
     await initPromise
     return swissEph
   }
   
   isInitializing = true
   initPromise = (async () => {
-    try {
-      console.log('Starting Swiss Ephemeris initialization...')
-      await loadSwissEph()
-      
-      if (!SwissEphemeris) {
-        throw new Error('SwissEphemeris constructor not available after loading')
+    while (initAttempts < MAX_INIT_ATTEMPTS) {
+      try {
+        initAttempts++
+        console.log(`Swiss Ephemeris initialization attempt ${initAttempts}/${MAX_INIT_ATTEMPTS}...`)
+        
+        await loadSwissEph()
+        
+        if (!SwissEphemeris) {
+          throw new Error('SwissEphemeris constructor not available after loading')
+        }
+        
+        console.log('Creating SwissEphemeris instance...')
+        const instance = new SwissEphemeris()
+        
+        if (!instance) {
+          throw new Error('SwissEphemeris constructor returned null/undefined')
+        }
+        
+        console.log('SwissEphemeris instance created, checking for init method...')
+        
+        if (typeof instance.init === 'function') {
+          console.log('Calling instance.init()...')
+          const initResult = instance.init()
+          
+          if (initResult && typeof initResult.then === 'function') {
+            console.log('init() returned a promise, awaiting...')
+            await initResult
+          }
+          console.log('Init completed successfully')
+        } else {
+          console.log('No init method found, instance ready')
+        }
+        
+        console.log('Validating instance methods...')
+        const requiredMethods = ['dateToJulianDay', 'calculateHouses', 'calculatePosition']
+        const missingMethods = requiredMethods.filter(method => typeof instance[method] !== 'function')
+        
+        if (missingMethods.length > 0) {
+          throw new Error(`SwissEphemeris instance missing required methods: ${missingMethods.join(', ')}`)
+        }
+        
+        swissEph = instance
+        console.log('✓ Swiss Ephemeris initialized successfully')
+        return
+        
+      } catch (error) {
+        console.error(`Initialization attempt ${initAttempts} failed:`, error)
+        
+        if (initAttempts < MAX_INIT_ATTEMPTS) {
+          const delayMs = initAttempts * 500
+          console.log(`Retrying in ${delayMs}ms...`)
+          await delay(delayMs)
+        } else {
+          swissEph = null
+          isInitializing = false
+          initPromise = null
+          
+          const errorMessage = error instanceof Error ? error.message : 'Unknown initialization error'
+          console.error('All initialization attempts failed')
+          throw new Error(`Failed to initialize astrology engine after ${MAX_INIT_ATTEMPTS} attempts: ${errorMessage}. Please refresh the page and try again.`)
+        }
       }
-      
-      console.log('Creating SwissEphemeris instance...')
-      swissEph = new SwissEphemeris()
-      
-      if (!swissEph) {
-        throw new Error('Failed to create SwissEphemeris instance')
-      }
-      
-      if (typeof swissEph.init === 'function') {
-        console.log('Calling swissEph.init()...')
-        await swissEph.init()
-        console.log('Swiss Ephemeris init() completed')
-      } else {
-        console.log('SwissEphemeris instance has no init() method, continuing...')
-      }
-      
-      console.log('Swiss Ephemeris initialized successfully')
-    } catch (error) {
-      console.error('Failed to initialize Swiss Ephemeris:', error)
-      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
-      swissEph = null
-      isInitializing = false
-      initPromise = null
-      
-      const errorMessage = error instanceof Error ? error.message : 'Unknown initialization error'
-      throw new Error(`Astrology calculation engine failed to load: ${errorMessage}. Please refresh the page and try again.`)
-    } finally {
-      isInitializing = false
     }
   })()
   
-  await initPromise
+  try {
+    await initPromise
+  } finally {
+    isInitializing = false
+  }
   
   if (!swissEph) {
-    throw new Error('Swiss Ephemeris is null after initialization attempt')
+    initAttempts = 0
+    throw new Error('Swiss Ephemeris initialization completed but instance is null')
   }
   
   return swissEph
+}
+
+export function resetSwissEphemeris(): void {
+  console.log('Resetting Swiss Ephemeris state...')
+  swissEph = null
+  SwissEphemeris = null
+  Planet = null
+  HouseSystem = null
+  isInitializing = false
+  initPromise = null
+  initAttempts = 0
+  console.log('Swiss Ephemeris reset complete')
 }
 
 function normalizeAngle(angle: number): number {

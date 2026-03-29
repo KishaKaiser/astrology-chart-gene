@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { ChartData } from '@/lib/astrology-types'
-import { generateChartData } from '@/lib/astrology-calc'
+import { generateChartData, resetSwissEphemeris } from '@/lib/astrology-calc'
 import { ChartForm, ChartFormData } from '@/components/ChartForm'
 import { ChartLibrary } from '@/components/ChartLibrary'
 import { ChartView } from '@/components/ChartView'
@@ -12,13 +12,38 @@ import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 import { CrystalBallLogo } from '@/components/CrystalBallLogo'
-import { BookOpen, Sparkle, Star } from '@phosphor-icons/react'
+import { BookOpen, Sparkle, Star, ArrowsClockwise } from '@phosphor-icons/react'
+import { Button } from '@/components/ui/button'
 
 function App() {
   const [charts, setCharts] = useKV<ChartData[]>('astrology-charts', [])
   const [selectedChart, setSelectedChart] = useState<ChartData | null>(null)
   const [view, setView] = useState<'library' | 'chart'>('library')
   const [activeTab, setActiveTab] = useState<'charts' | 'personal-horoscope' | 'zodiac-horoscope'>('charts')
+  const [ephemerisError, setEphemerisError] = useState(false)
+
+  useEffect(() => {
+    const preInitialize = async () => {
+      try {
+        console.log('Pre-initializing Swiss Ephemeris on app load...')
+        const testDate = new Date('2000-01-01T12:00:00Z')
+        await generateChartData(
+          'Init Test',
+          '2000-01-01',
+          '12:00',
+          'Greenwich',
+          51.4769,
+          -0.0005,
+          '+00:00'
+        )
+        console.log('Swiss Ephemeris pre-initialization successful')
+      } catch (error) {
+        console.error('Swiss Ephemeris pre-initialization failed:', error)
+      }
+    }
+    
+    preInitialize()
+  }, [])
 
   const handleGenerateChart = async (formData: ChartFormData) => {
     try {
@@ -51,6 +76,7 @@ function App() {
       setCharts((currentCharts) => [...(currentCharts || []), newChart])
       setSelectedChart(newChart)
       setView('chart')
+      setEphemerisError(false)
     } catch (error) {
       console.error('=== CHART GENERATION FAILED ===')
       console.error('Error object:', error)
@@ -60,12 +86,15 @@ function App() {
       
       let errorMessage = 'Failed to generate chart.'
       let errorDetails = ''
+      let isEphemerisError = false
       
       if (error instanceof Error) {
         errorMessage = error.message
         
-        if (error.message.includes('Swiss Ephemeris')) {
-          errorDetails = '\n\nThe astrology calculation library failed to initialize. This might be a browser compatibility issue. Try refreshing the page or using a different browser.'
+        if (error.message.includes('Swiss Ephemeris') || error.message.includes('astrology engine') || error.message.includes('initialization')) {
+          isEphemerisError = true
+          setEphemerisError(true)
+          errorDetails = '\n\nThe astrology calculation library failed to initialize. Click the "Reset Engine" button in the header to try reinitializing, or refresh the page.'
         } else if (error.message.includes('date') || error.message.includes('time')) {
           errorDetails = '\n\nPlease check that the date and time are valid and in the correct format.'
         } else if (error.message.includes('location') || error.message.includes('coordinates')) {
@@ -81,10 +110,17 @@ function App() {
       
       toast.error(fullMessage, { 
         id: 'chart-generation',
-        duration: 10000,
+        duration: isEphemerisError ? 15000 : 10000,
         description: 'Check the browser console (F12) for detailed technical information.'
       })
     }
+  }
+
+  const handleResetEngine = () => {
+    console.log('User requested engine reset')
+    resetSwissEphemeris()
+    setEphemerisError(false)
+    toast.success('Astrology engine reset successfully. Try generating a chart again.')
   }
 
   const handleSelectChart = (chart: ChartData) => {
@@ -143,7 +179,20 @@ function App() {
               </div>
             </motion.div>
             
-            {view === 'library' && activeTab === 'charts' && <ChartForm onSubmit={handleGenerateChart} />}
+            <div className="flex items-center gap-3">
+              {ephemerisError && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResetEngine}
+                  className="border-accent text-accent hover:bg-accent hover:text-accent-foreground transition-colors"
+                >
+                  <ArrowsClockwise className="mr-2" weight="bold" />
+                  Reset Engine
+                </Button>
+              )}
+              {view === 'library' && activeTab === 'charts' && <ChartForm onSubmit={handleGenerateChart} />}
+            </div>
           </div>
         </div>
       </header>
