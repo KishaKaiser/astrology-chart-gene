@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Plus, Sun, Moon, Clock, Info } from '@phosphor-icons/react'
+import { Plus, Sun, Moon, Clock, Info, Warning } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { BirthTimeRectification } from '@/components/BirthTimeRectification'
 import { LocationSearch } from '@/components/LocationSearch'
@@ -41,6 +41,26 @@ export function ChartForm({ onSubmit }: ChartFormProps) {
     notes: ''
   })
   const [dstInfo, setDstInfo] = useState<ReturnType<typeof calculateDST> | null>(null)
+  
+  const getLatitudeWarning = (latitude: number): { severity: 'warning' | 'error', message: string } | null => {
+    const absLat = Math.abs(latitude)
+    
+    if (absLat > 80) {
+      return {
+        severity: 'error',
+        message: `Extreme polar latitude (${latitude.toFixed(2)}°). Chart calculations will likely fail due to astronomical house system limitations near the poles. Consider using a different location or be prepared for calculation errors.`
+      }
+    } else if (absLat > 66.5) {
+      return {
+        severity: 'warning',
+        message: `High latitude location (${latitude.toFixed(2)}°) above the Arctic/Antarctic Circle. House calculations may be unreliable or fail during certain times of year when the sun doesn't rise or set normally.`
+      }
+    }
+    
+    return null
+  }
+  
+  const latitudeWarning = formData.latitude !== 0 ? getLatitudeWarning(formData.latitude) : null
 
   useEffect(() => {
     if (formData.date && formData.time && formData.timezone) {
@@ -190,53 +210,64 @@ export function ChartForm({ onSubmit }: ChartFormProps) {
                   />
                   
                   {formData.location && formData.latitude !== 0 && (
-                    <div className="p-4 bg-accent/10 border border-accent/20 rounded-md space-y-3">
-                      <div>
-                        <p className="text-sm text-foreground font-medium mb-1">{formData.location}</p>
-                        <p className="text-xs text-muted-foreground font-mono">
-                          {formData.latitude.toFixed(4)}°, {formData.longitude.toFixed(4)}°
-                        </p>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Sun size={16} className="text-accent" weight="fill" />
-                          <p className="text-xs text-accent font-medium">
-                            {formatTimezoneDisplay(formData.timezone)}
+                    <div className="space-y-3">
+                      <div className="p-4 bg-accent/10 border border-accent/20 rounded-md space-y-3">
+                        <div>
+                          <p className="text-sm text-foreground font-medium mb-1">{formData.location}</p>
+                          <p className="text-xs text-muted-foreground font-mono">
+                            {formData.latitude.toFixed(4)}°, {formData.longitude.toFixed(4)}°
                           </p>
                         </div>
                         
-                        <div className="flex items-start gap-2 pl-6">
-                          <Moon size={14} className="text-muted-foreground mt-0.5" weight="fill" />
-                          <p className="text-xs text-muted-foreground leading-relaxed">
-                            {formatDSTDisplay(formData.timezone)}
-                          </p>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Sun size={16} className="text-accent" weight="fill" />
+                            <p className="text-xs text-accent font-medium">
+                              {formatTimezoneDisplay(formData.timezone)}
+                            </p>
+                          </div>
+                          
+                          <div className="flex items-start gap-2 pl-6">
+                            <Moon size={14} className="text-muted-foreground mt-0.5" weight="fill" />
+                            <p className="text-xs text-muted-foreground leading-relaxed">
+                              {formatDSTDisplay(formData.timezone)}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                      
-                      {dstInfo && (
-                        <div className="pt-3 border-t border-accent/20">
-                          <Alert className="bg-background/50 border-accent/30">
-                            <Clock size={16} className="text-accent" weight="bold" />
-                            <AlertDescription className="space-y-2">
-                              <div className="flex items-start gap-2">
-                                <Info size={14} className="text-accent mt-0.5 flex-shrink-0" weight="bold" />
-                                <div>
-                                  <p className="text-xs font-semibold text-foreground mb-1">
-                                    {formatDSTInfo(dstInfo)}
-                                  </p>
-                                  <div className="space-y-0.5">
-                                    {formatDSTDetails(dstInfo).map((detail, idx) => (
-                                      <p key={idx} className="text-xs text-muted-foreground">
-                                        {detail}
-                                      </p>
-                                    ))}
+                        
+                        {dstInfo && (
+                          <div className="pt-3 border-t border-accent/20">
+                            <Alert className="bg-background/50 border-accent/30">
+                              <Clock size={16} className="text-accent" weight="bold" />
+                              <AlertDescription className="space-y-2">
+                                <div className="flex items-start gap-2">
+                                  <Info size={14} className="text-accent mt-0.5 flex-shrink-0" weight="bold" />
+                                  <div>
+                                    <p className="text-xs font-semibold text-foreground mb-1">
+                                      {formatDSTInfo(dstInfo)}
+                                    </p>
+                                    <div className="space-y-0.5">
+                                      {formatDSTDetails(dstInfo).map((detail, idx) => (
+                                        <p key={idx} className="text-xs text-muted-foreground">
+                                          {detail}
+                                        </p>
+                                      ))}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            </AlertDescription>
-                          </Alert>
-                        </div>
+                              </AlertDescription>
+                            </Alert>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {latitudeWarning && (
+                        <Alert className={latitudeWarning.severity === 'error' ? 'bg-destructive/10 border-destructive/50' : 'bg-yellow-500/10 border-yellow-500/50'}>
+                          <Warning size={16} className={latitudeWarning.severity === 'error' ? 'text-destructive' : 'text-yellow-500'} weight="bold" />
+                          <AlertDescription className="text-xs text-foreground">
+                            {latitudeWarning.message}
+                          </AlertDescription>
+                        </Alert>
                       )}
                     </div>
                   )}
@@ -279,6 +310,8 @@ export function ChartForm({ onSubmit }: ChartFormProps) {
                         id="chart-latitude"
                         type="number"
                         step="0.0001"
+                        min="-90"
+                        max="90"
                         value={formData.latitude}
                         onChange={(e) => setFormData(prev => ({ ...prev, latitude: parseFloat(e.target.value) || 0 }))}
                         placeholder="40.7128"
@@ -293,6 +326,8 @@ export function ChartForm({ onSubmit }: ChartFormProps) {
                         id="chart-longitude"
                         type="number"
                         step="0.0001"
+                        min="-180"
+                        max="180"
                         value={formData.longitude}
                         onChange={(e) => setFormData(prev => ({ ...prev, longitude: parseFloat(e.target.value) || 0 }))}
                         placeholder="-74.0060"
@@ -313,6 +348,15 @@ export function ChartForm({ onSubmit }: ChartFormProps) {
                       />
                     </div>
                   </div>
+                  
+                  {latitudeWarning && (
+                    <Alert className={latitudeWarning.severity === 'error' ? 'bg-destructive/10 border-destructive/50' : 'bg-yellow-500/10 border-yellow-500/50'}>
+                      <Warning size={16} className={latitudeWarning.severity === 'error' ? 'text-destructive' : 'text-yellow-500'} weight="bold" />
+                      <AlertDescription className="text-xs text-foreground">
+                        {latitudeWarning.message}
+                      </AlertDescription>
+                    </Alert>
+                  )}
                 </TabsContent>
               </Tabs>
             </div>
