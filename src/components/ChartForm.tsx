@@ -55,7 +55,6 @@ export function ChartForm({ onSubmit }: ChartFormProps) {
       timezone: '+00:00',
       notes: ''
     })
-    toast.success('Chart generated successfully!')
   }
 
   const popularCities = [

@@ -36,23 +36,30 @@ async function getSwissEph(): Promise<any> {
   isInitializing = true
   initPromise = (async () => {
     try {
+      console.log('Starting Swiss Ephemeris initialization...')
       await loadSwissEph()
       
       if (!SwissEphemeris) {
         throw new Error('SwissEphemeris constructor not available')
       }
       
+      console.log('Creating SwissEphemeris instance...')
       swissEph = new SwissEphemeris()
       
       if (typeof swissEph.init === 'function') {
+        console.log('Calling swissEph.init()...')
         await swissEph.init()
       }
+      
+      console.log('Swiss Ephemeris initialized successfully')
     } catch (error) {
       console.error('Failed to initialize Swiss Ephemeris:', error)
       swissEph = null
       isInitializing = false
       initPromise = null
-      throw new Error('Failed to initialize astrology calculation engine. Please refresh and try again.')
+      
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      throw new Error(`Astrology calculation engine failed: ${errorMessage}. Please refresh and try again.`)
     } finally {
       isInitializing = false
     }
@@ -139,7 +146,13 @@ export async function generateChartData(
   timezone: string,
   notes?: string
 ): Promise<ChartData> {
+  console.log('generateChartData called with:', { name, date, time, location, latitude, longitude, timezone })
+  
   const swe = await getSwissEph()
+  
+  if (!swe) {
+    throw new Error('Swiss Ephemeris not initialized')
+  }
   
   const PLANET_MAP: Record<string, any> = {
     'Sun': Planet.Sun,
@@ -154,10 +167,39 @@ export async function generateChartData(
     'Pluto': Planet.Pluto
   }
   
-  const dateTime = new Date(`${date}T${time}:00${timezone}`)
-  const jd = swe.dateToJulianDay(dateTime)
+  let dateTime: Date
+  try {
+    const dateTimeStr = `${date}T${time}:00${timezone}`
+    console.log('Parsing datetime:', dateTimeStr)
+    dateTime = new Date(dateTimeStr)
+    
+    if (isNaN(dateTime.getTime())) {
+      throw new Error('Invalid date/time format')
+    }
+  } catch (error) {
+    console.error('Date parsing error:', error)
+    throw new Error('Invalid date or time format. Please check your input.')
+  }
   
-  const houseData = swe.calculateHouses(jd, latitude, longitude, HouseSystem.Placidus)
+  console.log('Calculating Julian Day for:', dateTime)
+  let jd: number
+  try {
+    jd = swe.dateToJulianDay(dateTime)
+    console.log('Julian Day:', jd)
+  } catch (error) {
+    console.error('Julian Day calculation error:', error)
+    throw new Error('Failed to calculate Julian Day. Please check your date/time input.')
+  }
+  
+  console.log('Calculating houses...')
+  let houseData: any
+  try {
+    houseData = swe.calculateHouses(jd, latitude, longitude, HouseSystem.Placidus)
+    console.log('House data calculated:', houseData)
+  } catch (error) {
+    console.error('House calculation error:', error)
+    throw new Error('Failed to calculate houses. Please check your location coordinates.')
+  }
   
   const houses: House[] = houseData.cusps.slice(1, 13).map((cusp: number, index: number) => ({
     number: index + 1,
@@ -168,29 +210,38 @@ export async function generateChartData(
   const ascendant = normalizeAngle(houseData.ascendant)
   const midheaven = normalizeAngle(houseData.mc)
   
+  console.log('Calculating planetary positions...')
   const planetNames = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto']
   const planets: PlanetInfo[] = []
   
   for (const planetName of planetNames) {
-    const planetId = PLANET_MAP[planetName]
-    const position = swe.calculatePosition(jd, planetId)
-    
-    const planetLong = normalizeAngle(position.longitude)
-    const sign = getZodiacSign(planetLong)
-    const degree = getDegreeInSign(planetLong)
-    const house = calculateHouseForPlanet(planetLong, houses)
-    
-    planets.push({
-      name: planetName,
-      symbol: planetName,
-      longitude: planetLong,
-      sign,
-      degree,
-      house
-    })
+    try {
+      const planetId = PLANET_MAP[planetName]
+      console.log(`Calculating position for ${planetName}...`)
+      const position = swe.calculatePosition(jd, planetId)
+      
+      const planetLong = normalizeAngle(position.longitude)
+      const sign = getZodiacSign(planetLong)
+      const degree = getDegreeInSign(planetLong)
+      const house = calculateHouseForPlanet(planetLong, houses)
+      
+      planets.push({
+        name: planetName,
+        symbol: planetName,
+        longitude: planetLong,
+        sign,
+        degree,
+        house
+      })
+    } catch (error) {
+      console.error(`Error calculating ${planetName}:`, error)
+      throw new Error(`Failed to calculate position for ${planetName}.`)
+    }
   }
   
+  console.log('Calculating aspects...')
   const aspects = calculateAspects(planets)
+  console.log('Chart generation complete!')
   
   return {
     id: `chart-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
