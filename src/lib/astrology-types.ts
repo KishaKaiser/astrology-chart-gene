@@ -22,8 +22,18 @@ export interface Aspect {
   color: string
 }
 
+export interface TransitAspect {
+  transitPlanet: string
+  natalPlanet: string
+  type: string
+  orb: number
+  angle: number
+  color: string
+}
+
 export interface TransitData {
   planets: Planet[]
+  aspects: TransitAspect[]
   calculatedAt: Date
 }
 

@@ -178,6 +178,30 @@ export function ChartWheel({ chart, transits, size = 500 }: ChartWheelProps) {
         )
       })}
 
+      {transits && transits.aspects.map((aspect, index) => {
+        const transitPlanet = transits.planets.find((p) => p.name === aspect.transitPlanet)
+        const natalPlanet = chart.planets.find((p) => p.name === aspect.natalPlanet)
+
+        if (!transitPlanet || !natalPlanet) return null
+
+        const transitPos = polarToCartesian(transitPlanet.longitude, transitPlanetRadius)
+        const natalPos = polarToCartesian(natalPlanet.longitude, natalPlanetRadius)
+
+        return (
+          <line
+            key={`transit-aspect-${index}`}
+            x1={transitPos.x}
+            y1={transitPos.y}
+            x2={natalPos.x}
+            y2={natalPos.y}
+            stroke={aspect.color}
+            strokeWidth="1.5"
+            opacity="0.6"
+            strokeDasharray={aspect.type === 'Trine' ? '5 3' : aspect.type === 'Sextile' ? '3 2' : undefined}
+          />
+        )
+      })}
+
       {transits && transits.planets.map((planet) => {
         const pos = polarToCartesian(planet.longitude, transitPlanetRadius)
         

@@ -172,11 +172,12 @@ export function ChartView({ chart, onBack, onEdit }: ChartViewProps) {
       </div>
 
       <Tabs defaultValue="planets" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="planets">Planetary Positions</TabsTrigger>
           <TabsTrigger value="houses">House Cusps</TabsTrigger>
           <TabsTrigger value="aspects">Major Aspects</TabsTrigger>
           <TabsTrigger value="transits" disabled={!showTransits}>Current Transits</TabsTrigger>
+          <TabsTrigger value="transit-aspects" disabled={!showTransits}>Transit Aspects</TabsTrigger>
         </TabsList>
 
         <TabsContent value="planets">
@@ -333,6 +334,71 @@ export function ChartView({ chart, onBack, onEdit }: ChartViewProps) {
               ) : (
                 <p className="text-muted-foreground text-center py-8">
                   Enable the &quot;Show Transits&quot; toggle above to view current planetary positions
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="transit-aspects">
+          <Card>
+            <CardHeader>
+              <CardTitle>Transit-to-Natal Aspects</CardTitle>
+              <CardDescription>
+                {transits ? `Current transiting planets forming aspects to natal planets (${transits.calculatedAt.toLocaleString()})` : 'Enable transit display to view transit aspects'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {transits ? (
+                transits.aspects.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">
+                    No significant transit-to-natal aspects found within orb
+                  </p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Transit Planet</TableHead>
+                        <TableHead>Aspect</TableHead>
+                        <TableHead>Natal Planet</TableHead>
+                        <TableHead>Orb</TableHead>
+                        <TableHead>Angle</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {transits.aspects.map((aspect, index) => {
+                        const aspectInfo = Object.values(ASPECT_TYPES).find(
+                          (t) => t.name === aspect.type
+                        )
+                        return (
+                          <TableRow key={index}>
+                            <TableCell className="font-medium">
+                              <span className="text-xl mr-2">{PLANET_SYMBOLS[aspect.transitPlanet]}</span>
+                              {aspect.transitPlanet}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant="outline"
+                                style={{ borderColor: aspect.color, color: aspect.color }}
+                              >
+                                {aspectInfo?.symbol} {aspect.type}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              <span className="text-xl mr-2">{PLANET_SYMBOLS[aspect.natalPlanet]}</span>
+                              {aspect.natalPlanet}
+                            </TableCell>
+                            <TableCell className="font-mono">{aspect.orb.toFixed(2)}°</TableCell>
+                            <TableCell className="font-mono">{aspect.angle}°</TableCell>
+                          </TableRow>
+                        )
+                      })}
+                    </TableBody>
+                  </Table>
+                )
+              ) : (
+                <p className="text-muted-foreground text-center py-8">
+                  Enable the &quot;Show Transits&quot; toggle above to view transit-to-natal aspects
                 </p>
               )}
             </CardContent>

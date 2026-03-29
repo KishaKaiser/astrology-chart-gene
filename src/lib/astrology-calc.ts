@@ -1,4 +1,4 @@
-import { ChartData, Planet, House, Aspect, TransitData, ZODIAC_SIGNS, ASPECT_TYPES } from './astrology-types'
+import { ChartData, Planet, House, Aspect, TransitData, TransitAspect, ZODIAC_SIGNS, ASPECT_TYPES } from './astrology-types'
 
 function normalizeAngle(angle: number): number {
   angle = angle % 360
@@ -314,6 +314,33 @@ export function generateChartData(
   }
 }
 
+function calculateTransitAspects(transitPlanets: Planet[], natalPlanets: Planet[]): TransitAspect[] {
+  const transitAspects: TransitAspect[] = []
+  
+  for (const transitPlanet of transitPlanets) {
+    for (const natalPlanet of natalPlanets) {
+      let angle = Math.abs(transitPlanet.longitude - natalPlanet.longitude)
+      if (angle > 180) angle = 360 - angle
+      
+      for (const [aspectType, aspectData] of Object.entries(ASPECT_TYPES)) {
+        const diff = Math.abs(angle - aspectData.angle)
+        if (diff <= aspectData.orb) {
+          transitAspects.push({
+            transitPlanet: transitPlanet.name,
+            natalPlanet: natalPlanet.name,
+            type: aspectData.name,
+            orb: diff,
+            angle: aspectData.angle,
+            color: aspectData.color
+          })
+        }
+      }
+    }
+  }
+  
+  return transitAspects
+}
+
 export function calculateCurrentTransits(natalChart: ChartData): TransitData {
   const now = new Date()
   const jd = julianDate(now)
@@ -348,8 +375,11 @@ export function calculateCurrentTransits(natalChart: ChartData): TransitData {
     })
   }
   
+  const transitAspects = calculateTransitAspects(transitPlanets, natalChart.planets)
+  
   return {
     planets: transitPlanets,
+    aspects: transitAspects,
     calculatedAt: now
   }
 }
