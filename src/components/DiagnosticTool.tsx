@@ -313,7 +313,7 @@ export function DiagnosticTool() {
       warning: 'secondary',
       info: 'outline'
     }
-    return <Badge variant={variants[status] || 'outline'}>{status}</Badge>
+    return <Badge variant={variants[status] || 'outline'} className="text-white">{status}</Badge>
   }
 
   const groupedResults = results.reduce((acc, result) => {
@@ -339,11 +339,11 @@ export function DiagnosticTool() {
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[80vh]">
         <DialogHeader className="pb-4">
-          <DialogTitle className="flex items-center gap-3">
+          <DialogTitle className="flex items-center gap-3 text-white">
             <Wrench weight="bold" className="text-accent" size={24} />
             System Diagnostics
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-white">
             Comprehensive check of browser compatibility and astrology library status
           </DialogDescription>
         </DialogHeader>
@@ -372,7 +372,7 @@ export function DiagnosticTool() {
                 variant="ghost"
                 size="sm"
                 onClick={copyToClipboard}
-                className="text-white"
+                className="text-white hover:text-white"
               >
                 <Copy className="mr-2" />
                 Copy Report
@@ -383,7 +383,7 @@ export function DiagnosticTool() {
               size="sm"
               onClick={runDiagnostics}
               disabled={isRunning}
-              className="text-white"
+              className="text-white hover:text-white border-accent/50 hover:bg-accent hover:text-accent-foreground"
             >
               <ArrowsClockwise className={`mr-2 ${isRunning ? 'animate-spin' : ''}`} />
               {isRunning ? 'Running...' : 'Rerun'}
@@ -391,25 +391,25 @@ export function DiagnosticTool() {
           </div>
         </div>
 
-        <Separator className="my-4" />
+        <Separator />
 
-        <ScrollArea className="h-[50vh] pr-4">
+        <ScrollArea className="h-[50vh] pr-4 -mr-4">
           {isRunning ? (
-            <div className="flex items-center justify-center py-12 px-1">
+            <div className="flex items-center justify-center py-12 pr-4">
               <div className="text-center space-y-3">
                 <ArrowsClockwise className="animate-spin mx-auto text-accent" size={32} />
                 <p className="text-sm text-white">Running diagnostics...</p>
               </div>
             </div>
           ) : results.length === 0 ? (
-            <div className="flex items-center justify-center py-12 px-1">
+            <div className="flex items-center justify-center py-12 pr-4">
               <div className="text-center space-y-3">
                 <Wrench className="mx-auto text-muted-foreground" size={32} />
                 <p className="text-sm text-white">Click "Run Diagnostics" to begin</p>
               </div>
             </div>
           ) : (
-            <div className="space-y-6 p-1">
+            <div className="space-y-6 pr-4">
               {Object.entries(groupedResults).map(([category, categoryResults]) => (
                 <Card key={category} className="border-border/50">
                   <CardHeader className="pb-3">

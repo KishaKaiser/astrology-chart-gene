@@ -1131,18 +1131,18 @@ export function TroubleshootingWizard() {
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[85vh]">
         <DialogHeader className="pb-4">
-          <DialogTitle className="flex items-center gap-3">
+          <DialogTitle className="flex items-center gap-3 text-white">
             <FirstAid weight="bold" className="text-accent" size={24} />
             Troubleshooting Wizard
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-white">
             Step-by-step guidance to resolve common issues
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="h-[60vh] pr-4">
+        <ScrollArea className="h-[60vh] pr-4 -mr-4">
           {!selectedCategory ? (
-            <div className="space-y-4 p-1">
+            <div className="space-y-4 pr-4">
               <p className="text-sm text-white">
                 What type of issue are you experiencing?
               </p>
@@ -1240,13 +1240,13 @@ export function TroubleshootingWizard() {
               </div>
             </div>
           ) : currentStep ? (
-            <div className="space-y-6 p-1">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Badge variant="outline" className="text-xs">
+            <div className="space-y-6 pr-4">
+              <div className="flex items-center gap-2 text-xs">
+                <Badge variant="outline" className="text-xs text-white">
                   Step {history.length + 1}
                 </Badge>
                 {currentStep.isTerminal && (
-                  <Badge variant="default" className="text-xs bg-accent">
+                  <Badge variant="default" className="text-xs bg-accent text-white">
                     Solution
                   </Badge>
                 )}
@@ -1268,7 +1268,7 @@ export function TroubleshootingWizard() {
                       {currentStep.choices.map((choice) => (
                         <div key={choice.value} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-muted/30 cursor-pointer">
                           <RadioGroupItem value={choice.value} id={choice.value} />
-                          <Label htmlFor={choice.value} className="text-sm cursor-pointer flex-1 text-white">
+                          <Label htmlFor={choice.value} className="text-sm cursor-pointer flex-1 text-white leading-relaxed">
                             {choice.label}
                           </Label>
                         </div>
@@ -1292,15 +1292,15 @@ export function TroubleshootingWizard() {
           ) : null}
         </ScrollArea>
 
-        <Separator className="my-4" />
+        <Separator />
 
-        <div className="flex items-center justify-between gap-3 pt-2">
+        <div className="flex items-center justify-between gap-3 pt-4">
           <Button
             variant="ghost"
             size="sm"
             onClick={goBack}
             disabled={!selectedCategory}
-            className="text-white"
+            className="text-white hover:text-white"
           >
             <ArrowLeft className="mr-2" />
             Back
@@ -1315,46 +1315,46 @@ export function TroubleshootingWizard() {
                   setIsOpen(false)
                   reset()
                 }}
-                className="text-white"
+                className="bg-accent text-white hover:bg-accent/90"
               >
                 <CheckCircle className="mr-2" weight="fill" />
                 Done
               </Button>
-            ) : (
+            ) : currentStep ? (
               <>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={reset}
-                  className="text-white"
+                  className="text-white hover:text-white"
                 >
                   Start Over
                 </Button>
-                {currentStep?.type === 'info' && currentStep?.nextStep && (
+                {currentStep.type === 'info' && currentStep.nextStep && (
                   <Button
                     variant="default"
                     size="sm"
                     onClick={goToNextStep}
-                    className="text-white"
+                    className="bg-accent text-white hover:bg-accent/90"
                   >
                     Continue
                     <ArrowRight className="ml-2" weight="bold" />
                   </Button>
                 )}
-                {currentStep?.type === 'choice' && (
+                {currentStep.type === 'choice' && (
                   <Button
                     variant="default"
                     size="sm"
                     onClick={goToNextStep}
                     disabled={!selectedChoice}
-                    className="text-white"
+                    className="bg-accent text-white hover:bg-accent/90 disabled:opacity-50"
                   >
                     Continue
                     <ArrowRight className="ml-2" weight="bold" />
                   </Button>
                 )}
               </>
-            )}
+            ) : null}
           </div>
         </div>
       </DialogContent>
