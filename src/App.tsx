@@ -22,7 +22,18 @@ function App() {
 
   const handleGenerateChart = async (formData: ChartFormData) => {
     try {
-      toast.loading('Generating chart...', { id: 'chart-generation' })
+      console.log('=== CHART GENERATION STARTED ===')
+      console.log('Input data:', {
+        name: formData.name,
+        date: formData.date,
+        time: formData.time,
+        location: formData.location,
+        latitude: formData.latitude,
+        longitude: formData.longitude,
+        timezone: formData.timezone
+      })
+      
+      toast.loading('Initializing astrology engine...', { id: 'chart-generation' })
       
       const newChart = await generateChartData(
         formData.name,
@@ -35,14 +46,44 @@ function App() {
         formData.notes
       )
 
+      console.log('=== CHART GENERATION SUCCESSFUL ===')
       toast.success('Chart generated successfully!', { id: 'chart-generation' })
       setCharts((currentCharts) => [...(currentCharts || []), newChart])
       setSelectedChart(newChart)
       setView('chart')
     } catch (error) {
-      console.error('Error generating chart:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Failed to generate chart. Please try again.'
-      toast.error(errorMessage, { id: 'chart-generation' })
+      console.error('=== CHART GENERATION FAILED ===')
+      console.error('Error object:', error)
+      console.error('Error type:', error?.constructor?.name)
+      console.error('Error message:', error instanceof Error ? error.message : String(error))
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
+      
+      let errorMessage = 'Failed to generate chart.'
+      let errorDetails = ''
+      
+      if (error instanceof Error) {
+        errorMessage = error.message
+        
+        if (error.message.includes('Swiss Ephemeris')) {
+          errorDetails = '\n\nThe astrology calculation library failed to initialize. This might be a browser compatibility issue. Try refreshing the page or using a different browser.'
+        } else if (error.message.includes('date') || error.message.includes('time')) {
+          errorDetails = '\n\nPlease check that the date and time are valid and in the correct format.'
+        } else if (error.message.includes('location') || error.message.includes('coordinates')) {
+          errorDetails = '\n\nPlease verify the location coordinates are correct. Latitude should be between -90 and 90, longitude between -180 and 180.'
+        } else if (error.message.includes('Julian')) {
+          errorDetails = '\n\nThe date/time could not be converted for astronomical calculations. Ensure the date is not too far in the past or future.'
+        } else if (error.message.includes('houses')) {
+          errorDetails = '\n\nThe house system calculation failed. This may be due to extreme latitude values (near poles).'
+        }
+      }
+      
+      const fullMessage = errorMessage + errorDetails
+      
+      toast.error(fullMessage, { 
+        id: 'chart-generation',
+        duration: 10000,
+        description: 'Check the browser console (F12) for detailed technical information.'
+      })
     }
   }
 
