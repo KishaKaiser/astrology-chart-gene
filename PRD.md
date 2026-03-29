@@ -77,12 +77,12 @@ A sophisticated celestial palette anchored by deep cosmic blues and purples with
 
 ## Font Selection
 
-Typography should bridge ancient astronomical texts with modern technical precision, using a distinctive serif for headings that evokes classical star charts and a clean technical sans-serif for data that ensures readability of complex calculations.
+Typography should bridge ancient astronomical texts with modern technical precision, using an elegant decorative script for headings that evokes mystical and classical aesthetics, and a clean technical sans-serif for data that ensures readability of complex calculations.
 
 - **Typographic Hierarchy**: 
-  - H1 (App Title/Page Headers): Crimson Pro SemiBold/32px/tight letter-spacing (-0.02em) - Elegant serif that references historical astronomical manuscripts
-  - H2 (Section Headers): Crimson Pro SemiBold/24px/normal letter-spacing
-  - H3 (Chart Names/Subsections): Crimson Pro Medium/18px/normal letter-spacing
+  - H1 (App Title/Page Headers): Corinthia Regular/48px/tight letter-spacing (-0.02em) - Elegant script that evokes mystical and classical aesthetics
+  - H2 (Section Headers): Corinthia Regular/36px/normal letter-spacing
+  - H3 (Chart Names/Subsections): Corinthia Regular/28px/normal letter-spacing
   - Body (Data Tables/Forms): IBM Plex Sans Regular/15px/relaxed line-height (1.6) - Technical clarity for numerical data
   - Labels/Captions: IBM Plex Sans Medium/13px/normal letter-spacing - Clear hierarchy for form fields
   - Data Values: IBM Plex Mono Regular/14px/tabular figures - Precise alignment for degrees, coordinates, times
