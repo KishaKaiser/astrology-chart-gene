@@ -8,7 +8,7 @@ import { ChartView } from '@/components/ChartView'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
-import psychicLogo from '@/assets/images/psychic-logo.png'
+import { CrystalBallLogo } from '@/components/CrystalBallLogo'
 
 function App() {
   const [charts, setCharts] = useKV<ChartData[]>('astrology-charts', [])
@@ -85,9 +85,7 @@ function App() {
               className="flex items-center gap-4"
             >
               <div className="relative">
-                <div className="w-12 h-12 rounded-lg overflow-hidden ring-2 ring-accent/30 shadow-lg shadow-accent/20">
-                  <img src={psychicLogo} alt="Psychic Link" className="w-full h-full object-cover" />
-                </div>
+                <CrystalBallLogo className="w-12 h-12" />
               </div>
               <div className="flex flex-col gap-0.5">
                 <h1 className="text-5xl font-semibold leading-none" style={{ fontFamily: 'Corinthia, cursive' }}>Psychic Link Charts</h1>
