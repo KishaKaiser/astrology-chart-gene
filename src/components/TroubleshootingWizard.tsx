@@ -1140,9 +1140,9 @@ export function TroubleshootingWizard() {
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="h-[60vh] pr-4 -mx-6 px-6">
+        <ScrollArea className="h-[60vh] pr-4">
           {!selectedCategory ? (
-            <div className="space-y-4">
+            <div className="space-y-4 p-1">
               <p className="text-sm text-white">
                 What type of issue are you experiencing?
               </p>
@@ -1240,7 +1240,7 @@ export function TroubleshootingWizard() {
               </div>
             </div>
           ) : currentStep ? (
-            <div className="space-y-6">
+            <div className="space-y-6 p-1">
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Badge variant="outline" className="text-xs">
                   Step {history.length + 1}

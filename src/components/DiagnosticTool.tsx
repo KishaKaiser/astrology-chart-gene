@@ -393,23 +393,23 @@ export function DiagnosticTool() {
 
         <Separator className="my-4" />
 
-        <ScrollArea className="h-[50vh] pr-4 -mx-6 px-6">
+        <ScrollArea className="h-[50vh] pr-4">
           {isRunning ? (
-            <div className="flex items-center justify-center py-12">
+            <div className="flex items-center justify-center py-12 px-1">
               <div className="text-center space-y-3">
                 <ArrowsClockwise className="animate-spin mx-auto text-accent" size={32} />
                 <p className="text-sm text-white">Running diagnostics...</p>
               </div>
             </div>
           ) : results.length === 0 ? (
-            <div className="flex items-center justify-center py-12">
+            <div className="flex items-center justify-center py-12 px-1">
               <div className="text-center space-y-3">
                 <Wrench className="mx-auto text-muted-foreground" size={32} />
                 <p className="text-sm text-white">Click "Run Diagnostics" to begin</p>
               </div>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-6 p-1">
               {Object.entries(groupedResults).map(([category, categoryResults]) => (
                 <Card key={category} className="border-border/50">
                   <CardHeader className="pb-3">
