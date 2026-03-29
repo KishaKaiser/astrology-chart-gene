@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from 'react'
 import { ChartData, TransitData, PLANET_SYMBOLS, ASPECT_TYPES, ZodiacSign, ZODIAC_SYMBOLS } from '@/lib/astrology-types'
 import { calculateCurrentTransits } from '@/lib/astrology-calc'
 import { ZODIAC_INFO, PLANETARY_DIGNITIES, getPlanetaryDignity, getDignityDescription, getDignityColor, HOUSE_INFO, getHouseCategoryDescription } from '@/lib/zodiac-info'
+import { detectAspectPatterns } from '@/lib/aspect-patterns'
 import { ChartWheel } from './ChartWheel'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -348,11 +349,12 @@ Write each section with depth and nuance. Be specific about how energies manifes
       </div>
 
       <Tabs defaultValue="planets" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-9">
+        <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10">
           <TabsTrigger value="planets">Planetary Positions</TabsTrigger>
           <TabsTrigger value="houses">House Cusps</TabsTrigger>
           <TabsTrigger value="house-meanings">House Meanings</TabsTrigger>
           <TabsTrigger value="aspects">Major Aspects</TabsTrigger>
+          <TabsTrigger value="patterns">Aspect Patterns</TabsTrigger>
           <TabsTrigger value="zodiac">Zodiac Signs</TabsTrigger>
           <TabsTrigger value="dignities">Planetary Dignities</TabsTrigger>
           <TabsTrigger value="interpretation">
@@ -629,6 +631,108 @@ Write each section with depth and nuance. Be specific about how energies manifes
                   </TableBody>
                 </Table>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="patterns">
+          <Card>
+            <CardHeader>
+              <CardTitle>Aspect Patterns</CardTitle>
+              <CardDescription>Complex configurations revealing deeper chart dynamics</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {(() => {
+                const patterns = detectAspectPatterns(chart.planets, chart.aspects)
+                
+                if (patterns.length === 0) {
+                  return (
+                    <div className="text-center py-12">
+                      <p className="text-muted-foreground mb-2">
+                        No major aspect patterns detected in this chart
+                      </p>
+                      <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                        Aspect patterns like T-Squares, Grand Trines, and Yods require specific configurations of multiple aspects between planets.
+                      </p>
+                    </div>
+                  )
+                }
+
+                return (
+                  <div className="space-y-6">
+                    {patterns.map((pattern, index) => (
+                      <div key={index} className="border border-border rounded-lg p-5 space-y-4" style={{ borderLeftWidth: '4px', borderLeftColor: pattern.color }}>
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 className="text-xl font-semibold" style={{ color: pattern.color }}>
+                                {pattern.type}
+                              </h3>
+                              {pattern.element && (
+                                <Badge variant="outline" style={{ borderColor: pattern.color, color: pattern.color }}>
+                                  {pattern.element}
+                                </Badge>
+                              )}
+                              {pattern.modality && (
+                                <Badge variant="outline" style={{ borderColor: pattern.color, color: pattern.color }}>
+                                  {pattern.modality}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-3">
+                              {pattern.description}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          <span className="text-xs font-semibold text-muted-foreground mr-2">PLANETS INVOLVED:</span>
+                          {pattern.planets.map((planetName) => (
+                            <Badge key={planetName} variant="secondary" className="text-sm">
+                              <span className="mr-1.5">{PLANET_SYMBOLS[planetName]}</span>
+                              {planetName}
+                            </Badge>
+                          ))}
+                        </div>
+
+                        <Separator />
+
+                        <div className="bg-muted/30 rounded-md p-4">
+                          <p className="text-xs font-semibold text-muted-foreground mb-2">INTERPRETATION:</p>
+                          <p className="text-sm text-foreground leading-relaxed">
+                            {pattern.interpretation}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+
+                    <div className="mt-8 p-5 bg-muted/30 rounded-lg border border-border space-y-3">
+                      <h4 className="font-semibold text-base">Understanding Aspect Patterns:</h4>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        Aspect patterns are configurations of three or more planets connected by major aspects. They represent core themes and dynamics in the natal chart that are more powerful than individual aspects. These patterns often describe significant life challenges, natural talents, and key areas of personal development.
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div className="space-y-2">
+                          <h5 className="text-sm font-semibold">Challenging Patterns:</h5>
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            <strong>T-Square:</strong> Creates dynamic tension requiring action<br/>
+                            <strong>Grand Cross:</strong> Maximum challenge and maximum potential<br/>
+                            <strong>Yod:</strong> Karmic or fated life direction
+                          </p>
+                        </div>
+                        <div className="space-y-2">
+                          <h5 className="text-sm font-semibold">Harmonious Patterns:</h5>
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            <strong>Grand Trine:</strong> Natural talents and ease<br/>
+                            <strong>Kite:</strong> Grand Trine with focused direction<br/>
+                            <strong>Grand Sextile:</strong> Exceptional potential and gifts
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
             </CardContent>
           </Card>
         </TabsContent>
