@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect } from 'react'
-import { ChartData, TransitData, PLANET_SYMBOLS, ASPECT_TYPES } from '@/lib/astrology-types'
+import { ChartData, TransitData, PLANET_SYMBOLS, ASPECT_TYPES, ZodiacSign, ZODIAC_SYMBOLS } from '@/lib/astrology-types'
 import { calculateCurrentTransits } from '@/lib/astrology-calc'
+import { ZODIAC_INFO, PLANETARY_DIGNITIES, getPlanetaryDignity, getDignityDescription, getDignityColor } from '@/lib/zodiac-info'
 import { ChartWheel } from './ChartWheel'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -347,10 +348,12 @@ Write each section with depth and nuance. Be specific about how energies manifes
       </div>
 
       <Tabs defaultValue="planets" className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
           <TabsTrigger value="planets">Planetary Positions</TabsTrigger>
           <TabsTrigger value="houses">House Cusps</TabsTrigger>
           <TabsTrigger value="aspects">Major Aspects</TabsTrigger>
+          <TabsTrigger value="zodiac">Zodiac Signs</TabsTrigger>
+          <TabsTrigger value="dignities">Planetary Dignities</TabsTrigger>
           <TabsTrigger value="interpretation">
             <Sparkle className="mr-1.5" size={16} weight="fill" />
             Interpretation
@@ -363,7 +366,7 @@ Write each section with depth and nuance. Be specific about how energies manifes
           <Card>
             <CardHeader>
               <CardTitle>Planetary Positions</CardTitle>
-              <CardDescription>Exact positions of all planets in the natal chart</CardDescription>
+              <CardDescription>Exact positions of all planets in the natal chart with dignity status</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -373,22 +376,42 @@ Write each section with depth and nuance. Be specific about how energies manifes
                     <TableHead>Sign</TableHead>
                     <TableHead>Degree in Sign</TableHead>
                     <TableHead>House</TableHead>
+                    <TableHead>Dignity</TableHead>
                     <TableHead>Longitude</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {chart.planets.map((planet) => (
-                    <TableRow key={planet.name}>
-                      <TableCell className="font-medium">
-                        <span className="text-xl mr-2">{PLANET_SYMBOLS[planet.name]}</span>
-                        {planet.name}
-                      </TableCell>
-                      <TableCell>{planet.sign}</TableCell>
-                      <TableCell className="font-mono">{planet.degree.toFixed(2)}°</TableCell>
-                      <TableCell>{planet.house}</TableCell>
-                      <TableCell className="font-mono">{planet.longitude.toFixed(2)}°</TableCell>
-                    </TableRow>
-                  ))}
+                  {chart.planets.map((planet) => {
+                    const dignity = getPlanetaryDignity(planet.name, planet.sign as ZodiacSign)
+                    return (
+                      <TableRow key={planet.name}>
+                        <TableCell className="font-medium">
+                          <span className="text-xl mr-2">{PLANET_SYMBOLS[planet.name]}</span>
+                          {planet.name}
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-lg mr-2">{ZODIAC_SYMBOLS[planet.sign as ZodiacSign]}</span>
+                          {planet.sign}
+                        </TableCell>
+                        <TableCell className="font-mono">{planet.degree.toFixed(2)}°</TableCell>
+                        <TableCell>{planet.house}</TableCell>
+                        <TableCell>
+                          {dignity ? (
+                            <Badge
+                              variant="outline"
+                              style={{ borderColor: getDignityColor(dignity), color: getDignityColor(dignity) }}
+                              className="text-xs"
+                            >
+                              {dignity}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="font-mono">{planet.longitude.toFixed(2)}°</TableCell>
+                      </TableRow>
+                    )
+                  })}
                 </TableBody>
               </Table>
             </CardContent>
@@ -471,6 +494,141 @@ Write each section with depth and nuance. Be specific about how energies manifes
                   </TableBody>
                 </Table>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="zodiac">
+          <Card>
+            <CardHeader>
+              <CardTitle>Zodiac Sign Meanings</CardTitle>
+              <CardDescription>Comprehensive information about each zodiac sign</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {Object.entries(ZODIAC_INFO).map(([sign, info]) => (
+                <div key={sign} className="border border-border rounded-lg p-4 space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-4xl">{ZODIAC_SYMBOLS[sign as ZodiacSign]}</span>
+                      <div>
+                        <h3 className="text-lg font-semibold">{sign}</h3>
+                        <div className="flex gap-2 mt-1">
+                          <Badge variant="outline" style={{ borderColor: getDignityColor('Domicile'), color: getDignityColor('Domicile') }}>
+                            {info.element}
+                          </Badge>
+                          <Badge variant="outline" style={{ borderColor: getDignityColor('Exaltation'), color: getDignityColor('Exaltation') }}>
+                            {info.modality}
+                          </Badge>
+                          <Badge variant="secondary">
+                            Ruled by {info.ruler}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{info.description}</p>
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground mb-2">KEY THEMES:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {info.keywords.map((keyword) => (
+                        <Badge key={keyword} variant="secondary" className="text-xs">
+                          {keyword}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="dignities">
+          <Card>
+            <CardHeader>
+              <CardTitle>Planetary Dignities in Your Chart</CardTitle>
+              <CardDescription>Essential dignities show how well planets can express their nature</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Planet</TableHead>
+                    <TableHead>Sign</TableHead>
+                    <TableHead>Dignity Status</TableHead>
+                    <TableHead>Meaning</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {chart.planets.map((planet) => {
+                    const dignity = getPlanetaryDignity(planet.name, planet.sign as ZodiacSign)
+                    return (
+                      <TableRow key={planet.name}>
+                        <TableCell className="font-medium">
+                          <span className="text-xl mr-2">{PLANET_SYMBOLS[planet.name]}</span>
+                          {planet.name}
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-lg mr-2">{ZODIAC_SYMBOLS[planet.sign as ZodiacSign]}</span>
+                          {planet.sign}
+                        </TableCell>
+                        <TableCell>
+                          {dignity ? (
+                            <Badge
+                              variant="outline"
+                              style={{ borderColor: getDignityColor(dignity), color: getDignityColor(dignity) }}
+                            >
+                              {dignity}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">Peregrine</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {dignity ? getDignityDescription(dignity) : 'Neutral - Planet functions normally'}
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
+              <div className="mt-6 p-4 bg-muted/30 rounded-lg border border-border space-y-3">
+                <h4 className="font-semibold text-sm">Understanding Planetary Dignities:</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                  <div className="flex items-start gap-2">
+                    <Badge variant="outline" style={{ borderColor: getDignityColor('Domicile'), color: getDignityColor('Domicile') }}>
+                      Domicile
+                    </Badge>
+                    <p className="text-muted-foreground text-xs leading-relaxed">
+                      Planet is in its ruling sign - operates at full strength and comfort
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Badge variant="outline" style={{ borderColor: getDignityColor('Exaltation'), color: getDignityColor('Exaltation') }}>
+                      Exaltation
+                    </Badge>
+                    <p className="text-muted-foreground text-xs leading-relaxed">
+                      Planet is honored - expresses its highest and most refined qualities
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Badge variant="outline" style={{ borderColor: getDignityColor('Detriment'), color: getDignityColor('Detriment') }}>
+                      Detriment
+                    </Badge>
+                    <p className="text-muted-foreground text-xs leading-relaxed">
+                      Planet is opposite its domicile - faces challenges expressing naturally
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Badge variant="outline" style={{ borderColor: getDignityColor('Fall'), color: getDignityColor('Fall') }}>
+                      Fall
+                    </Badge>
+                    <p className="text-muted-foreground text-xs leading-relaxed">
+                      Planet is opposite its exaltation - struggles to manifest its nature
+                    </p>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
