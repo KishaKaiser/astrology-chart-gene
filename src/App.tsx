@@ -111,7 +111,7 @@ function App() {
         {view === 'library' ? (
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'charts' | 'personal-horoscope' | 'zodiac-horoscope')} className="space-y-6">
             <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3">
-              <TabsTrigger value="charts" className="gap-2">
+              <TabsTrigger value="charts" className="gap-2 text-white">
                 <BookOpen weight="bold" />
                 Chart Library
               </TabsTrigger>
