@@ -43,32 +43,45 @@ async function getSwissEph(): Promise<any> {
       await loadSwissEph()
       
       if (!SwissEphemeris) {
-        throw new Error('SwissEphemeris constructor not available')
+        throw new Error('SwissEphemeris constructor not available after loading')
       }
       
       console.log('Creating SwissEphemeris instance...')
       swissEph = new SwissEphemeris()
       
+      if (!swissEph) {
+        throw new Error('Failed to create SwissEphemeris instance')
+      }
+      
       if (typeof swissEph.init === 'function') {
         console.log('Calling swissEph.init()...')
         await swissEph.init()
+        console.log('Swiss Ephemeris init() completed')
+      } else {
+        console.log('SwissEphemeris instance has no init() method, continuing...')
       }
       
       console.log('Swiss Ephemeris initialized successfully')
     } catch (error) {
       console.error('Failed to initialize Swiss Ephemeris:', error)
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
       swissEph = null
       isInitializing = false
       initPromise = null
       
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      throw new Error(`Astrology calculation engine failed: ${errorMessage}. Please refresh and try again.`)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown initialization error'
+      throw new Error(`Astrology calculation engine failed to load: ${errorMessage}. Please refresh the page and try again.`)
     } finally {
       isInitializing = false
     }
   })()
   
   await initPromise
+  
+  if (!swissEph) {
+    throw new Error('Swiss Ephemeris is null after initialization attempt')
+  }
+  
   return swissEph
 }
 
@@ -154,7 +167,27 @@ export async function generateChartData(
   const swe = await getSwissEph()
   
   if (!swe) {
-    throw new Error('Swiss Ephemeris not initialized')
+    throw new Error('Swiss Ephemeris not initialized properly')
+  }
+  
+  if (typeof swe.dateToJulianDay !== 'function') {
+    throw new Error('Swiss Ephemeris is missing required method: dateToJulianDay')
+  }
+  
+  if (typeof swe.calculateHouses !== 'function') {
+    throw new Error('Swiss Ephemeris is missing required method: calculateHouses')
+  }
+  
+  if (typeof swe.calculatePosition !== 'function') {
+    throw new Error('Swiss Ephemeris is missing required method: calculatePosition')
+  }
+  
+  if (!Planet) {
+    throw new Error('Planet enum not loaded from Swiss Ephemeris library')
+  }
+  
+  if (!HouseSystem) {
+    throw new Error('HouseSystem enum not loaded from Swiss Ephemeris library')
   }
   
   const PLANET_MAP: Record<string, any> = {
