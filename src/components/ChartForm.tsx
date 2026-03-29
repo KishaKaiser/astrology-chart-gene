@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Plus } from '@phosphor-icons/react'
 import { toast } from 'sonner'
+import { BirthTimeRectification } from '@/components/BirthTimeRectification'
 
 interface ChartFormProps {
   onSubmit: (data: ChartFormData) => void
@@ -123,13 +124,26 @@ export function ChartForm({ onSubmit }: ChartFormProps) {
 
               <div className="space-y-2">
                 <Label htmlFor="chart-time">Birth Time *</Label>
-                <Input
-                  id="chart-time"
-                  type="time"
-                  value={formData.time}
-                  onChange={(e) => setFormData(prev => ({ ...prev, time: e.target.value }))}
-                  required
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="chart-time"
+                    type="time"
+                    value={formData.time}
+                    onChange={(e) => setFormData(prev => ({ ...prev, time: e.target.value }))}
+                    required
+                    className="flex-1"
+                  />
+                  {formData.date && formData.location && formData.latitude !== 0 && (
+                    <BirthTimeRectification
+                      birthDate={formData.date}
+                      location={formData.location}
+                      latitude={formData.latitude}
+                      longitude={formData.longitude}
+                      timezone={formData.timezone}
+                      onTimeSelected={(time) => setFormData(prev => ({ ...prev, time }))}
+                    />
+                  )}
+                </div>
               </div>
             </div>
 
