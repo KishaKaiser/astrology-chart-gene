@@ -34,7 +34,7 @@
 
   --border: oklch(0.30 0.05 270);
   --input: oklch(0.28 0.06 268);
-  --ring: oklch(0.78 0.15 85);
+  --ring: oklch(0.55 0.18 295);
 
   --radius: 0.5rem;
 }
