@@ -333,15 +333,15 @@ Write each section with depth and nuance. Be specific about how energies manifes
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Place:</span>
-                  <span>{chart.location}</span>
+                  <span className="text-[oklch(0.75_0.19_195)]">{chart.location}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Latitude:</span>
-                  <span className="font-mono">{chart.latitude.toFixed(4)}°</span>
+                  <span className="font-mono text-[oklch(0.75_0.19_195)]">{chart.latitude.toFixed(4)}°</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Longitude:</span>
-                  <span className="font-mono">{chart.longitude.toFixed(4)}°</span>
+                  <span className="font-mono text-[oklch(0.75_0.19_195)]">{chart.longitude.toFixed(4)}°</span>
                 </div>
               </div>
             </div>
