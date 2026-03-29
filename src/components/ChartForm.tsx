@@ -7,6 +7,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Plus } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { BirthTimeRectification } from '@/components/BirthTimeRectification'
+import { LocationSearch } from '@/components/LocationSearch'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 interface ChartFormProps {
   onSubmit: (data: ChartFormData) => void
@@ -147,71 +149,111 @@ export function ChartForm({ onSubmit }: ChartFormProps) {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="chart-location" className="text-foreground">Birth Location *</Label>
-              <Input
-                id="chart-location"
-                value={formData.location}
-                onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                placeholder="City, Country"
-                required
-              />
-              <div className="flex flex-wrap gap-2 mt-2">
-                {popularCities.map(city => (
-                  <Button
-                    key={city.name}
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCity(city)}
-                    className="text-xs"
-                  >
-                    {city.name}
-                  </Button>
-                ))}
-              </div>
-            </div>
+            <div className="space-y-3">
+              <Label className="text-foreground">Birth Location *</Label>
+              <Tabs defaultValue="search" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="search">Search Location</TabsTrigger>
+                  <TabsTrigger value="manual">Manual Entry</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="search" className="space-y-3 mt-4">
+                  <LocationSearch
+                    value={formData.location}
+                    onLocationSelect={(location) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        location: location.name,
+                        latitude: location.latitude,
+                        longitude: location.longitude,
+                        timezone: location.timezone
+                      }))
+                    }}
+                  />
+                  
+                  {formData.location && formData.latitude !== 0 && (
+                    <div className="p-3 bg-accent/10 border border-accent/20 rounded-md">
+                      <p className="text-sm text-foreground font-medium mb-1">{formData.location}</p>
+                      <p className="text-xs text-muted-foreground font-mono">
+                        {formData.latitude.toFixed(4)}°, {formData.longitude.toFixed(4)}° • Timezone: {formData.timezone}
+                      </p>
+                    </div>
+                  )}
+                  
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground">Popular cities:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {popularCities.map(city => (
+                        <Button
+                          key={city.name}
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCity(city)}
+                          className="text-xs"
+                        >
+                          {city.name}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="manual" className="space-y-4 mt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="chart-location" className="text-foreground">Location Name</Label>
+                    <Input
+                      id="chart-location"
+                      value={formData.location}
+                      onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                      placeholder="City, Country"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="chart-latitude" className="text-foreground">Latitude</Label>
+                      <Input
+                        id="chart-latitude"
+                        type="number"
+                        step="0.0001"
+                        value={formData.latitude}
+                        onChange={(e) => setFormData(prev => ({ ...prev, latitude: parseFloat(e.target.value) || 0 }))}
+                        placeholder="40.7128"
+                        required
+                        className="font-mono"
+                      />
+                    </div>
 
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="chart-latitude" className="text-foreground">Latitude *</Label>
-                <Input
-                  id="chart-latitude"
-                  type="number"
-                  step="0.0001"
-                  value={formData.latitude}
-                  onChange={(e) => setFormData(prev => ({ ...prev, latitude: parseFloat(e.target.value) || 0 }))}
-                  placeholder="40.7128"
-                  required
-                  className="font-mono"
-                />
-              </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="chart-longitude" className="text-foreground">Longitude</Label>
+                      <Input
+                        id="chart-longitude"
+                        type="number"
+                        step="0.0001"
+                        value={formData.longitude}
+                        onChange={(e) => setFormData(prev => ({ ...prev, longitude: parseFloat(e.target.value) || 0 }))}
+                        placeholder="-74.0060"
+                        required
+                        className="font-mono"
+                      />
+                    </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="chart-longitude" className="text-foreground">Longitude *</Label>
-                <Input
-                  id="chart-longitude"
-                  type="number"
-                  step="0.0001"
-                  value={formData.longitude}
-                  onChange={(e) => setFormData(prev => ({ ...prev, longitude: parseFloat(e.target.value) || 0 }))}
-                  placeholder="-74.0060"
-                  required
-                  className="font-mono"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="chart-timezone" className="text-foreground">Timezone *</Label>
-                <Input
-                  id="chart-timezone"
-                  value={formData.timezone}
-                  onChange={(e) => setFormData(prev => ({ ...prev, timezone: e.target.value }))}
-                  placeholder="-05:00"
-                  required
-                  className="font-mono"
-                />
-              </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="chart-timezone" className="text-foreground">Timezone</Label>
+                      <Input
+                        id="chart-timezone"
+                        value={formData.timezone}
+                        onChange={(e) => setFormData(prev => ({ ...prev, timezone: e.target.value }))}
+                        placeholder="-05:00"
+                        required
+                        className="font-mono"
+                      />
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
             </div>
 
             <div className="space-y-2">
