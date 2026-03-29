@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 import { BirthTimeRectification } from '@/components/BirthTimeRectification'
 import { LocationSearch } from '@/components/LocationSearch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { findTimezoneByCoordinates, formatTimezoneDisplay } from '@/lib/timezone-db'
 
 interface ChartFormProps {
   onSubmit: (data: ChartFormData) => void
@@ -61,21 +62,22 @@ export function ChartForm({ onSubmit }: ChartFormProps) {
   }
 
   const popularCities = [
-    { name: 'New York, USA', lat: 40.7128, lng: -74.0060, tz: '-05:00' },
-    { name: 'London, UK', lat: 51.5074, lng: -0.1278, tz: '+00:00' },
-    { name: 'Paris, France', lat: 48.8566, lng: 2.3522, tz: '+01:00' },
-    { name: 'Tokyo, Japan', lat: 35.6762, lng: 139.6503, tz: '+09:00' },
-    { name: 'Sydney, Australia', lat: -33.8688, lng: 151.2093, tz: '+10:00' },
-    { name: 'Los Angeles, USA', lat: 34.0522, lng: -118.2437, tz: '-08:00' },
+    { name: 'New York, USA', lat: 40.7128, lng: -74.0060 },
+    { name: 'London, UK', lat: 51.5074, lng: -0.1278 },
+    { name: 'Paris, France', lat: 48.8566, lng: 2.3522 },
+    { name: 'Tokyo, Japan', lat: 35.6762, lng: 139.6503 },
+    { name: 'Sydney, Australia', lat: -33.8688, lng: 151.2093 },
+    { name: 'Los Angeles, USA', lat: 34.0522, lng: -118.2437 },
   ]
 
   const setCity = (city: typeof popularCities[0]) => {
+    const timezone = findTimezoneByCoordinates(city.lat, city.lng)
     setFormData(prev => ({
       ...prev,
       location: city.name,
       latitude: city.lat,
       longitude: city.lng,
-      timezone: city.tz
+      timezone
     }))
   }
 
@@ -174,8 +176,11 @@ export function ChartForm({ onSubmit }: ChartFormProps) {
                   {formData.location && formData.latitude !== 0 && (
                     <div className="p-3 bg-accent/10 border border-accent/20 rounded-md">
                       <p className="text-sm text-foreground font-medium mb-1">{formData.location}</p>
-                      <p className="text-xs text-muted-foreground font-mono">
-                        {formData.latitude.toFixed(4)}°, {formData.longitude.toFixed(4)}° • Timezone: {formData.timezone}
+                      <p className="text-xs text-muted-foreground font-mono mb-1">
+                        {formData.latitude.toFixed(4)}°, {formData.longitude.toFixed(4)}°
+                      </p>
+                      <p className="text-xs text-accent font-medium">
+                        {formatTimezoneDisplay(formData.timezone)}
                       </p>
                     </div>
                   )}

@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { MagnifyingGlass, MapPin, Spinner } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils'
+import { findTimezoneByCoordinates, formatTimezoneDisplay } from '@/lib/timezone-db'
 
 interface LocationResult {
   name: string
@@ -112,11 +113,8 @@ export function LocationSearch({ value, onLocationSelect, className }: LocationS
     }
   }
 
-  const getTimezoneOffset = (latitude: number, longitude: number): string => {
-    const lonOffset = Math.round(longitude / 15)
-    const sign = lonOffset >= 0 ? '+' : '-'
-    const absOffset = Math.abs(lonOffset)
-    return `${sign}${absOffset.toString().padStart(2, '0')}:00`
+  const getTimezoneFromCoordinates = (latitude: number, longitude: number): string => {
+    return findTimezoneByCoordinates(latitude, longitude)
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,7 +135,7 @@ export function LocationSearch({ value, onLocationSelect, className }: LocationS
     setShowResults(false)
     setResults([])
 
-    const timezone = getTimezoneOffset(location.latitude, location.longitude)
+    const timezone = getTimezoneFromCoordinates(location.latitude, location.longitude)
 
     onLocationSelect({
       name: location.displayName,
