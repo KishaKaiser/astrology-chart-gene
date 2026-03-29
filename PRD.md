@@ -1,6 +1,6 @@
 # Planning Guide
 
-A professional astrology software platform that generates accurate natal charts with comprehensive planetary calculations, house systems, and aspects, allowing astrologers to save, edit, and export charts in PDF format for client readings.
+A professional astrology software platform called "Psychic Link Charts" that generates accurate natal charts with comprehensive planetary calculations, house systems, and aspects, allowing astrologers to save, edit, and export charts in PDF format for client readings.
 
 **Experience Qualities**:
 1. **Mystical yet Professional** - Combines celestial aesthetics with clean, business-ready presentation that balances spiritual wonder with technical precision

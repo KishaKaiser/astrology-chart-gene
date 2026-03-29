@@ -69,7 +69,7 @@ function App() {
                 <Star size={36} weight="fill" className="text-accent star-pulse" />
               </div>
               <div>
-                <h1 className="text-3xl font-semibold">Celestial Charts</h1>
+                <h1 className="text-3xl font-semibold">Psychic Link Charts</h1>
                 <p className="text-sm text-muted-foreground">Professional Astrology Software</p>
               </div>
             </motion.div>
@@ -98,7 +98,7 @@ function App() {
       <footer className="border-t border-border/50 mt-20">
         <div className="container mx-auto px-6 py-8">
           <p className="text-center text-sm text-muted-foreground">
-            Celestial Charts © {new Date().getFullYear()} | Professional Astrology Software
+            Psychic Link Charts © {new Date().getFullYear()} | Professional Astrology Software
           </p>
         </div>
       </footer>
