@@ -101,7 +101,7 @@ export function ChartForm({ onSubmit }: ChartFormProps) {
     <>
       <Button 
         onClick={() => setOpen(true)}
-        className="gap-2 text-white"
+        className="gap-2 text-white hover:bg-accent hover:text-accent-foreground"
         size="lg"
       >
         <Plus size={20} weight="bold" />
@@ -171,8 +171,8 @@ export function ChartForm({ onSubmit }: ChartFormProps) {
               <Label className="text-foreground">Birth Location *</Label>
               <Tabs defaultValue="search" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="search">Search Location</TabsTrigger>
-                  <TabsTrigger value="manual">Manual Entry</TabsTrigger>
+                  <TabsTrigger value="search" className="hover:bg-accent/10">Search Location</TabsTrigger>
+                  <TabsTrigger value="manual" className="hover:bg-accent/10">Manual Entry</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="search" className="space-y-3 mt-4">
@@ -251,7 +251,7 @@ export function ChartForm({ onSubmit }: ChartFormProps) {
                           variant="outline"
                           size="sm"
                           onClick={() => setCity(city)}
-                          className="text-xs text-foreground"
+                          className="text-xs text-foreground hover:bg-accent/20 hover:border-accent"
                         >
                           {city.name}
                         </Button>
@@ -329,10 +329,10 @@ export function ChartForm({ onSubmit }: ChartFormProps) {
             </div>
 
             <div className="flex justify-end gap-3 pt-4">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)} className="text-foreground">
+              <Button type="button" variant="outline" onClick={() => setOpen(false)} className="text-foreground hover:bg-accent/20 hover:border-accent">
                 Cancel
               </Button>
-              <Button type="submit">
+              <Button type="submit" className="hover:bg-accent hover:text-accent-foreground">
                 Generate Chart
               </Button>
             </div>
