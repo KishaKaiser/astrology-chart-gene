@@ -13,12 +13,15 @@ async function loadSwissEph() {
   }
 
   try {
+    console.log('Loading Swiss Ephemeris modules...')
     const swissephBrowser = await import('@swisseph/browser')
     SwissEphemeris = swissephBrowser.SwissEphemeris
     
     const swissephCore = await import('@swisseph/core')
     Planet = swissephCore.Planet
     HouseSystem = swissephCore.HouseSystem
+    
+    console.log('Modules loaded successfully')
   } catch (error) {
     console.error('Failed to load Swiss Ephemeris modules:', error)
     throw new Error('Swiss Ephemeris library failed to load. Please refresh and try again.')
