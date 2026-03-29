@@ -14,6 +14,7 @@ import { motion } from 'framer-motion'
 import { CrystalBallLogo } from '@/components/CrystalBallLogo'
 import { BookOpen, Sparkle, Star, ArrowsClockwise } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
+import { DiagnosticTool } from '@/components/DiagnosticTool'
 
 function App() {
   const [charts, setCharts] = useKV<ChartData[]>('astrology-charts', [])
@@ -180,6 +181,7 @@ function App() {
             </motion.div>
             
             <div className="flex items-center gap-3">
+              <DiagnosticTool />
               {ephemerisError && (
                 <Button
                   variant="outline"
