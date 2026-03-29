@@ -1,5 +1,6 @@
 import { ChartData, Planet as PlanetInfo, House, Aspect, TransitData, TransitAspect, ZODIAC_SIGNS, ASPECT_TYPES } from './astrology-types'
-import { SwissEphemeris, Planet, HouseSystem } from '@swisseph/browser'
+import { SwissEphemeris } from '@swisseph/browser'
+import { Planet, HouseSystem } from '@swisseph/core'
 
 let swissEph: SwissEphemeris | null = null
 
