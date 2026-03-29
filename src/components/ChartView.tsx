@@ -359,7 +359,7 @@ Write each section with depth and nuance. Be specific about how energies manifes
       </div>
 
       <Tabs defaultValue="planets" className="w-full">
-        <TabsList className="grid w-full grid-cols-5 lg:grid-cols-11">
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-11">
           <TabsTrigger value="planets">Planetary Positions</TabsTrigger>
           <TabsTrigger value="houses">House Cusps</TabsTrigger>
           <TabsTrigger value="house-meanings">House Meanings</TabsTrigger>
