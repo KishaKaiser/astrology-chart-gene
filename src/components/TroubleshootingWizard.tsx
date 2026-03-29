@@ -1130,7 +1130,7 @@ export function TroubleshootingWizard() {
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[85vh]">
-        <DialogHeader>
+        <DialogHeader className="pb-4">
           <DialogTitle className="flex items-center gap-3">
             <FirstAid weight="bold" className="text-accent" size={24} />
             Troubleshooting Wizard
@@ -1140,7 +1140,7 @@ export function TroubleshootingWizard() {
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="h-[60vh] pr-4">
+        <ScrollArea className="h-[60vh] pr-4 -mx-6 px-6">
           {!selectedCategory ? (
             <div className="space-y-4">
               <p className="text-sm text-white">
@@ -1292,9 +1292,9 @@ export function TroubleshootingWizard() {
           ) : null}
         </ScrollArea>
 
-        <Separator />
+        <Separator className="my-4" />
 
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-3 pt-2">
           <Button
             variant="ghost"
             size="sm"

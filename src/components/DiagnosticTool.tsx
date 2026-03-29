@@ -338,7 +338,7 @@ export function DiagnosticTool() {
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[80vh]">
-        <DialogHeader>
+        <DialogHeader className="pb-4">
           <DialogTitle className="flex items-center gap-3">
             <Wrench weight="bold" className="text-accent" size={24} />
             System Diagnostics
@@ -348,7 +348,7 @@ export function DiagnosticTool() {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex items-center justify-between gap-3 py-2">
+        <div className="flex items-center justify-between gap-3 py-3">
           <div className="flex items-center gap-2">
             {results.length > 0 && (
               <>
@@ -391,9 +391,9 @@ export function DiagnosticTool() {
           </div>
         </div>
 
-        <Separator />
+        <Separator className="my-4" />
 
-        <ScrollArea className="h-[50vh] pr-4">
+        <ScrollArea className="h-[50vh] pr-4 -mx-6 px-6">
           {isRunning ? (
             <div className="flex items-center justify-center py-12">
               <div className="text-center space-y-3">
