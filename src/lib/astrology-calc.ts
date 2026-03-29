@@ -1,10 +1,23 @@
 import { ChartData, Planet as PlanetInfo, House, Aspect, TransitData, TransitAspect, ZODIAC_SIGNS, ASPECT_TYPES } from './astrology-types'
-import { SwissEphemeris } from '@swisseph/browser'
-import { Planet, HouseSystem } from '@swisseph/core'
 
-let swissEph: SwissEphemeris | null = null
+let swissEph: any = null
+let SwissEphemeris: any = null
+let Planet: any = null
+let HouseSystem: any = null
 
-async function getSwissEph(): Promise<SwissEphemeris> {
+async function loadSwissEph() {
+  if (!SwissEphemeris) {
+    const swissephBrowser = await import('@swisseph/browser')
+    const swissephCore = await import('@swisseph/core')
+    SwissEphemeris = swissephBrowser.SwissEphemeris
+    Planet = swissephCore.Planet
+    HouseSystem = swissephCore.HouseSystem
+  }
+}
+
+async function getSwissEph(): Promise<any> {
+  await loadSwissEph()
+  
   if (swissEph) return swissEph
   
   swissEph = new SwissEphemeris()
@@ -80,19 +93,6 @@ function calculateAspects(planets: PlanetInfo[]): Aspect[] {
   return aspects
 }
 
-const PLANET_MAP: Record<string, Planet> = {
-  'Sun': Planet.Sun,
-  'Moon': Planet.Moon,
-  'Mercury': Planet.Mercury,
-  'Venus': Planet.Venus,
-  'Mars': Planet.Mars,
-  'Jupiter': Planet.Jupiter,
-  'Saturn': Planet.Saturn,
-  'Uranus': Planet.Uranus,
-  'Neptune': Planet.Neptune,
-  'Pluto': Planet.Pluto
-}
-
 export async function generateChartData(
   name: string,
   date: string,
@@ -104,6 +104,19 @@ export async function generateChartData(
   notes?: string
 ): Promise<ChartData> {
   const swe = await getSwissEph()
+  
+  const PLANET_MAP: Record<string, any> = {
+    'Sun': Planet.Sun,
+    'Moon': Planet.Moon,
+    'Mercury': Planet.Mercury,
+    'Venus': Planet.Venus,
+    'Mars': Planet.Mars,
+    'Jupiter': Planet.Jupiter,
+    'Saturn': Planet.Saturn,
+    'Uranus': Planet.Uranus,
+    'Neptune': Planet.Neptune,
+    'Pluto': Planet.Pluto
+  }
   
   const dateTime = new Date(`${date}T${time}:00${timezone}`)
   const jd = swe.dateToJulianDay(dateTime)
@@ -193,6 +206,19 @@ function calculateTransitAspects(transitPlanets: PlanetInfo[], natalPlanets: Pla
 
 export async function calculateCurrentTransits(natalChart: ChartData): Promise<TransitData> {
   const swe = await getSwissEph()
+  
+  const PLANET_MAP: Record<string, any> = {
+    'Sun': Planet.Sun,
+    'Moon': Planet.Moon,
+    'Mercury': Planet.Mercury,
+    'Venus': Planet.Venus,
+    'Mars': Planet.Mars,
+    'Jupiter': Planet.Jupiter,
+    'Saturn': Planet.Saturn,
+    'Uranus': Planet.Uranus,
+    'Neptune': Planet.Neptune,
+    'Pluto': Planet.Pluto
+  }
   
   const now = new Date()
   const jd = swe.dateToJulianDay(now)
