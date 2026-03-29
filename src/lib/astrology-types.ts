@@ -47,6 +47,7 @@ export interface ChartData {
   longitude: number
   timezone: string
   notes?: string
+  interpretation?: string
   planets: Planet[]
   houses: House[]
   aspects: Aspect[]

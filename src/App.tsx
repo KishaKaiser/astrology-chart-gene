@@ -44,6 +44,19 @@ function App() {
     }
   }
 
+  const handleUpdateChart = (chartId: string, interpretation: string) => {
+    setCharts((currentCharts) =>
+      (currentCharts || []).map(chart =>
+        chart.id === chartId
+          ? { ...chart, interpretation, updatedAt: Date.now() }
+          : chart
+      )
+    )
+    if (selectedChart?.id === chartId) {
+      setSelectedChart({ ...selectedChart, interpretation, updatedAt: Date.now() })
+    }
+  }
+
   const handleBackToLibrary = () => {
     setView('library')
     setSelectedChart(null)
@@ -91,6 +104,7 @@ function App() {
             chart={selectedChart}
             onBack={handleBackToLibrary}
             onEdit={handleEditChart}
+            onUpdateChart={handleUpdateChart}
           />
         ) : null}
       </main>

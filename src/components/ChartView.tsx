@@ -18,13 +18,14 @@ interface ChartViewProps {
   chart: ChartData
   onBack: () => void
   onEdit: () => void
+  onUpdateChart: (chartId: string, interpretation: string) => void
 }
 
-export function ChartView({ chart, onBack, onEdit }: ChartViewProps) {
+export function ChartView({ chart, onBack, onEdit, onUpdateChart }: ChartViewProps) {
   const svgRef = useRef<SVGSVGElement>(null)
   const [showTransits, setShowTransits] = useState(false)
   const [transits, setTransits] = useState<TransitData | null>(null)
-  const [interpretation, setInterpretation] = useState<string>('')
+  const [interpretation, setInterpretation] = useState<string>(chart.interpretation || '')
   const [isGeneratingInterpretation, setIsGeneratingInterpretation] = useState(false)
 
   useEffect(() => {
@@ -33,6 +34,10 @@ export function ChartView({ chart, onBack, onEdit }: ChartViewProps) {
       setTransits(currentTransits)
     }
   }, [showTransits, chart])
+
+  useEffect(() => {
+    setInterpretation(chart.interpretation || '')
+  }, [chart.interpretation])
 
   const handleExport = async () => {
     const svg = document.querySelector('svg')
@@ -101,7 +106,8 @@ Format the response in clear sections with headers. Be insightful, professional,
 
       const result = await window.spark.llm(promptText, 'gpt-4o')
       setInterpretation(result)
-      toast.success('Interpretation generated successfully!')
+      onUpdateChart(chart.id, result)
+      toast.success('Interpretation generated and saved!')
     } catch (error) {
       toast.error('Failed to generate interpretation')
       console.error('Interpretation error:', error)
