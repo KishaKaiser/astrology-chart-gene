@@ -411,7 +411,7 @@ export function DiagnosticTool() {
               {Object.entries(groupedResults).map(([category, categoryResults]) => (
                 <Card key={category} className="border-border/50">
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-lg">{category}</CardTitle>
+                    <CardTitle className="text-lg text-white">{category}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {categoryResults.map((result, idx) => (
@@ -421,12 +421,12 @@ export function DiagnosticTool() {
                         </div>
                         <div className="flex-1 space-y-1">
                           <div className="flex items-center justify-between gap-2">
-                            <span className="font-medium text-sm">{result.name}</span>
+                            <span className="font-medium text-sm text-white">{result.name}</span>
                             {getStatusBadge(result.status)}
                           </div>
-                          <p className="text-sm text-muted-foreground">{result.message}</p>
+                          <p className="text-sm text-white">{result.message}</p>
                           {result.details && (
-                            <pre className="text-xs text-muted-foreground bg-background/50 p-2 rounded mt-2 overflow-x-auto font-mono">
+                            <pre className="text-xs text-white bg-background/50 p-2 rounded mt-2 overflow-x-auto font-mono">
                               {result.details}
                             </pre>
                           )}

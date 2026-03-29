@@ -1143,7 +1143,7 @@ export function TroubleshootingWizard() {
         <ScrollArea className="h-[60vh] pr-4">
           {!selectedCategory ? (
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-white">
                 What type of issue are you experiencing?
               </p>
 
@@ -1153,11 +1153,11 @@ export function TroubleshootingWizard() {
                   onClick={() => startTroubleshooting('chart-generation')}
                 >
                   <CardHeader>
-                    <CardTitle className="text-base flex items-center gap-2">
+                    <CardTitle className="text-base flex items-center gap-2 text-white">
                       <XCircle weight="fill" className="text-red-500" />
                       Chart Generation Problems
                     </CardTitle>
-                    <CardDescription className="text-xs">
+                    <CardDescription className="text-xs text-white">
                       Errors when trying to generate a natal chart
                     </CardDescription>
                   </CardHeader>
@@ -1168,11 +1168,11 @@ export function TroubleshootingWizard() {
                   onClick={() => startTroubleshooting('library-error')}
                 >
                   <CardHeader>
-                    <CardTitle className="text-base flex items-center gap-2">
+                    <CardTitle className="text-base flex items-center gap-2 text-white">
                       <Warning weight="fill" className="text-yellow-500" />
                       Library/Engine Errors
                     </CardTitle>
-                    <CardDescription className="text-xs">
+                    <CardDescription className="text-xs text-white">
                       Swiss Ephemeris or calculation engine issues
                     </CardDescription>
                   </CardHeader>
@@ -1183,11 +1183,11 @@ export function TroubleshootingWizard() {
                   onClick={() => startTroubleshooting('location-search')}
                 >
                   <CardHeader>
-                    <CardTitle className="text-base flex items-center gap-2">
+                    <CardTitle className="text-base flex items-center gap-2 text-white">
                       <Globe weight="bold" className="text-blue-400" />
                       Location Search Issues
                     </CardTitle>
-                    <CardDescription className="text-xs">
+                    <CardDescription className="text-xs text-white">
                       Can't find or select birth location
                     </CardDescription>
                   </CardHeader>
@@ -1198,11 +1198,11 @@ export function TroubleshootingWizard() {
                   onClick={() => startTroubleshooting('calculation-accuracy')}
                 >
                   <CardHeader>
-                    <CardTitle className="text-base flex items-center gap-2">
+                    <CardTitle className="text-base flex items-center gap-2 text-white">
                       <Info weight="fill" className="text-purple-400" />
                       Calculation Accuracy
                     </CardTitle>
-                    <CardDescription className="text-xs">
+                    <CardDescription className="text-xs text-white">
                       Chart data seems incorrect or inaccurate
                     </CardDescription>
                   </CardHeader>
@@ -1213,11 +1213,11 @@ export function TroubleshootingWizard() {
                   onClick={() => startTroubleshooting('performance')}
                 >
                   <CardHeader>
-                    <CardTitle className="text-base flex items-center gap-2">
+                    <CardTitle className="text-base flex items-center gap-2 text-white">
                       <ArrowsClockwise weight="bold" className="text-orange-400" />
                       Performance Issues
                     </CardTitle>
-                    <CardDescription className="text-xs">
+                    <CardDescription className="text-xs text-white">
                       App is slow or unresponsive
                     </CardDescription>
                   </CardHeader>
@@ -1228,11 +1228,11 @@ export function TroubleshootingWizard() {
                   onClick={() => startTroubleshooting('other')}
                 >
                   <CardHeader>
-                    <CardTitle className="text-base flex items-center gap-2">
+                    <CardTitle className="text-base flex items-center gap-2 text-white">
                       <Sparkle weight="fill" className="text-accent" />
                       Other Issues
                     </CardTitle>
-                    <CardDescription className="text-xs">
+                    <CardDescription className="text-xs text-white">
                       Something else not listed above
                     </CardDescription>
                   </CardHeader>
@@ -1253,8 +1253,8 @@ export function TroubleshootingWizard() {
               </div>
 
               <div className="space-y-3">
-                <h3 className="text-xl font-semibold">{currentStep.title}</h3>
-                <p className="text-sm text-muted-foreground">{currentStep.description}</p>
+                <h3 className="text-xl font-semibold text-white">{currentStep.title}</h3>
+                <p className="text-sm text-white">{currentStep.description}</p>
               </div>
 
               <Separator />
@@ -1268,7 +1268,7 @@ export function TroubleshootingWizard() {
                       {currentStep.choices.map((choice) => (
                         <div key={choice.value} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-muted/30 cursor-pointer">
                           <RadioGroupItem value={choice.value} id={choice.value} />
-                          <Label htmlFor={choice.value} className="text-sm cursor-pointer flex-1">
+                          <Label htmlFor={choice.value} className="text-sm cursor-pointer flex-1 text-white">
                             {choice.label}
                           </Label>
                         </div>
