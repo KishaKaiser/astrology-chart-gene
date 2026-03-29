@@ -6,18 +6,19 @@ import { ChartForm, ChartFormData } from '@/components/ChartForm'
 import { ChartLibrary } from '@/components/ChartLibrary'
 import { ChartView } from '@/components/ChartView'
 import { DailyHoroscope } from '@/components/DailyHoroscope'
+import { GeneralHoroscope } from '@/components/GeneralHoroscope'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 import { CrystalBallLogo } from '@/components/CrystalBallLogo'
-import { BookOpen, Sparkle } from '@phosphor-icons/react'
+import { BookOpen, Sparkle, Star } from '@phosphor-icons/react'
 
 function App() {
   const [charts, setCharts] = useKV<ChartData[]>('astrology-charts', [])
   const [selectedChart, setSelectedChart] = useState<ChartData | null>(null)
   const [view, setView] = useState<'library' | 'chart'>('library')
-  const [activeTab, setActiveTab] = useState<'charts' | 'horoscope'>('charts')
+  const [activeTab, setActiveTab] = useState<'charts' | 'personal-horoscope' | 'zodiac-horoscope'>('charts')
 
   const handleGenerateChart = async (formData: ChartFormData) => {
     try {
@@ -108,15 +109,19 @@ function App() {
 
       <main className="container mx-auto px-6 py-12">
         {view === 'library' ? (
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'charts' | 'horoscope')} className="space-y-6">
-            <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'charts' | 'personal-horoscope' | 'zodiac-horoscope')} className="space-y-6">
+            <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3">
               <TabsTrigger value="charts" className="gap-2">
                 <BookOpen weight="bold" />
                 Chart Library
               </TabsTrigger>
-              <TabsTrigger value="horoscope" className="gap-2">
+              <TabsTrigger value="personal-horoscope" className="gap-2">
                 <Sparkle weight="fill" />
-                Horoscope
+                Personal
+              </TabsTrigger>
+              <TabsTrigger value="zodiac-horoscope" className="gap-2">
+                <Star weight="fill" />
+                Zodiac
               </TabsTrigger>
             </TabsList>
 
@@ -128,19 +133,23 @@ function App() {
               />
             </TabsContent>
 
-            <TabsContent value="horoscope">
+            <TabsContent value="personal-horoscope">
               {charts && charts.length > 0 ? (
                 <DailyHoroscope chart={charts[0]} />
               ) : (
                 <div className="text-center py-20">
                   <p className="text-muted-foreground mb-4">
-                    You need to create a natal chart first to view horoscope forecasts.
+                    You need to create a natal chart first to view personalized horoscope forecasts.
                   </p>
                   <p className="text-sm text-muted-foreground">
                     Switch to the Chart Library tab and generate your first chart.
                   </p>
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="zodiac-horoscope">
+              <GeneralHoroscope />
             </TabsContent>
           </Tabs>
         ) : selectedChart ? (

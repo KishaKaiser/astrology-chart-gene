@@ -28,11 +28,11 @@ This is a sophisticated tool requiring astronomical calculations, data visualiza
 - Success criteria: Transit planets appear in distinct color/style, correct house placement relative to natal chart, timestamp shows calculation time, seamless toggle on/off
 
 **Daily Horoscope Predictions**
-- Functionality: Generate personalized daily horoscope readings based on current planetary transits to the user's natal chart with AI-powered interpretation
-- Purpose: Provides daily guidance and predictions by analyzing how current transiting planets interact with natal positions
-- Trigger: User navigates to "Daily Horoscope" tab in chart view
-- Progression: Chart view → Daily Horoscope tab → Calculate current transits → Generate horoscope button → AI analyzes transit aspects → Display personalized reading with transit details
-- Success criteria: Horoscope considers current Sun/Moon positions, significant transit aspects to natal planets, provides practical guidance for emotions/relationships/work/growth, includes current date and active transit count, allows regeneration for fresh perspectives
+- Functionality: Generate personalized daily, weekly, and monthly horoscope readings based on current planetary transits to the user's natal chart with AI-powered interpretation, plus general horoscopes by zodiac sign
+- Purpose: Provides both personalized guidance by analyzing how current transiting planets interact with natal positions, and general forecasts for all zodiac signs
+- Trigger: User navigates to "Personal" tab for personalized horoscopes or "Zodiac" tab for general zodiac forecasts
+- Progression: Horoscope tab → Select timeframe (daily/weekly/monthly) → For personal: Calculate current transits → Generate button → AI analyzes transit aspects → Display reading | For zodiac: Select sign → Generate button → AI creates general forecast → Display reading
+- Success criteria: Personal horoscopes consider current Sun/Moon positions and significant transit aspects to natal planets; Zodiac horoscopes provide general guidance for all 12 signs with sign selector; Both include practical guidance for emotions/relationships/work/growth; Display includes current date and timeframe badge; Allows regeneration for fresh perspectives; Separate tabs for personalized vs general horoscopes
 
 **Chart Library Management**
 - Functionality: Save generated charts with client names and notes, view all saved charts, search and filter charts
