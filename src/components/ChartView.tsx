@@ -36,7 +36,7 @@ export function ChartView({ chart, onBack, onEdit }: ChartViewProps) {
 
   const handleExport = async () => {
     const svg = document.querySelector('svg')
-    await exportChartToPDF(chart, svg)
+    await exportChartToPDF(chart, svg, interpretation)
   }
 
   const handlePrint = () => {
@@ -136,7 +136,7 @@ Format the response in clear sections with headers. Be insightful, professional,
           </Button>
           <Button onClick={handleExport} className="gap-2">
             <DownloadSimple size={18} weight="bold" />
-            Export PDF
+            {interpretation ? 'Export PDF with Interpretation' : 'Export PDF'}
           </Button>
         </div>
       </div>

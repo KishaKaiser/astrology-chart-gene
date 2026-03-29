@@ -2,7 +2,7 @@ import { ChartData } from '@/lib/astrology-types'
 import jsPDF from 'jspdf'
 import { toast } from 'sonner'
 
-export async function exportChartToPDF(chart: ChartData, chartSvgElement: SVGSVGElement | null) {
+export async function exportChartToPDF(chart: ChartData, chartSvgElement: SVGSVGElement | null, interpretation?: string) {
   try {
     const pdf = new jsPDF('p', 'mm', 'a4')
     const pageWidth = pdf.internal.pageSize.getWidth()
@@ -202,6 +202,51 @@ export async function exportChartToPDF(chart: ChartData, chartSvgElement: SVGSVG
       })
     }
 
+    if (interpretation) {
+      pdf.addPage()
+      yPos = 20
+
+      pdf.setFontSize(16)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(120, 100, 220)
+      pdf.text('AI Chart Interpretation', 14, yPos)
+      yPos += 5
+      
+      pdf.setFontSize(9)
+      pdf.setFont('helvetica', 'italic')
+      pdf.setTextColor(100, 100, 100)
+      pdf.text('Professional astrological analysis powered by AI', 14, yPos)
+      yPos += 10
+
+      pdf.setFontSize(9)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setTextColor(0, 0, 0)
+      
+      const interpretationLines = pdf.splitTextToSize(interpretation, pageWidth - 28)
+      interpretationLines.forEach((line: string) => {
+        if (yPos > pageHeight - 20) {
+          pdf.addPage()
+          yPos = 20
+        }
+        
+        if (line.match(/^[0-9]+\./)) {
+          yPos += 3
+          pdf.setFont('helvetica', 'bold')
+          pdf.setTextColor(120, 100, 220)
+        } else if (line.match(/^[A-Z\s]+:$/)) {
+          yPos += 3
+          pdf.setFont('helvetica', 'bold')
+          pdf.setTextColor(60, 50, 110)
+        } else {
+          pdf.setFont('helvetica', 'normal')
+          pdf.setTextColor(0, 0, 0)
+        }
+        
+        pdf.text(line, 14, yPos)
+        yPos += 5
+      })
+    }
+
     pdf.setFontSize(8)
     pdf.setFont('helvetica', 'italic')
     pdf.setTextColor(150, 150, 150)
@@ -217,7 +262,10 @@ export async function exportChartToPDF(chart: ChartData, chartSvgElement: SVGSVG
     }
 
     pdf.save(`${chart.name.replace(/[^a-z0-9]/gi, '_')}_chart.pdf`)
-    toast.success('PDF exported successfully!')
+    const message = interpretation 
+      ? 'PDF exported successfully with chart interpretation!' 
+      : 'PDF exported successfully!'
+    toast.success(message)
   } catch (error) {
     console.error('PDF export error:', error)
     toast.error('Failed to export PDF. Please try again.')
