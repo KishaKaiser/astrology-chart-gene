@@ -372,7 +372,7 @@ Write each section with depth and nuance. Be specific about how energies manifes
           </TabsTrigger>
           <TabsTrigger value="horoscope">
             <Sparkle className="mr-1.5" size={16} weight="fill" />
-            Daily Horoscope
+            Horoscopes
           </TabsTrigger>
           <TabsTrigger value="transits" disabled={!showTransits}>Current Transits</TabsTrigger>
           <TabsTrigger value="transit-aspects" disabled={!showTransits}>Transit Aspects</TabsTrigger>
