@@ -4,6 +4,7 @@ import { calculateCurrentTransits } from '@/lib/astrology-calc'
 import { ZODIAC_INFO, PLANETARY_DIGNITIES, getPlanetaryDignity, getDignityDescription, getDignityColor, HOUSE_INFO, getHouseCategoryDescription } from '@/lib/zodiac-info'
 import { detectAspectPatterns } from '@/lib/aspect-patterns'
 import { ChartWheel } from './ChartWheel'
+import { AspectPatternDiagram } from './AspectPatternDiagram'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
@@ -662,46 +663,52 @@ Write each section with depth and nuance. Be specific about how energies manifes
                   <div className="space-y-6">
                     {patterns.map((pattern, index) => (
                       <div key={index} className="border border-border rounded-lg p-5 space-y-4" style={{ borderLeftWidth: '4px', borderLeftColor: pattern.color }}>
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <h3 className="text-xl font-semibold" style={{ color: pattern.color }}>
-                                {pattern.type}
-                              </h3>
-                              {pattern.element && (
-                                <Badge variant="outline" style={{ borderColor: pattern.color, color: pattern.color }}>
-                                  {pattern.element}
-                                </Badge>
-                              )}
-                              {pattern.modality && (
-                                <Badge variant="outline" style={{ borderColor: pattern.color, color: pattern.color }}>
-                                  {pattern.modality}
-                                </Badge>
-                              )}
-                            </div>
-                            <p className="text-sm text-muted-foreground mb-3">
-                              {pattern.description}
-                            </p>
+                        <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-6">
+                          <div className="flex items-start justify-center">
+                            <AspectPatternDiagram pattern={pattern} />
                           </div>
-                        </div>
+                          
+                          <div className="space-y-4">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <h3 className="text-xl font-semibold" style={{ color: pattern.color }}>
+                                  {pattern.type}
+                                </h3>
+                                {pattern.element && (
+                                  <Badge variant="outline" style={{ borderColor: pattern.color, color: pattern.color }}>
+                                    {pattern.element}
+                                  </Badge>
+                                )}
+                                {pattern.modality && (
+                                  <Badge variant="outline" style={{ borderColor: pattern.color, color: pattern.color }}>
+                                    {pattern.modality}
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-muted-foreground mb-3">
+                                {pattern.description}
+                              </p>
+                            </div>
 
-                        <div className="flex flex-wrap gap-2">
-                          <span className="text-xs font-semibold text-muted-foreground mr-2">PLANETS INVOLVED:</span>
-                          {pattern.planets.map((planetName) => (
-                            <Badge key={planetName} variant="secondary" className="text-sm">
-                              <span className="mr-1.5">{PLANET_SYMBOLS[planetName]}</span>
-                              {planetName}
-                            </Badge>
-                          ))}
-                        </div>
+                            <div className="flex flex-wrap gap-2">
+                              <span className="text-xs font-semibold text-muted-foreground mr-2">PLANETS INVOLVED:</span>
+                              {pattern.planets.map((planetName) => (
+                                <Badge key={planetName} variant="secondary" className="text-sm">
+                                  <span className="mr-1.5">{PLANET_SYMBOLS[planetName]}</span>
+                                  {planetName}
+                                </Badge>
+                              ))}
+                            </div>
 
-                        <Separator />
+                            <Separator />
 
-                        <div className="bg-muted/30 rounded-md p-4">
-                          <p className="text-xs font-semibold text-muted-foreground mb-2">INTERPRETATION:</p>
-                          <p className="text-sm text-foreground leading-relaxed">
-                            {pattern.interpretation}
-                          </p>
+                            <div className="bg-muted/30 rounded-md p-4">
+                              <p className="text-xs font-semibold text-muted-foreground mb-2">INTERPRETATION:</p>
+                              <p className="text-sm text-foreground leading-relaxed">
+                                {pattern.interpretation}
+                              </p>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     ))}
