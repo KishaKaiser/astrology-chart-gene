@@ -58,19 +58,19 @@ function App() {
       <Toaster position="top-center" />
       
       <header className="border-b border-border/50 backdrop-blur-sm bg-background/80 sticky top-0 z-50">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
+        <div className="container mx-auto px-8 py-6">
+          <div className="flex items-center justify-between gap-8">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-3"
+              className="flex items-center gap-4"
             >
               <div className="relative">
                 <img src={psychicLogo} alt="Psychic Link Charts Logo" className="w-10 h-10 rounded-lg object-cover ring-2 ring-accent/20 shadow-md shadow-accent/10" />
               </div>
-              <div>
-                <h1 className="text-3xl font-semibold">Psychic Link Charts</h1>
-                <p className="text-sm text-muted-foreground">Professional Astrology Software</p>
+              <div className="flex flex-col gap-0.5">
+                <h1 className="text-3xl font-semibold leading-none">Psychic Link Charts</h1>
+                <p className="text-sm text-muted-foreground leading-none">Professional Astrology Software</p>
               </div>
             </motion.div>
             
