@@ -1,15 +1,17 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Plus, Sun, Moon } from '@phosphor-icons/react'
+import { Plus, Sun, Moon, Clock, Info } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { BirthTimeRectification } from '@/components/BirthTimeRectification'
 import { LocationSearch } from '@/components/LocationSearch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { findTimezoneByCoordinates, formatTimezoneDisplay, formatDSTDisplay } from '@/lib/timezone-db'
+import { calculateDST, formatDSTInfo, formatDSTDetails } from '@/lib/dst-calculator'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 interface ChartFormProps {
   onSubmit: (data: ChartFormData) => void
@@ -38,6 +40,20 @@ export function ChartForm({ onSubmit }: ChartFormProps) {
     timezone: '+00:00',
     notes: ''
   })
+  const [dstInfo, setDstInfo] = useState<ReturnType<typeof calculateDST> | null>(null)
+
+  useEffect(() => {
+    if (formData.date && formData.time && formData.timezone) {
+      const [year, month, day] = formData.date.split('-').map(Number)
+      const [hours, minutes] = formData.time.split(':').map(Number)
+      const birthDate = new Date(year, month - 1, day, hours, minutes, 0)
+      
+      const result = calculateDST(birthDate, formData.timezone)
+      setDstInfo(result)
+    } else {
+      setDstInfo(null)
+    }
+  }, [formData.date, formData.time, formData.timezone])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -197,6 +213,31 @@ export function ChartForm({ onSubmit }: ChartFormProps) {
                           </p>
                         </div>
                       </div>
+                      
+                      {dstInfo && (
+                        <div className="pt-3 border-t border-accent/20">
+                          <Alert className="bg-background/50 border-accent/30">
+                            <Clock size={16} className="text-accent" weight="bold" />
+                            <AlertDescription className="space-y-2">
+                              <div className="flex items-start gap-2">
+                                <Info size={14} className="text-accent mt-0.5 flex-shrink-0" weight="bold" />
+                                <div>
+                                  <p className="text-xs font-semibold text-foreground mb-1">
+                                    {formatDSTInfo(dstInfo)}
+                                  </p>
+                                  <div className="space-y-0.5">
+                                    {formatDSTDetails(dstInfo).map((detail, idx) => (
+                                      <p key={idx} className="text-xs text-muted-foreground">
+                                        {detail}
+                                      </p>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            </AlertDescription>
+                          </Alert>
+                        </div>
+                      )}
                     </div>
                   )}
                   
