@@ -10,8 +10,9 @@ import { Separator } from '@/components/ui/separator'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
-import { DownloadSimple, Printer, PencilSimple, ArrowLeft } from '@phosphor-icons/react'
+import { DownloadSimple, Printer, PencilSimple, ArrowLeft, Sparkle } from '@phosphor-icons/react'
 import { exportChartToPDF } from '@/lib/pdf-export'
+import { toast } from 'sonner'
 
 interface ChartViewProps {
   chart: ChartData
@@ -23,6 +24,8 @@ export function ChartView({ chart, onBack, onEdit }: ChartViewProps) {
   const svgRef = useRef<SVGSVGElement>(null)
   const [showTransits, setShowTransits] = useState(false)
   const [transits, setTransits] = useState<TransitData | null>(null)
+  const [interpretation, setInterpretation] = useState<string>('')
+  const [isGeneratingInterpretation, setIsGeneratingInterpretation] = useState(false)
 
   useEffect(() => {
     if (showTransits) {
@@ -38,6 +41,73 @@ export function ChartView({ chart, onBack, onEdit }: ChartViewProps) {
 
   const handlePrint = () => {
     window.print()
+  }
+
+  const generateInterpretation = async () => {
+    setIsGeneratingInterpretation(true)
+    try {
+      const chartSummary = {
+        name: chart.name,
+        sunSign: chart.planets.find(p => p.name === 'Sun')?.sign,
+        moonSign: chart.planets.find(p => p.name === 'Moon')?.sign,
+        risingSign: chart.planets.find(p => p.name === 'Sun')?.sign,
+        ascendant: chart.ascendant,
+        planets: chart.planets.map(p => ({
+          name: p.name,
+          sign: p.sign,
+          house: p.house,
+          degree: p.degree
+        })),
+        majorAspects: chart.aspects.slice(0, 10).map(a => ({
+          planet1: a.planet1,
+          planet2: a.planet2,
+          type: a.type,
+          orb: a.orb
+        }))
+      }
+
+      const planetList = chartSummary.planets.map(p => 
+        `${p.name} in ${p.sign} (House ${p.house}, ${p.degree.toFixed(2)}°)`
+      ).join('\n')
+
+      const aspectList = chartSummary.majorAspects.map(a => 
+        `${a.planet1} ${a.type} ${a.planet2} (orb: ${a.orb.toFixed(2)}°)`
+      ).join('\n')
+
+      const promptText = `You are a professional astrologer providing detailed chart interpretations.
+
+Generate a comprehensive astrological interpretation for the following natal chart:
+
+Name: ${chartSummary.name}
+Sun Sign: ${chartSummary.sunSign}
+Moon Sign: ${chartSummary.moonSign}
+Ascendant: ${chartSummary.ascendant.toFixed(2)}°
+
+Planetary Positions:
+${planetList}
+
+Major Aspects:
+${aspectList}
+
+Provide an interpretation covering:
+1. Overall Chart Pattern & Energy
+2. Sun, Moon, and Rising Sign synthesis
+3. Key planetary placements and their meanings
+4. Significant aspects and their influence
+5. Life themes and potential strengths
+6. Areas for growth and awareness
+
+Format the response in clear sections with headers. Be insightful, professional, and constructive. Focus on psychological and developmental themes rather than predictions.`
+
+      const result = await window.spark.llm(promptText, 'gpt-4o')
+      setInterpretation(result)
+      toast.success('Interpretation generated successfully!')
+    } catch (error) {
+      toast.error('Failed to generate interpretation')
+      console.error('Interpretation error:', error)
+    } finally {
+      setIsGeneratingInterpretation(false)
+    }
   }
 
   return (
@@ -172,10 +242,14 @@ export function ChartView({ chart, onBack, onEdit }: ChartViewProps) {
       </div>
 
       <Tabs defaultValue="planets" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="planets">Planetary Positions</TabsTrigger>
           <TabsTrigger value="houses">House Cusps</TabsTrigger>
           <TabsTrigger value="aspects">Major Aspects</TabsTrigger>
+          <TabsTrigger value="interpretation">
+            <Sparkle className="mr-1.5" size={16} weight="fill" />
+            Interpretation
+          </TabsTrigger>
           <TabsTrigger value="transits" disabled={!showTransits}>Current Transits</TabsTrigger>
           <TabsTrigger value="transit-aspects" disabled={!showTransits}>Transit Aspects</TabsTrigger>
         </TabsList>
@@ -291,6 +365,60 @@ export function ChartView({ chart, onBack, onEdit }: ChartViewProps) {
                     })}
                   </TableBody>
                 </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="interpretation">
+          <Card>
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkle size={24} weight="fill" className="text-accent" />
+                    AI Chart Interpretation
+                  </CardTitle>
+                  <CardDescription>
+                    Comprehensive astrological analysis powered by AI
+                  </CardDescription>
+                </div>
+                <Button 
+                  onClick={generateInterpretation}
+                  disabled={isGeneratingInterpretation}
+                  className="gap-2"
+                >
+                  {isGeneratingInterpretation ? (
+                    <>
+                      <Sparkle size={18} weight="fill" className="animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkle size={18} weight="fill" />
+                      {interpretation ? 'Regenerate' : 'Generate'} Interpretation
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {interpretation ? (
+                <div className="prose prose-invert max-w-none">
+                  <div className="space-y-4 text-sm leading-relaxed whitespace-pre-wrap">
+                    {interpretation}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Sparkle size={48} weight="fill" className="text-accent/30 mx-auto mb-4" />
+                  <p className="text-muted-foreground mb-4">
+                    No interpretation generated yet
+                  </p>
+                  <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                    Click the button above to generate a comprehensive AI-powered interpretation of this natal chart, including planetary positions, aspects, and life themes.
+                  </p>
+                </div>
               )}
             </CardContent>
           </Card>
