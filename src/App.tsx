@@ -17,6 +17,8 @@ function App() {
 
   const handleGenerateChart = async (formData: ChartFormData) => {
     try {
+      toast.loading('Generating chart...', { id: 'chart-generation' })
+      
       const newChart = await generateChartData(
         formData.name,
         formData.date,
@@ -28,12 +30,14 @@ function App() {
         formData.notes
       )
 
+      toast.success('Chart generated successfully!', { id: 'chart-generation' })
       setCharts((currentCharts) => [...(currentCharts || []), newChart])
       setSelectedChart(newChart)
       setView('chart')
     } catch (error) {
       console.error('Error generating chart:', error)
-      toast.error('Failed to generate chart. Please try again.')
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate chart. Please try again.'
+      toast.error(errorMessage, { id: 'chart-generation' })
     }
   }
 

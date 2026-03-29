@@ -4,25 +4,61 @@ let swissEph: any = null
 let SwissEphemeris: any = null
 let Planet: any = null
 let HouseSystem: any = null
+let isInitializing = false
+let initPromise: Promise<void> | null = null
 
 async function loadSwissEph() {
-  if (!SwissEphemeris) {
+  if (SwissEphemeris && Planet && HouseSystem) {
+    return
+  }
+
+  try {
     const swissephBrowser = await import('@swisseph/browser')
-    const swissephCore = await import('@swisseph/core')
     SwissEphemeris = swissephBrowser.SwissEphemeris
+    
+    const swissephCore = await import('@swisseph/core')
     Planet = swissephCore.Planet
     HouseSystem = swissephCore.HouseSystem
+  } catch (error) {
+    console.error('Failed to load Swiss Ephemeris modules:', error)
+    throw new Error('Swiss Ephemeris library failed to load. Please refresh and try again.')
   }
 }
 
 async function getSwissEph(): Promise<any> {
-  await loadSwissEph()
-  
   if (swissEph) return swissEph
   
-  swissEph = new SwissEphemeris()
-  await swissEph.init()
+  if (isInitializing && initPromise) {
+    await initPromise
+    return swissEph
+  }
   
+  isInitializing = true
+  initPromise = (async () => {
+    try {
+      await loadSwissEph()
+      
+      if (!SwissEphemeris) {
+        throw new Error('SwissEphemeris constructor not available')
+      }
+      
+      swissEph = new SwissEphemeris()
+      
+      if (typeof swissEph.init === 'function') {
+        await swissEph.init()
+      }
+    } catch (error) {
+      console.error('Failed to initialize Swiss Ephemeris:', error)
+      swissEph = null
+      isInitializing = false
+      initPromise = null
+      throw new Error('Failed to initialize astrology calculation engine. Please refresh and try again.')
+    } finally {
+      isInitializing = false
+    }
+  })()
+  
+  await initPromise
   return swissEph
 }
 
