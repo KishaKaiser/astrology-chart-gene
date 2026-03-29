@@ -1,4 +1,5 @@
 import { TIMEZONE_DATABASE } from './timezone-db'
+import { getHistoricalDSTRule, formatHistoricalDSTInfo, type DSTHistoricalRule } from './dst-historical-rules'
 
 export interface DSTResult {
   isDST: boolean
@@ -9,6 +10,8 @@ export interface DSTResult {
   observesDST: boolean
   dstStartDate?: Date
   dstEndDate?: Date
+  historicalRule?: string
+  ruleYear?: number
 }
 
 function getNthWeekdayOfMonth(year: number, month: number, weekday: number, n: number): Date {
@@ -154,13 +157,19 @@ export function calculateDST(
   const dstOffset = tzData.dstOffset
   const dstRules = tzData.dstRules
   
+  const historicalRule = getHistoricalDSTRule(timezone, date)
+  const historicalRuleDescription = historicalRule ? historicalRule.description : undefined
+  const ruleYear = date.getFullYear()
+  
   if (!observesDST) {
     return {
       isDST: false,
       standardOffset,
       effectiveOffset: standardOffset,
       observesDST: false,
-      dstRules
+      dstRules,
+      historicalRule: historicalRuleDescription,
+      ruleYear
     }
   }
   
@@ -173,7 +182,9 @@ export function calculateDST(
       dstOffset,
       effectiveOffset: standardOffset,
       observesDST: true,
-      dstRules
+      dstRules,
+      historicalRule: historicalRuleDescription,
+      ruleYear
     }
   }
   
@@ -194,7 +205,9 @@ export function calculateDST(
     observesDST: true,
     dstRules,
     dstStartDate: start,
-    dstEndDate: end
+    dstEndDate: end,
+    historicalRule: historicalRuleDescription,
+    ruleYear
   }
 }
 
@@ -234,6 +247,9 @@ export function formatDSTDetails(dstInfo: DSTResult): string[] {
   if (!dstInfo.observesDST) {
     details.push('This location does not observe Daylight Saving Time')
     details.push(`Standard offset: UTC${dstInfo.standardOffset}`)
+    if (dstInfo.historicalRule) {
+      details.push(`Historical context (${dstInfo.ruleYear}): ${dstInfo.historicalRule}`)
+    }
     return details
   }
   
@@ -262,6 +278,10 @@ export function formatDSTDetails(dstInfo: DSTResult): string[] {
       year: 'numeric'
     })
     details.push(`DST period: ${startStr} to ${endStr}`)
+  }
+  
+  if (dstInfo.historicalRule) {
+    details.push(`Historical rule (${dstInfo.ruleYear}): ${dstInfo.historicalRule}`)
   }
   
   return details
