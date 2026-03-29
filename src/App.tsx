@@ -8,7 +8,7 @@ import { ChartView } from '@/components/ChartView'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
-import psychicLogo from '@/assets/images/psychic-logo.png'
+import { Sparkle } from '@phosphor-icons/react'
 
 function App() {
   const [charts, setCharts] = useKV<ChartData[]>('astrology-charts', [])
@@ -85,7 +85,9 @@ function App() {
               className="flex items-center gap-4"
             >
               <div className="relative">
-                <img src={psychicLogo} alt="Psychic Link Charts Logo" className="w-10 h-10 rounded-lg object-cover ring-2 ring-accent/20 shadow-md shadow-accent/10" />
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-accent to-accent/70 flex items-center justify-center ring-2 ring-accent/20 shadow-md shadow-accent/10">
+                  <Sparkle weight="fill" className="text-accent-foreground" size={24} />
+                </div>
               </div>
               <div className="flex flex-col gap-0.5">
                 <h1 className="text-5xl font-semibold leading-none" style={{ fontFamily: 'Corinthia, cursive' }}>Psychic Link Charts</h1>
