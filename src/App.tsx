@@ -7,7 +7,7 @@ import { ChartLibrary } from '@/components/ChartLibrary'
 import { ChartView } from '@/components/ChartView'
 import { Toaster } from '@/components/ui/sonner'
 import { motion } from 'framer-motion'
-import logoImage from '@/assets/images/psychic-link-logo.png'
+import logoImage from './assets/images/psychic-link-logo.png'
 
 function App() {
   const [charts, setCharts] = useKV<ChartData[]>('astrology-charts', [])
