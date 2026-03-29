@@ -7,7 +7,7 @@ import { ChartLibrary } from '@/components/ChartLibrary'
 import { ChartView } from '@/components/ChartView'
 import { Toaster } from '@/components/ui/sonner'
 import { motion } from 'framer-motion'
-import psychicLogo from '@/assets/images/psychic-logo.png'
+import psychicLogo from './assets/images/psychic-logo.png'
 
 function App() {
   const [charts, setCharts] = useKV<ChartData[]>('astrology-charts', [])
