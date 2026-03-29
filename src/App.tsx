@@ -7,7 +7,7 @@ import { ChartLibrary } from '@/components/ChartLibrary'
 import { ChartView } from '@/components/ChartView'
 import { Toaster } from '@/components/ui/sonner'
 import { motion } from 'framer-motion'
-import { Star } from '@phosphor-icons/react'
+import psychicLogo from '@/assets/images/psychic-logo.png'
 
 function App() {
   const [charts, setCharts] = useKV<ChartData[]>('astrology-charts', [])
@@ -66,7 +66,7 @@ function App() {
               className="flex items-center gap-3"
             >
               <div className="relative">
-                <Star className="w-10 h-10 text-accent star-pulse" weight="fill" />
+                <img src={psychicLogo} alt="Psychic Link Charts Logo" className="w-10 h-10 rounded-full object-cover star-pulse" />
               </div>
               <div>
                 <h1 className="text-3xl font-semibold">Psychic Link Charts</h1>
