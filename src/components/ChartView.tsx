@@ -383,10 +383,10 @@ Format the response in clear sections with headers. Be insightful, professional,
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <Sparkle size={24} weight="fill" className="text-accent" />
-                    AI Chart Interpretation
+                    Chart Interpretation
                   </CardTitle>
                   <CardDescription>
-                    Comprehensive astrological analysis powered by AI
+                    Comprehensive astrological analysis by The Psychic Link
                   </CardDescription>
                 </div>
                 <Button 
