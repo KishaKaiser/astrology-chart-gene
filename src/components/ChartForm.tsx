@@ -4,12 +4,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Plus } from '@phosphor-icons/react'
+import { Plus, Sun, Moon } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { BirthTimeRectification } from '@/components/BirthTimeRectification'
 import { LocationSearch } from '@/components/LocationSearch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { findTimezoneByCoordinates, formatTimezoneDisplay } from '@/lib/timezone-db'
+import { findTimezoneByCoordinates, formatTimezoneDisplay, formatDSTDisplay } from '@/lib/timezone-db'
 
 interface ChartFormProps {
   onSubmit: (data: ChartFormData) => void
@@ -174,14 +174,29 @@ export function ChartForm({ onSubmit }: ChartFormProps) {
                   />
                   
                   {formData.location && formData.latitude !== 0 && (
-                    <div className="p-3 bg-accent/10 border border-accent/20 rounded-md">
-                      <p className="text-sm text-foreground font-medium mb-1">{formData.location}</p>
-                      <p className="text-xs text-muted-foreground font-mono mb-1">
-                        {formData.latitude.toFixed(4)}°, {formData.longitude.toFixed(4)}°
-                      </p>
-                      <p className="text-xs text-accent font-medium">
-                        {formatTimezoneDisplay(formData.timezone)}
-                      </p>
+                    <div className="p-4 bg-accent/10 border border-accent/20 rounded-md space-y-3">
+                      <div>
+                        <p className="text-sm text-foreground font-medium mb-1">{formData.location}</p>
+                        <p className="text-xs text-muted-foreground font-mono">
+                          {formData.latitude.toFixed(4)}°, {formData.longitude.toFixed(4)}°
+                        </p>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Sun size={16} className="text-accent" weight="fill" />
+                          <p className="text-xs text-accent font-medium">
+                            {formatTimezoneDisplay(formData.timezone)}
+                          </p>
+                        </div>
+                        
+                        <div className="flex items-start gap-2 pl-6">
+                          <Moon size={14} className="text-muted-foreground mt-0.5" weight="fill" />
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            {formatDSTDisplay(formData.timezone)}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   )}
                   

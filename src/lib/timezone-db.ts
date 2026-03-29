@@ -2,6 +2,9 @@ interface TimezoneData {
   name: string
   offset: string
   countries: string[]
+  dstObserved?: boolean
+  dstOffset?: string
+  dstRules?: string
   bounds?: {
     minLat: number
     maxLat: number
@@ -14,84 +17,122 @@ export const TIMEZONE_DATABASE: Record<string, TimezoneData> = {
   'America/New_York': {
     name: 'Eastern Time',
     offset: '-05:00',
+    dstObserved: true,
+    dstOffset: '-04:00',
+    dstRules: 'Second Sunday in March to First Sunday in November',
     countries: ['US', 'CA'],
     bounds: { minLat: 24.5, maxLat: 47.5, minLon: -85, maxLon: -67 }
   },
   'America/Chicago': {
     name: 'Central Time',
     offset: '-06:00',
+    dstObserved: true,
+    dstOffset: '-05:00',
+    dstRules: 'Second Sunday in March to First Sunday in November',
     countries: ['US', 'CA', 'MX'],
     bounds: { minLat: 25, maxLat: 49, minLon: -106, maxLon: -85 }
   },
   'America/Denver': {
     name: 'Mountain Time',
     offset: '-07:00',
+    dstObserved: true,
+    dstOffset: '-06:00',
+    dstRules: 'Second Sunday in March to First Sunday in November',
     countries: ['US', 'CA', 'MX'],
     bounds: { minLat: 31, maxLat: 49, minLon: -116, maxLon: -102 }
   },
   'America/Los_Angeles': {
     name: 'Pacific Time',
     offset: '-08:00',
+    dstObserved: true,
+    dstOffset: '-07:00',
+    dstRules: 'Second Sunday in March to First Sunday in November',
     countries: ['US', 'CA'],
     bounds: { minLat: 32, maxLat: 49, minLon: -125, maxLon: -114 }
   },
   'America/Anchorage': {
     name: 'Alaska Time',
     offset: '-09:00',
+    dstObserved: true,
+    dstOffset: '-08:00',
+    dstRules: 'Second Sunday in March to First Sunday in November',
     countries: ['US'],
     bounds: { minLat: 51, maxLat: 71, minLon: -180, maxLon: -130 }
   },
   'Pacific/Honolulu': {
     name: 'Hawaii-Aleutian Time',
     offset: '-10:00',
+    dstObserved: false,
     countries: ['US'],
     bounds: { minLat: 18, maxLat: 23, minLon: -161, maxLon: -154 }
   },
   'America/Phoenix': {
     name: 'Mountain Time (no DST)',
     offset: '-07:00',
+    dstObserved: false,
     countries: ['US'],
     bounds: { minLat: 31, maxLat: 37, minLon: -115, maxLon: -109 }
   },
   'Europe/London': {
     name: 'Greenwich Mean Time',
     offset: '+00:00',
+    dstObserved: true,
+    dstOffset: '+01:00',
+    dstRules: 'Last Sunday in March to Last Sunday in October',
     countries: ['GB', 'IE'],
     bounds: { minLat: 49.5, maxLat: 61, minLon: -11, maxLon: 2 }
   },
   'Europe/Paris': {
     name: 'Central European Time',
     offset: '+01:00',
+    dstObserved: true,
+    dstOffset: '+02:00',
+    dstRules: 'Last Sunday in March to Last Sunday in October',
     countries: ['FR', 'ES', 'IT', 'DE', 'NL', 'BE', 'CH', 'AT', 'NO', 'SE', 'DK'],
     bounds: { minLat: 36, maxLat: 71, minLon: -5, maxLon: 24 }
   },
   'Europe/Berlin': {
     name: 'Central European Time',
     offset: '+01:00',
+    dstObserved: true,
+    dstOffset: '+02:00',
+    dstRules: 'Last Sunday in March to Last Sunday in October',
     countries: ['DE', 'PL', 'CZ', 'SK'],
     bounds: { minLat: 47, maxLat: 55, minLon: 6, maxLon: 24 }
   },
   'Europe/Rome': {
     name: 'Central European Time',
     offset: '+01:00',
+    dstObserved: true,
+    dstOffset: '+02:00',
+    dstRules: 'Last Sunday in March to Last Sunday in October',
     countries: ['IT'],
     bounds: { minLat: 36, maxLat: 47, minLon: 6, maxLon: 19 }
   },
   'Europe/Madrid': {
     name: 'Central European Time',
     offset: '+01:00',
+    dstObserved: true,
+    dstOffset: '+02:00',
+    dstRules: 'Last Sunday in March to Last Sunday in October',
     countries: ['ES'],
     bounds: { minLat: 36, maxLat: 44, minLon: -10, maxLon: 5 }
   },
   'Europe/Athens': {
     name: 'Eastern European Time',
     offset: '+02:00',
+    dstObserved: true,
+    dstOffset: '+03:00',
+    dstRules: 'Last Sunday in March to Last Sunday in October',
     countries: ['GR', 'RO', 'BG'],
     bounds: { minLat: 34, maxLat: 48, minLon: 19, maxLon: 30 }
   },
   'Europe/Helsinki': {
     name: 'Eastern European Time',
     offset: '+02:00',
+    dstObserved: true,
+    dstOffset: '+03:00',
+    dstRules: 'Last Sunday in March to Last Sunday in October',
     countries: ['FI', 'EE', 'LV', 'LT'],
     bounds: { minLat: 54, maxLat: 70, minLon: 20, maxLon: 32 }
   },
@@ -164,36 +205,50 @@ export const TIMEZONE_DATABASE: Record<string, TimezoneData> = {
   'Australia/Sydney': {
     name: 'Australian Eastern Time',
     offset: '+10:00',
+    dstObserved: true,
+    dstOffset: '+11:00',
+    dstRules: 'First Sunday in October to First Sunday in April',
     countries: ['AU'],
     bounds: { minLat: -44, maxLat: -28, minLon: 141, maxLon: 154 }
   },
   'Australia/Melbourne': {
     name: 'Australian Eastern Time',
     offset: '+10:00',
+    dstObserved: true,
+    dstOffset: '+11:00',
+    dstRules: 'First Sunday in October to First Sunday in April',
     countries: ['AU'],
     bounds: { minLat: -39, maxLat: -34, minLon: 140, maxLon: 150 }
   },
   'Australia/Brisbane': {
     name: 'Australian Eastern Time (no DST)',
     offset: '+10:00',
+    dstObserved: false,
     countries: ['AU'],
     bounds: { minLat: -29, maxLat: -10, minLon: 138, maxLon: 154 }
   },
   'Australia/Perth': {
     name: 'Australian Western Time',
     offset: '+08:00',
+    dstObserved: false,
     countries: ['AU'],
     bounds: { minLat: -35, maxLat: -13, minLon: 113, maxLon: 129 }
   },
   'Australia/Adelaide': {
     name: 'Australian Central Time',
     offset: '+09:30',
+    dstObserved: true,
+    dstOffset: '+10:30',
+    dstRules: 'First Sunday in October to First Sunday in April',
     countries: ['AU'],
     bounds: { minLat: -38, maxLat: -26, minLon: 129, maxLon: 141 }
   },
   'Pacific/Auckland': {
     name: 'New Zealand Time',
     offset: '+12:00',
+    dstObserved: true,
+    dstOffset: '+13:00',
+    dstRules: 'Last Sunday in September to First Sunday in April',
     countries: ['NZ'],
     bounds: { minLat: -47, maxLat: -34, minLon: 166, maxLon: 179 }
   },
@@ -447,6 +502,40 @@ export function formatTimezoneDisplay(timezone: string): string {
   const offset = getTimezoneOffset(timezone)
   const name = getTimezoneName(timezone)
   return `${name} (UTC${offset})`
+}
+
+export function getDSTInfo(timezone: string): {
+  observesDST: boolean
+  dstOffset?: string
+  dstRules?: string
+} | null {
+  const data = TIMEZONE_DATABASE[timezone]
+  if (!data) return null
+
+  return {
+    observesDST: data.dstObserved || false,
+    dstOffset: data.dstOffset,
+    dstRules: data.dstRules
+  }
+}
+
+export function formatDSTDisplay(timezone: string): string {
+  const dstInfo = getDSTInfo(timezone)
+  if (!dstInfo) return 'DST information unavailable'
+  
+  if (!dstInfo.observesDST) {
+    return 'Does not observe Daylight Saving Time'
+  }
+  
+  const parts = []
+  if (dstInfo.dstOffset) {
+    parts.push(`DST offset: UTC${dstInfo.dstOffset}`)
+  }
+  if (dstInfo.dstRules) {
+    parts.push(dstInfo.dstRules)
+  }
+  
+  return parts.length > 0 ? parts.join(' • ') : 'Observes Daylight Saving Time'
 }
 
 export function getAllTimezones(): Array<{ value: string; label: string; offset: string }> {
