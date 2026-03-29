@@ -24,7 +24,7 @@ export function ChartLibrary({ charts, onSelectChart, onDeleteChart }: ChartLibr
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold mb-2" style={{ fontFamily: 'IBM Plex Sans, sans-serif' }}>Chart Library</h2>
+        <h2 className="text-2xl font-semibold mb-2 text-white" style={{ fontFamily: 'IBM Plex Sans, sans-serif' }}>Chart Library</h2>
         <p className="text-muted-foreground">
           {charts.length} {charts.length === 1 ? 'chart' : 'charts'} saved
         </p>
