@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { ChartData, PLANET_SYMBOLS, ZODIAC_SYMBOLS, ZodiacSign } from '@/lib/astrology-types'
 import { calculateTransitsForDate } from '@/lib/astrology-calc'
+import { LifeEvent, detectRecurringPatterns, AstrologicalPattern } from '@/lib/pattern-detection'
+import { PatternVisualization } from '@/components/PatternVisualization'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,28 +12,10 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Trash, Sparkle, CalendarBlank } from '@phosphor-icons/react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Plus, Trash, Sparkle, CalendarBlank, Graph, TrendUp } from '@phosphor-icons/react'
 import { toast } from 'sonner'
-import { motion } from 'framer-motion'
-
-interface LifeEvent {
-  id: string
-  chartId: string
-  date: string
-  title: string
-  description: string
-  category: 'career' | 'relationship' | 'health' | 'spiritual' | 'family' | 'education' | 'travel' | 'other'
-  transitData?: {
-    planets: Array<{
-      name: string
-      sign: string
-      degree: number
-      house: number
-    }>
-    significantTransits: string[]
-  }
-  createdAt: number
-}
+import { motion, AnimatePresence } from 'framer-motion'
 
 const CATEGORY_COLORS = {
   career: 'oklch(0.70 0.20 150)',
@@ -63,6 +47,7 @@ export function LifeEventsTimeline({ chart }: LifeEventsTimelineProps) {
   const [events, setEvents] = useKV<LifeEvent[]>('life-events', [])
   const [isAddingEvent, setIsAddingEvent] = useState(false)
   const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false)
+  const [selectedPattern, setSelectedPattern] = useState<AstrologicalPattern | null>(null)
   const [newEvent, setNewEvent] = useState({
     date: '',
     title: '',
@@ -73,6 +58,8 @@ export function LifeEventsTimeline({ chart }: LifeEventsTimelineProps) {
   const chartEvents = (events || []).filter(e => e.chartId === chart.id).sort((a, b) => 
     new Date(b.date).getTime() - new Date(a.date).getTime()
   )
+
+  const patterns = detectRecurringPatterns(chartEvents, chart)
 
   const handleAddEvent = async () => {
     if (!newEvent.date || !newEvent.title) {
@@ -217,7 +204,7 @@ Write in a warm, insightful, and professional tone. Be specific about how the tr
               Life Events Timeline
             </CardTitle>
             <CardDescription>
-              Track significant life events with planetary transit analysis
+              Track significant life events and discover recurring astrological patterns
             </CardDescription>
           </div>
           <Dialog open={isAddingEvent} onOpenChange={setIsAddingEvent}>
@@ -308,8 +295,26 @@ Write in a warm, insightful, and professional tone. Be specific about how the tr
             </Button>
           </div>
         ) : (
-          <div className="relative">
-            <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-accent via-accent/50 to-transparent" />
+          <Tabs defaultValue="timeline" className="w-full">
+            <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6">
+              <TabsTrigger value="timeline" className="gap-2">
+                <CalendarBlank size={18} weight="bold" />
+                Timeline
+              </TabsTrigger>
+              <TabsTrigger value="patterns" className="gap-2">
+                <Graph size={18} weight="bold" />
+                Patterns
+                {patterns.length > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                    {patterns.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="timeline" className="mt-0">
+              <div className="relative">
+                <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-accent via-accent/50 to-transparent" />
             
             <div className="space-y-6">
               {chartEvents.map((event, index) => (
@@ -444,8 +449,148 @@ Write in a warm, insightful, and professional tone. Be specific about how the tr
               ))}
             </div>
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </TabsContent>
+
+        <TabsContent value="patterns" className="mt-0">
+          {patterns.length === 0 ? (
+            <div className="text-center py-12">
+              <Graph size={48} weight="thin" className="text-muted-foreground/30 mx-auto mb-4" />
+              <p className="text-muted-foreground mb-2">No recurring patterns detected yet</p>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                Add more life events to discover recurring astrological patterns and connections.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <PatternVisualization patterns={patterns} />
+
+              <div className="bg-muted/30 rounded-lg p-6 border border-border">
+                <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+                  <TrendUp size={24} weight="bold" className="text-accent" />
+                  Recurring Astrological Patterns
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  These patterns reveal cosmic themes that have repeatedly appeared during significant moments in your life.
+                </p>
+              </div>
+
+              {patterns
+                .sort((a, b) => {
+                  const sigOrder = { high: 0, medium: 1, low: 2 }
+                  return sigOrder[a.significance] - sigOrder[b.significance] || b.frequency - a.frequency
+                })
+                .map((pattern, index) => (
+                  <motion.div
+                    key={pattern.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <Card
+                      className="border-l-4 cursor-pointer hover:shadow-lg transition-shadow"
+                      style={{ borderLeftColor: pattern.color }}
+                      onClick={() => setSelectedPattern(pattern.id === selectedPattern?.id ? null : pattern)}
+                    >
+                      <CardHeader>
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2 flex-wrap">
+                              <CardTitle className="text-lg">{pattern.name}</CardTitle>
+                              <Badge
+                                variant={pattern.significance === 'high' ? 'default' : 'outline'}
+                                style={{
+                                  backgroundColor: pattern.significance === 'high' ? pattern.color : 'transparent',
+                                  borderColor: pattern.color,
+                                  color: pattern.significance === 'high' ? 'white' : pattern.color
+                                }}
+                              >
+                                {pattern.significance.toUpperCase()}
+                              </Badge>
+                              <Badge variant="secondary" className="gap-1">
+                                <span className="font-mono">{pattern.frequency}</span>
+                                occurrences
+                              </Badge>
+                            </div>
+                            <CardDescription className="leading-relaxed">
+                              {pattern.description}
+                            </CardDescription>
+                          </div>
+                          <div 
+                            className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold"
+                            style={{ 
+                              backgroundColor: `${pattern.color}20`,
+                              color: pattern.color,
+                              border: `2px solid ${pattern.color}`
+                            }}
+                          >
+                            {pattern.frequency}
+                          </div>
+                        </div>
+                      </CardHeader>
+                      
+                      <AnimatePresence>
+                        {selectedPattern?.id === pattern.id && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <CardContent className="border-t border-border pt-6">
+                              <h4 className="text-sm font-semibold mb-4">Events Connected by This Pattern:</h4>
+                              <div className="space-y-3">
+                                {pattern.occurrences.map((occurrence, idx) => {
+                                  const event = chartEvents.find(e => e.id === occurrence.eventId)
+                                  return (
+                                    <div
+                                      key={idx}
+                                      className="bg-background rounded-lg p-4 border-l-2"
+                                      style={{ borderLeftColor: event ? CATEGORY_COLORS[event.category] : pattern.color }}
+                                    >
+                                      <div className="flex items-start justify-between gap-4 mb-2">
+                                        <div className="flex-1">
+                                          <div className="font-semibold text-sm mb-1">{occurrence.eventTitle}</div>
+                                          <div className="text-xs text-muted-foreground font-mono mb-2">
+                                            {new Date(occurrence.eventDate).toLocaleDateString('en-US', {
+                                              year: 'numeric',
+                                              month: 'long',
+                                              day: 'numeric'
+                                            })}
+                                          </div>
+                                        </div>
+                                        {event && (
+                                          <Badge
+                                            variant="outline"
+                                            className="text-xs"
+                                            style={{
+                                              borderColor: CATEGORY_COLORS[event.category],
+                                              color: CATEGORY_COLORS[event.category]
+                                            }}
+                                          >
+                                            {CATEGORY_LABELS[event.category]}
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      <div className="text-xs bg-muted/50 rounded px-3 py-2 font-mono">
+                                        {occurrence.relevantData}
+                                      </div>
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            </CardContent>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </Card>
+                  </motion.div>
+                ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
+    )}
+  </CardContent>
+</Card>
   )
 }
