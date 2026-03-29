@@ -32,8 +32,20 @@ export default defineConfig({
   },
   build: {
     commonjsOptions: {
-      include: [/node_modules/],
-      transformMixedEsModules: true
+      include: [/node_modules/, /@swisseph/],
+      transformMixedEsModules: true,
+      defaultIsModuleExports: 'auto'
+    },
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'swisseph': ['@swisseph/browser', '@swisseph/core']
+        }
+      }
     }
+  },
+  define: {
+    'process.env': {},
+    'module': 'undefined'
   }
 });

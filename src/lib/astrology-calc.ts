@@ -1,4 +1,5 @@
 import { ChartData, Planet as PlanetInfo, House, Aspect, TransitData, TransitAspect, ZODIAC_SIGNS, ASPECT_TYPES } from './astrology-types'
+import { loadSwissEphemeris } from './swisseph-loader'
 
 let swissEph: any = null
 let SwissEphemeris: any = null
@@ -15,13 +16,12 @@ async function loadSwissEph() {
   }
 
   try {
-    console.log('Loading Swiss Ephemeris modules...')
-    const swissephBrowser = await import('@swisseph/browser')
-    SwissEphemeris = swissephBrowser.SwissEphemeris
+    console.log('Loading Swiss Ephemeris modules via loader...')
+    const modules = await loadSwissEphemeris()
     
-    const swissephCore = await import('@swisseph/core')
-    Planet = swissephCore.Planet
-    HouseSystem = swissephCore.HouseSystem
+    SwissEphemeris = modules.SwissEphemeris
+    Planet = modules.Planet
+    HouseSystem = modules.HouseSystem
     
     console.log('Modules loaded successfully:', {
       hasSwissEphemeris: !!SwissEphemeris,
@@ -30,7 +30,8 @@ async function loadSwissEph() {
     })
   } catch (error) {
     console.error('Failed to load Swiss Ephemeris modules:', error)
-    throw new Error('Swiss Ephemeris library modules failed to import. Please refresh and try again.')
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error'
+    throw new Error(`Swiss Ephemeris library failed to load: ${errorMsg}. Please refresh and try again.`)
   }
 }
 
