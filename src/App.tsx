@@ -5,15 +5,19 @@ import { generateChartData } from '@/lib/astrology-calc'
 import { ChartForm, ChartFormData } from '@/components/ChartForm'
 import { ChartLibrary } from '@/components/ChartLibrary'
 import { ChartView } from '@/components/ChartView'
+import { DailyHoroscope } from '@/components/DailyHoroscope'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 import { CrystalBallLogo } from '@/components/CrystalBallLogo'
+import { BookOpen, Sparkle } from '@phosphor-icons/react'
 
 function App() {
   const [charts, setCharts] = useKV<ChartData[]>('astrology-charts', [])
   const [selectedChart, setSelectedChart] = useState<ChartData | null>(null)
   const [view, setView] = useState<'library' | 'chart'>('library')
+  const [activeTab, setActiveTab] = useState<'charts' | 'horoscope'>('charts')
 
   const handleGenerateChart = async (formData: ChartFormData) => {
     try {
@@ -97,18 +101,48 @@ function App() {
               </div>
             </motion.div>
             
-            {view === 'library' && <ChartForm onSubmit={handleGenerateChart} />}
+            {view === 'library' && activeTab === 'charts' && <ChartForm onSubmit={handleGenerateChart} />}
           </div>
         </div>
       </header>
 
       <main className="container mx-auto px-6 py-12">
         {view === 'library' ? (
-          <ChartLibrary
-            charts={charts || []}
-            onSelectChart={handleSelectChart}
-            onDeleteChart={handleDeleteChart}
-          />
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'charts' | 'horoscope')} className="space-y-6">
+            <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
+              <TabsTrigger value="charts" className="gap-2">
+                <BookOpen weight="bold" />
+                Chart Library
+              </TabsTrigger>
+              <TabsTrigger value="horoscope" className="gap-2">
+                <Sparkle weight="fill" />
+                Horoscope
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="charts">
+              <ChartLibrary
+                charts={charts || []}
+                onSelectChart={handleSelectChart}
+                onDeleteChart={handleDeleteChart}
+              />
+            </TabsContent>
+
+            <TabsContent value="horoscope">
+              {charts && charts.length > 0 ? (
+                <DailyHoroscope chart={charts[0]} />
+              ) : (
+                <div className="text-center py-20">
+                  <p className="text-muted-foreground mb-4">
+                    You need to create a natal chart first to view horoscope forecasts.
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Switch to the Chart Library tab and generate your first chart.
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         ) : selectedChart ? (
           <ChartView
             chart={selectedChart}
