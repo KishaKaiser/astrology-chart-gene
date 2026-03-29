@@ -477,8 +477,8 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
       content: (
         <div className="space-y-4">
           <div className="p-4 bg-muted/30 rounded-lg space-y-3">
-            <p className="text-sm font-medium">Required Browser Features:</p>
-            <ul className="text-sm space-y-2 ml-4 list-disc text-muted-foreground">
+            <p className="text-sm font-medium text-white">Required Browser Features:</p>
+            <ul className="text-sm space-y-2 ml-4 list-disc text-white">
               <li><strong>WebAssembly</strong> - Core calculation engine</li>
               <li><strong>ES6+ JavaScript</strong> - Modern syntax support</li>
               <li><strong>Async/Await</strong> - Asynchronous operations</li>
@@ -486,23 +486,23 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-medium">Try these solutions:</p>
-            <ol className="text-sm space-y-3 ml-4 list-decimal text-muted-foreground">
+            <p className="text-sm font-medium text-white">Try these solutions:</p>
+            <ol className="text-sm space-y-3 ml-4 list-decimal text-white">
               <li>
                 <strong>Update your browser</strong>
-                <p className="text-xs mt-1">Make sure you're using the latest version</p>
+                <p className="text-xs mt-1 text-white">Make sure you're using the latest version</p>
               </li>
               <li>
                 <strong>Switch to a supported browser</strong>
-                <p className="text-xs mt-1">Chrome, Firefox, Edge, or Safari 14+</p>
+                <p className="text-xs mt-1 text-white">Chrome, Firefox, Edge, or Safari 14+</p>
               </li>
               <li>
                 <strong>Refresh the page completely</strong>
-                <p className="text-xs mt-1">Use Ctrl+Shift+R (or Cmd+Shift+R) for a hard refresh</p>
+                <p className="text-xs mt-1 text-white">Use Ctrl+Shift+R (or Cmd+Shift+R) for a hard refresh</p>
               </li>
               <li>
                 <strong>Run Diagnostics</strong>
-                <p className="text-xs mt-1">Click "Diagnostics" in the header for detailed technical info</p>
+                <p className="text-xs mt-1 text-white">Click "Diagnostics" in the header for detailed technical info</p>
               </li>
             </ol>
           </div>
@@ -512,8 +512,8 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
           <div className="flex items-start gap-3 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
             <Warning weight="fill" className="text-yellow-500 mt-0.5" />
             <div className="space-y-1">
-              <p className="text-sm font-medium">Still Not Working?</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm font-medium text-white">Still Not Working?</p>
+              <p className="text-xs text-white">
                 Try disabling browser extensions (especially ad blockers and privacy tools) 
                 as they can interfere with WebAssembly loading. Test in Incognito/Private mode to confirm.
               </p>
@@ -557,8 +557,8 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
       content: (
         <div className="space-y-4">
           <div className="p-4 bg-accent/10 border border-accent/30 rounded-lg">
-            <p className="text-sm font-medium mb-2">Workaround:</p>
-            <ol className="text-sm space-y-2 ml-4 list-decimal text-muted-foreground">
+            <p className="text-sm font-medium mb-2 text-white">Workaround:</p>
+            <ol className="text-sm space-y-2 ml-4 list-decimal text-white">
               <li>Search for the nearest major city</li>
               <li>Select it to populate coordinates and timezone</li>
               <li>Manually adjust coordinates if needed (optional)</li>
@@ -566,11 +566,11 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-medium">Finding Coordinates:</p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm font-medium text-white">Finding Coordinates:</p>
+            <p className="text-sm text-white">
               You can find exact coordinates for any location using:
             </p>
-            <ul className="text-sm space-y-1 ml-4 list-disc text-muted-foreground">
+            <ul className="text-sm space-y-1 ml-4 list-disc text-white">
               <li>Google Maps (right-click on location → coordinates shown)</li>
               <li>Search "coordinates of [city name]" in any search engine</li>
               <li>GPS coordinates from maps applications</li>
@@ -580,7 +580,7 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
           <Separator />
 
           <div className="p-3 bg-muted/30 rounded-lg">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-white">
               <strong>Note:</strong> For astrology purposes, coordinates within 10-20 miles 
               of the actual birth location are usually sufficient unless you're doing very precise work.
             </p>
@@ -597,8 +597,8 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
       content: (
         <div className="space-y-4">
           <div className="p-4 bg-muted/30 rounded-lg space-y-3">
-            <p className="text-sm font-medium">Common causes:</p>
-            <ul className="text-sm space-y-2 ml-4 list-disc text-muted-foreground">
+            <p className="text-sm font-medium text-white">Common causes:</p>
+            <ul className="text-sm space-y-2 ml-4 list-disc text-white">
               <li>Location database hasn't loaded yet (wait a few seconds)</li>
               <li>Searching with special characters or unusual spelling</li>
               <li>Network connectivity issues</li>
@@ -606,8 +606,8 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-medium">Try these fixes:</p>
-            <ol className="text-sm space-y-2 ml-4 list-decimal text-muted-foreground">
+            <p className="text-sm font-medium text-white">Try these fixes:</p>
+            <ol className="text-sm space-y-2 ml-4 list-decimal text-white">
               <li>Wait 3-5 seconds after page load before searching</li>
               <li>Try different spelling variations (e.g., "New York" vs "New York City")</li>
               <li>Search for just the city name without state/country</li>
@@ -619,8 +619,8 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
           <Separator />
 
           <div className="p-4 bg-accent/10 border border-accent/30 rounded-lg">
-            <p className="text-sm font-medium mb-2">Alternative:</p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm font-medium mb-2 text-white">Alternative:</p>
+            <p className="text-sm text-white">
               If search completely fails, you can manually enter coordinates and timezone. 
               Find coordinates using Google Maps or any GPS service.
             </p>
@@ -637,27 +637,27 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
       content: (
         <div className="space-y-4">
           <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-            <p className="text-sm font-medium mb-2">Important:</p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm font-medium mb-2 text-white">Important:</p>
+            <p className="text-sm text-white">
               Always verify the coordinates and timezone after selecting a location. 
               The database might have outdated information for some cities.
             </p>
           </div>
 
           <div className="space-y-3">
-            <p className="text-sm font-medium">How to correct:</p>
+            <p className="text-sm font-medium text-white">How to correct:</p>
             <div className="space-y-2">
               <div className="p-3 bg-muted/30 rounded-lg">
-                <p className="text-sm font-medium mb-1">Coordinates</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm font-medium mb-1 text-white">Coordinates</p>
+                <p className="text-xs text-white">
                   Manually edit the latitude/longitude fields after selecting a location. 
                   Use decimal format (e.g., 40.7128, -74.0060 for New York).
                 </p>
               </div>
 
               <div className="p-3 bg-muted/30 rounded-lg">
-                <p className="text-sm font-medium mb-1">Timezone</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm font-medium mb-1 text-white">Timezone</p>
+                <p className="text-xs text-white">
                   Select the correct timezone from the dropdown. Make sure to account for 
                   whether Daylight Saving Time was in effect at the time of birth.
                 </p>
@@ -668,8 +668,8 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
           <Separator />
 
           <div className="p-3 bg-muted/30 rounded-lg">
-            <p className="text-sm font-medium mb-2">Timezone Resources:</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm font-medium mb-2 text-white">Timezone Resources:</p>
+            <p className="text-xs text-white">
               Search "historical timezone for [city] on [date]" to find accurate timezone 
               information including DST rules that were in effect at the time of birth.
             </p>
@@ -689,8 +689,8 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
       content: (
         <div className="space-y-4">
           <div className="p-4 bg-accent/10 border border-accent/30 rounded-lg">
-            <p className="text-sm font-medium mb-2">What to verify:</p>
-            <ul className="text-sm space-y-1 ml-4 list-disc text-muted-foreground">
+            <p className="text-sm font-medium mb-2 text-white">What to verify:</p>
+            <ul className="text-sm space-y-1 ml-4 list-disc text-white">
               <li>Birth date and time are correct</li>
               <li>Timezone matches the birth location</li>
               <li>Daylight Saving Time is accounted for</li>
@@ -699,27 +699,27 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-medium">Common accuracy issues:</p>
+            <p className="text-sm font-medium text-white">Common accuracy issues:</p>
             <div className="space-y-2">
               <div className="p-3 bg-muted/30 rounded-lg">
-                <p className="text-sm font-medium mb-1">DST (Daylight Saving Time)</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm font-medium mb-1 text-white">DST (Daylight Saving Time)</p>
+                <p className="text-xs text-white">
                   The most common cause of incorrect charts. Your timezone offset should reflect 
                   whether DST was active at birth time. Check DST History in the app for guidance.
                 </p>
               </div>
 
               <div className="p-3 bg-muted/30 rounded-lg">
-                <p className="text-sm font-medium mb-1">Local Mean Time vs Standard Time</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm font-medium mb-1 text-white">Local Mean Time vs Standard Time</p>
+                <p className="text-xs text-white">
                   For births before ~1900, you may need to use Local Mean Time calculations. 
                   This app uses standard timezone-based calculations.
                 </p>
               </div>
 
               <div className="p-3 bg-muted/30 rounded-lg">
-                <p className="text-sm font-medium mb-1">House System</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm font-medium mb-1 text-white">House System</p>
+                <p className="text-xs text-white">
                   Different house systems (Placidus, Koch, Whole Sign, etc.) will give different 
                   house cusps. This is normal and not an error.
                 </p>
@@ -764,13 +764,13 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
       content: (
         <div className="space-y-4">
           <div className="p-4 bg-muted/30 rounded-lg">
-            <p className="text-sm mb-2">The first chart after page load may take longer (5-10 seconds) while the library initializes.</p>
-            <p className="text-sm text-muted-foreground">Subsequent charts should be much faster.</p>
+            <p className="text-sm mb-2 text-white">The first chart after page load may take longer (5-10 seconds) while the library initializes.</p>
+            <p className="text-sm text-white">Subsequent charts should be much faster.</p>
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-medium">If every chart is slow:</p>
-            <ol className="text-sm space-y-2 ml-4 list-decimal text-muted-foreground">
+            <p className="text-sm font-medium text-white">If every chart is slow:</p>
+            <ol className="text-sm space-y-2 ml-4 list-decimal text-white">
               <li>Close other tabs to free up browser resources</li>
               <li>Refresh the page to clear memory</li>
               <li>Check if your device is low on RAM</li>
@@ -781,7 +781,7 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
           <Separator />
 
           <div className="p-3 bg-accent/10 border border-accent/30 rounded-lg">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-white">
               The app uses WebAssembly for calculations, which requires some initialization time. 
               This is normal and ensures accurate astronomical calculations.
             </p>
@@ -798,8 +798,8 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
       content: (
         <div className="space-y-4">
           <div className="space-y-2">
-            <p className="text-sm font-medium">Quick fixes:</p>
-            <ol className="text-sm space-y-2 ml-4 list-decimal text-muted-foreground">
+            <p className="text-sm font-medium text-white">Quick fixes:</p>
+            <ol className="text-sm space-y-2 ml-4 list-decimal text-white">
               <li>Refresh the page periodically to clear memory</li>
               <li>Close unused browser tabs</li>
               <li>Clear browser cache and cookies</li>
@@ -811,8 +811,8 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
           <Separator />
 
           <div className="p-4 bg-muted/30 rounded-lg">
-            <p className="text-sm font-medium mb-2">Chart Library Management:</p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm font-medium mb-2 text-white">Chart Library Management:</p>
+            <p className="text-sm text-white">
               If you have many saved charts (20+), the app may slow down. Consider deleting 
               old charts you no longer need to improve performance.
             </p>
@@ -829,16 +829,16 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
       content: (
         <div className="space-y-4">
           <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-            <p className="text-sm font-medium mb-2">Memory Considerations:</p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm font-medium mb-2 text-white">Memory Considerations:</p>
+            <p className="text-sm text-white">
               Each saved chart with interpretations uses browser storage. Large libraries 
               (50+ charts) may impact performance on lower-end devices.
             </p>
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-medium">To reduce memory usage:</p>
-            <ul className="text-sm space-y-2 ml-4 list-disc text-muted-foreground">
+            <p className="text-sm font-medium text-white">To reduce memory usage:</p>
+            <ul className="text-sm space-y-2 ml-4 list-disc text-white">
               <li>Delete old charts you don't need</li>
               <li>Clear interpretations from charts (they can be regenerated)</li>
               <li>Refresh the page to clear runtime memory</li>
@@ -849,7 +849,7 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
           <Separator />
 
           <div className="p-3 bg-muted/30 rounded-lg">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-white">
               Run Diagnostics to see current memory usage statistics.
             </p>
           </div>
@@ -896,15 +896,15 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
       content: (
         <div className="space-y-4">
           <div className="p-4 bg-accent/10 border border-accent/30 rounded-lg">
-            <p className="text-sm">
+            <p className="text-sm text-white">
               Interpretations provide insights into planetary positions, aspects, and patterns 
               found in your chart. They are generated on-demand using AI.
             </p>
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-medium">Key points:</p>
-            <ul className="text-sm space-y-2 ml-4 list-disc text-muted-foreground">
+            <p className="text-sm font-medium text-white">Key points:</p>
+            <ul className="text-sm space-y-2 ml-4 list-disc text-white">
               <li>Interpretations are guidelines, not absolute predictions</li>
               <li>Different astrologers may interpret the same chart differently</li>
               <li>You can regenerate interpretations to get different perspectives</li>
@@ -915,8 +915,8 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
           <Separator />
 
           <div className="p-3 bg-muted/30 rounded-lg">
-            <p className="text-sm font-medium mb-2">Need More Detail?</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm font-medium mb-2 text-white">Need More Detail?</p>
+            <p className="text-xs text-white">
               Click "Generate Interpretation" on any chart to get a comprehensive reading 
               of planetary positions, aspects, and patterns.
             </p>
@@ -934,24 +934,24 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
         <div className="space-y-4">
           <div className="space-y-3">
             <div className="p-3 bg-muted/30 rounded-lg">
-              <p className="text-sm font-medium mb-1">Export as PDF</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm font-medium mb-1 text-white">Export as PDF</p>
+              <p className="text-xs text-white">
                 Use the "Export PDF" button on any chart view to save a professional PDF 
                 with chart wheel and interpretation.
               </p>
             </div>
 
             <div className="p-3 bg-muted/30 rounded-lg">
-              <p className="text-sm font-medium mb-1">Browser Printing</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm font-medium mb-1 text-white">Browser Printing</p>
+              <p className="text-xs text-white">
                 Use Ctrl+P (or Cmd+P) to print directly from your browser. 
                 The chart will format appropriately for printing.
               </p>
             </div>
 
             <div className="p-3 bg-muted/30 rounded-lg">
-              <p className="text-sm font-medium mb-1">Screenshot</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm font-medium mb-1 text-white">Screenshot</p>
+              <p className="text-xs text-white">
                 Use your device's screenshot tool to capture specific sections of the chart.
               </p>
             </div>
@@ -960,7 +960,7 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
           <Separator />
 
           <div className="p-3 bg-accent/10 border border-accent/30 rounded-lg">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-white">
               All your saved charts remain in the Chart Library and can be accessed anytime.
             </p>
           </div>
@@ -976,16 +976,16 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
       content: (
         <div className="space-y-4">
           <div className="p-4 bg-accent/10 border border-accent/30 rounded-lg">
-            <p className="text-sm font-medium mb-2">Privacy First:</p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm font-medium mb-2 text-white">Privacy First:</p>
+            <p className="text-sm text-white">
               All chart data and interpretations are stored locally in your browser's storage. 
               Nothing is sent to external servers except during interpretation generation.
             </p>
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-medium">What this means:</p>
-            <ul className="text-sm space-y-2 ml-4 list-disc text-muted-foreground">
+            <p className="text-sm font-medium text-white">What this means:</p>
+            <ul className="text-sm space-y-2 ml-4 list-disc text-white">
               <li>Your charts are private to you and your browser</li>
               <li>Data persists even after closing the browser</li>
               <li>Charts won't sync across devices or browsers</li>
@@ -996,8 +996,8 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
           <Separator />
 
           <div className="space-y-2">
-            <p className="text-sm font-medium">To delete your data:</p>
-            <ol className="text-sm space-y-1 ml-4 list-decimal text-muted-foreground">
+            <p className="text-sm font-medium text-white">To delete your data:</p>
+            <ol className="text-sm space-y-1 ml-4 list-decimal text-white">
               <li>Delete individual charts from the Chart Library</li>
               <li>Or use browser settings → Clear browsing data → Site data</li>
             </ol>
@@ -1014,8 +1014,8 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
       content: (
         <div className="space-y-4">
           <div className="p-4 bg-muted/30 rounded-lg space-y-3">
-            <p className="text-sm font-medium">Helpful tools in the app:</p>
-            <ul className="text-sm space-y-2 ml-4 list-disc text-muted-foreground">
+            <p className="text-sm font-medium text-white">Helpful tools in the app:</p>
+            <ul className="text-sm space-y-2 ml-4 list-disc text-white">
               <li><strong>Diagnostics</strong> - Technical system check (in header)</li>
               <li><strong>DST History</strong> - Check daylight saving time rules</li>
               <li><strong>Reset Engine</strong> - Reinitialize calculation library (appears when needed)</li>
@@ -1025,8 +1025,8 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
           <Separator />
 
           <div className="space-y-2">
-            <p className="text-sm font-medium">Basic troubleshooting steps:</p>
-            <ol className="text-sm space-y-2 ml-4 list-decimal text-muted-foreground">
+            <p className="text-sm font-medium text-white">Basic troubleshooting steps:</p>
+            <ol className="text-sm space-y-2 ml-4 list-decimal text-white">
               <li>Refresh the page (Ctrl+R or Cmd+R)</li>
               <li>Clear browser cache</li>
               <li>Try a different browser</li>
@@ -1038,8 +1038,8 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
           <Separator />
 
           <div className="p-4 bg-accent/10 border border-accent/30 rounded-lg">
-            <p className="text-sm font-medium mb-2">Still need help?</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm font-medium mb-2 text-white">Still need help?</p>
+            <p className="text-xs text-white">
               Try running Diagnostics and reviewing the detailed technical report. 
               This will help identify specific browser or compatibility issues.
             </p>
