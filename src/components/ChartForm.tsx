@@ -81,7 +81,7 @@ export function ChartForm({ onSubmit }: ChartFormProps) {
     <>
       <Button 
         onClick={() => setOpen(true)}
-        className="gap-2"
+        className="gap-2 text-white"
         size="lg"
       >
         <Plus size={20} weight="bold" />
