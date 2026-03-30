@@ -1,5 +1,6 @@
 import { ChartData, Planet as PlanetInfo, House, Aspect, TransitData, TransitAspect, ZODIAC_SIGNS, ASPECT_TYPES } from './astrology-types'
 import { loadSwissEphemeris } from './swisseph-loader'
+import { getTimezoneOffset } from './timezone-db'
 
 let swissEph: any = null
 let SwissEphemeris: any = null
@@ -287,7 +288,9 @@ export async function generateChartData(
   console.log('Raw inputs - date:', date, 'time:', time, 'timezone:', timezone)
   let dateTime: Date
   try {
-    const dateTimeStr = `${date}T${time}:00${timezone}`
+    const timezoneOffset = getTimezoneOffset(timezone)
+    console.log('Timezone conversion:', { input: timezone, offset: timezoneOffset })
+    const dateTimeStr = `${date}T${time}:00${timezoneOffset}`
     console.log('Constructed datetime string:', dateTimeStr)
     dateTime = new Date(dateTimeStr)
     console.log('Parsed Date object:', dateTime)
