@@ -32,7 +32,6 @@ function App() {
     const preInitialize = async () => {
       try {
         console.log('Pre-initializing Swiss Ephemeris on app load...')
-        const testDate = new Date('2000-01-01T12:00:00Z')
         await generateChartData(
           'Init Test',
           '2000-01-01',
@@ -43,12 +42,17 @@ function App() {
           '+00:00'
         )
         console.log('Swiss Ephemeris pre-initialization successful')
+        setEphemerisError(false)
       } catch (error) {
         console.error('Swiss Ephemeris pre-initialization failed:', error)
+        setEphemerisError(true)
       }
     }
     
-    preInitialize()
+    preInitialize().catch(err => {
+      console.error('Fatal pre-initialization error:', err)
+      setEphemerisError(true)
+    })
   }, [])
 
   const handleGenerateChart = async (formData: ChartFormData) => {

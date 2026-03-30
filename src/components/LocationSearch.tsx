@@ -29,7 +29,7 @@ export function LocationSearch({ value, onLocationSelect, className }: LocationS
   const [results, setResults] = useState<LocationResult[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [showResults, setShowResults] = useState(false)
-  const searchTimeoutRef = useRef<NodeJS.Timeout>()
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
