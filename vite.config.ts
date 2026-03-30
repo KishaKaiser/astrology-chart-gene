@@ -23,7 +23,7 @@ export default defineConfig({
     }
   },
   optimizeDeps: {
-    include: ['@swisseph/browser', '@swisseph/core'],
+    exclude: ['@swisseph/browser', '@swisseph/core'],
     esbuildOptions: {
       define: {
         global: 'globalThis'
@@ -32,9 +32,8 @@ export default defineConfig({
   },
   build: {
     commonjsOptions: {
-      include: [/node_modules/, /@swisseph/],
-      transformMixedEsModules: true,
-      defaultIsModuleExports: 'auto'
+      include: [/node_modules/],
+      transformMixedEsModules: true
     },
     rollupOptions: {
       output: {
@@ -46,6 +45,7 @@ export default defineConfig({
   },
   define: {
     'process.env': {},
-    'module': 'undefined'
-  }
+    global: 'globalThis'
+  },
+  assetsInclude: ['**/*.wasm']
 });
