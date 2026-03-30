@@ -300,12 +300,24 @@ export async function generateChartData(
     const sign = timezoneMatch[1]
     const offsetHours = parseInt(timezoneMatch[2], 10)
     const offsetMinutes = parseInt(timezoneMatch[3], 10)
-    const offsetTotalMinutes = (sign === '+' ? 1 : -1) * (offsetHours * 60 + offsetMinutes)
     
-    console.log('Timezone offset parsed:', { sign, offsetHours, offsetMinutes, offsetTotalMinutes })
+    console.log('Timezone offset parsed:', { sign, offsetHours, offsetMinutes })
+    console.log('Conversion logic: To get UTC from local time with timezone offset:')
+    console.log('  - Local time represents the clock time in that timezone')
+    console.log('  - For timezone -05:00, local time is 5 hours BEHIND UTC')
+    console.log('  - So to get UTC: add 5 hours to local time')
+    console.log('  - For timezone +05:30, local time is 5.5 hours AHEAD of UTC')
+    console.log('  - So to get UTC: subtract 5.5 hours from local time')
+    
+    const offsetTotalMinutes = (sign === '-' ? -1 : 1) * (offsetHours * 60 + offsetMinutes)
+    console.log('Offset total minutes (positive = ahead of UTC):', offsetTotalMinutes)
     
     const utcTimestamp = Date.UTC(year, month - 1, day, hour, minute, 0, 0) - (offsetTotalMinutes * 60 * 1000)
     dateTime = new Date(utcTimestamp)
+    
+    console.log('Input local time:', `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')} ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`)
+    console.log('Calculated UTC time:', dateTime.toISOString())
+    console.log('Verification: UTC should be', sign === '-' ? 'AHEAD' : 'BEHIND', 'local time by', offsetHours, 'hours')
     
     console.log('Created UTC-adjusted Date object:', dateTime)
     console.log('Date object timestamp:', dateTime.getTime())
