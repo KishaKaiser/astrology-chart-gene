@@ -1,6 +1,5 @@
 import { ChartData, Planet as PlanetInfo, House, Aspect, TransitData, TransitAspect, ZODIAC_SIGNS, ASPECT_TYPES } from './astrology-types'
 import { loadSwissEphemeris } from './swisseph-loader'
-import { getTimezoneOffset } from './timezone-db'
 
 let swissEph: any = null
 let SwissEphemeris: any = null
@@ -288,18 +287,21 @@ export async function generateChartData(
   console.log('Raw inputs - date:', date, 'time:', time, 'timezone:', timezone)
   let dateTime: Date
   try {
-    const timezoneOffset = getTimezoneOffset(timezone)
-    console.log('Timezone conversion:', { input: timezone, offset: timezoneOffset })
-    const dateTimeStr = `${date}T${time}:00${timezoneOffset}`
-    console.log('Constructed datetime string:', dateTimeStr)
-    dateTime = new Date(dateTimeStr)
-    console.log('Parsed Date object:', dateTime)
+    const [year, month, day] = date.split('-').map(Number)
+    const [hour, minute] = time.split(':').map(Number)
+    
+    console.log('Parsed date components:', { year, month, day, hour, minute })
+    
+    dateTime = new Date(year, month - 1, day, hour, minute, 0, 0)
+    
+    console.log('Created local Date object:', dateTime)
     console.log('Date object timestamp:', dateTime.getTime())
+    console.log('Date toString:', dateTime.toString())
     
     if (isNaN(dateTime.getTime())) {
-      throw new Error(`Invalid date/time format. Input: "${dateTimeStr}" resulted in invalid Date`)
+      throw new Error(`Invalid date/time components. Year: ${year}, Month: ${month}, Day: ${day}, Hour: ${hour}, Minute: ${minute}`)
     }
-    console.log('✓ Date parsing successful:', dateTime.toISOString())
+    console.log('✓ Date parsing successful (local time):', dateTime.toISOString())
   } catch (error) {
     console.error('✗ Date parsing failed:', error)
     const errorMsg = error instanceof Error ? error.message : String(error)
