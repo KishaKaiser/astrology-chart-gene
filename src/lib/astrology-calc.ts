@@ -292,16 +292,30 @@ export async function generateChartData(
     
     console.log('Parsed date components:', { year, month, day, hour, minute })
     
-    dateTime = new Date(year, month - 1, day, hour, minute, 0, 0)
+    const timezoneMatch = timezone.match(/([+-])(\d{2}):(\d{2})/)
+    if (!timezoneMatch) {
+      throw new Error(`Invalid timezone format: ${timezone}. Expected format like +05:30 or -05:00`)
+    }
     
-    console.log('Created local Date object:', dateTime)
+    const sign = timezoneMatch[1]
+    const offsetHours = parseInt(timezoneMatch[2], 10)
+    const offsetMinutes = parseInt(timezoneMatch[3], 10)
+    const offsetTotalMinutes = (sign === '+' ? 1 : -1) * (offsetHours * 60 + offsetMinutes)
+    
+    console.log('Timezone offset parsed:', { sign, offsetHours, offsetMinutes, offsetTotalMinutes })
+    
+    const utcTimestamp = Date.UTC(year, month - 1, day, hour, minute, 0, 0) - (offsetTotalMinutes * 60 * 1000)
+    dateTime = new Date(utcTimestamp)
+    
+    console.log('Created UTC-adjusted Date object:', dateTime)
     console.log('Date object timestamp:', dateTime.getTime())
-    console.log('Date toString:', dateTime.toString())
+    console.log('Date toUTCString:', dateTime.toUTCString())
+    console.log('Date toISOString:', dateTime.toISOString())
     
     if (isNaN(dateTime.getTime())) {
       throw new Error(`Invalid date/time components. Year: ${year}, Month: ${month}, Day: ${day}, Hour: ${hour}, Minute: ${minute}`)
     }
-    console.log('✓ Date parsing successful (local time):', dateTime.toISOString())
+    console.log('✓ Date parsing successful (UTC-adjusted from local timezone):', dateTime.toISOString())
   } catch (error) {
     console.error('✗ Date parsing failed:', error)
     const errorMsg = error instanceof Error ? error.message : String(error)
