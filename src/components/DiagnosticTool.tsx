@@ -395,14 +395,14 @@ export function DiagnosticTool() {
 
         <ScrollArea className="h-[50vh] pr-4 -mr-4">
           {isRunning ? (
-            <div className="flex items-center justify-center py-12 pr-4">
+            <div className="flex items-center justify-center py-12">
               <div className="text-center space-y-3">
                 <ArrowsClockwise className="animate-spin mx-auto text-accent" size={32} />
                 <p className="text-sm text-white">Running diagnostics...</p>
               </div>
             </div>
           ) : results.length === 0 ? (
-            <div className="flex items-center justify-center py-12 pr-4">
+            <div className="flex items-center justify-center py-12">
               <div className="text-center space-y-3">
                 <Wrench className="mx-auto text-muted-foreground" size={32} />
                 <p className="text-sm text-white">Click "Run Diagnostics" to begin</p>
@@ -412,7 +412,7 @@ export function DiagnosticTool() {
             <div className="space-y-6 pr-4">
               {Object.entries(groupedResults).map(([category, categoryResults]) => (
                 <Card key={category} className="border-border/50">
-                  <CardHeader className="pb-3">
+                  <CardHeader>
                     <CardTitle className="text-lg text-white">{category}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
