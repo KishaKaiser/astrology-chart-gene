@@ -63,17 +63,25 @@ export function ChartForm({ onSubmit }: ChartFormProps) {
   const latitudeWarning = formData.latitude !== 0 ? getLatitudeWarning(formData.latitude) : null
 
   useEffect(() => {
-    if (formData.date && formData.time && formData.timezone) {
+    if (formData.date && formData.time && formData.latitude !== 0 && formData.longitude !== 0) {
       const [year, month, day] = formData.date.split('-').map(Number)
       const [hours, minutes] = formData.time.split(':').map(Number)
       const birthDate = new Date(year, month - 1, day, hours, minutes, 0)
       
-      const result = calculateDST(birthDate, formData.timezone)
+      const timezoneIdentifier = findTimezoneByCoordinates(formData.latitude, formData.longitude)
+      const result = calculateDST(birthDate, timezoneIdentifier)
       setDstInfo(result)
+      
+      if (result.effectiveOffset !== formData.timezone) {
+        setFormData(prev => ({
+          ...prev,
+          timezone: result.effectiveOffset
+        }))
+      }
     } else {
       setDstInfo(null)
     }
-  }, [formData.date, formData.time, formData.timezone])
+  }, [formData.date, formData.time, formData.latitude, formData.longitude])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
