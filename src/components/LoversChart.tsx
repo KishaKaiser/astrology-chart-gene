@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { Heart, Sparkle, Fire } from '@phosphor-icons/react'
+import { Heart, Sparkle, Fire, MagicWand, ArrowsClockwise } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 
@@ -18,6 +18,8 @@ export function LoversChart() {
   const [person2Id, setPerson2Id] = useState<string>('')
   const [synastryData, setSynastryData] = useState<SynastryData | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [aiInterpretation, setAiInterpretation] = useState<string>('')
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false)
 
   const handleGenerateSynastry = async () => {
     if (!person1Id || !person2Id) {
@@ -39,6 +41,7 @@ export function LoversChart() {
     }
 
     setIsGenerating(true)
+    setAiInterpretation('')
     try {
       await new Promise(resolve => setTimeout(resolve, 500))
       const data = generateSynastryData(chart1, chart2)
@@ -49,6 +52,71 @@ export function LoversChart() {
       toast.error('Failed to generate compatibility chart')
     } finally {
       setIsGenerating(false)
+    }
+  }
+
+  const handleGenerateAIInterpretation = async () => {
+    if (!synastryData) return
+
+    setIsGeneratingAI(true)
+    try {
+      const chart1 = charts?.find(c => c.id === person1Id)
+      const chart2 = charts?.find(c => c.id === person2Id)
+
+      if (!chart1 || !chart2) {
+        toast.error('Chart data not found')
+        return
+      }
+
+      const aspectsSummary = synastryData.aspects
+        .slice(0, 10)
+        .map(a => `${chart1.name}'s ${a.person1Planet} ${a.type} ${chart2.name}'s ${a.person2Planet} (${a.interpretation})`)
+        .join('\n')
+
+      const scoresSummary = synastryData.compatibilityScores
+        .map(s => `${s.category}: ${s.score}%`)
+        .join('\n')
+
+      const prompt = (window.spark.llmPrompt as any)`You are an expert astrologer specializing in relationship compatibility and synastry analysis.
+
+Generate a detailed, personalized compatibility interpretation for these two individuals:
+
+Person 1: ${chart1.name}
+Birth: ${chart1.date} at ${chart1.time} in ${chart1.location}
+Sun Sign: ${chart1.planets.find(p => p.name === 'Sun')?.sign || 'Unknown'}
+
+Person 2: ${chart2.name}
+Birth: ${chart2.date} at ${chart2.time} in ${chart2.location}
+Sun Sign: ${chart2.planets.find(p => p.name === 'Sun')?.sign || 'Unknown'}
+
+Overall Compatibility Score: ${synastryData.overallScore}%
+
+Category Scores:
+${scoresSummary}
+
+Key Planetary Aspects:
+${aspectsSummary}
+
+Provide a comprehensive compatibility interpretation that includes:
+1. An opening summary of their overall relationship dynamic (2-3 sentences)
+2. Emotional Connection: How they connect emotionally and support each other
+3. Communication Style: How they communicate and understand each other
+4. Romantic Chemistry: Their physical attraction and romantic expression
+5. Shared Values: What they have in common and their life goals alignment
+6. Growth Potential: Areas where they can help each other grow
+7. Challenges: Potential friction points and how to navigate them
+8. Long-term Outlook: Advice for sustaining the relationship
+
+Write in a warm, insightful, professional tone. Be honest about both strengths and challenges. Make it personal and specific to their charts. Use "you" and "your partner" language as if speaking to one person about their relationship. Keep each section concise but meaningful (2-4 sentences per section).`
+
+      const response = await window.spark.llm(prompt, 'gpt-4o')
+      setAiInterpretation(response)
+      toast.success('AI interpretation generated!')
+    } catch (error) {
+      console.error('AI interpretation error:', error)
+      toast.error('Failed to generate AI interpretation. Please try again.')
+    } finally {
+      setIsGeneratingAI(false)
     }
   }
 
@@ -294,6 +362,92 @@ export function LoversChart() {
                 <div className="mt-4 text-center">
                   <p className="text-sm text-muted-foreground">
                     Showing top 12 of {synastryData.aspects.length} aspects
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-accent/20 bg-card/50 backdrop-blur">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-xl text-white flex items-center gap-2">
+                    <MagicWand weight="fill" className="text-accent" />
+                    AI Relationship Insights
+                  </CardTitle>
+                  <CardDescription className="text-white/70">
+                    Personalized compatibility interpretation powered by AI
+                  </CardDescription>
+                </div>
+                {!aiInterpretation && (
+                  <Button
+                    onClick={handleGenerateAIInterpretation}
+                    disabled={isGeneratingAI}
+                    className="bg-gradient-to-r from-accent to-pink-500 hover:from-accent/90 hover:to-pink-500/90 text-white"
+                  >
+                    {isGeneratingAI ? (
+                      <>
+                        <Sparkle className="mr-2 animate-spin" weight="fill" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <MagicWand className="mr-2" weight="fill" />
+                        Generate Insights
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {aiInterpretation ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="space-y-4"
+                >
+                  <div className="prose prose-invert max-w-none">
+                    <div className="text-white/90 whitespace-pre-wrap leading-relaxed">
+                      {aiInterpretation}
+                    </div>
+                  </div>
+                  <Separator className="my-6" />
+                  <div className="flex justify-end">
+                    <Button
+                      onClick={handleGenerateAIInterpretation}
+                      disabled={isGeneratingAI}
+                      variant="outline"
+                      size="sm"
+                      className="border-accent/30 text-accent hover:bg-accent/10"
+                    >
+                      {isGeneratingAI ? (
+                        <>
+                          <Sparkle className="mr-2 animate-spin" weight="fill" />
+                          Regenerating...
+                        </>
+                      ) : (
+                        <>
+                          <ArrowsClockwise className="mr-2" weight="bold" />
+                          Regenerate
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </motion.div>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="flex justify-center mb-4">
+                    <div className="p-4 rounded-full bg-accent/10">
+                      <MagicWand className="w-8 h-8 text-accent" weight="fill" />
+                    </div>
+                  </div>
+                  <p className="text-muted-foreground mb-4">
+                    Get a personalized, in-depth analysis of your relationship compatibility
+                  </p>
+                  <p className="text-sm text-white/60">
+                    Our AI astrologer will analyze your charts and provide detailed insights into your emotional connection, communication style, romantic chemistry, and more.
                   </p>
                 </div>
               )}
