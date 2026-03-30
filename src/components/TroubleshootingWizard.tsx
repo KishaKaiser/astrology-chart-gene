@@ -90,8 +90,8 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
           <div className="p-4 bg-muted/30 rounded-lg space-y-2">
             <p className="text-sm">This usually happens when:</p>
             <ul className="text-sm space-y-1 ml-4 list-disc text-white">
-              <li>WebAssembly is not supported in your browser</li>
-              <li>The library files failed to download</li>
+              <li>The calculation engine encountered an error</li>
+              <li>The library files failed to load</li>
               <li>There's a browser compatibility issue</li>
             </ul>
           </div>
@@ -133,7 +133,7 @@ const ISSUE_FLOWS: Record<IssueCategory, TroubleshootingStep[]> = {
             <ul className="text-sm space-y-1 ml-4 list-disc text-white">
               <li>Try using a different browser (Chrome, Firefox, or Edge recommended)</li>
               <li>Check that your browser is up to date</li>
-              <li>Disable browser extensions that might block WebAssembly</li>
+              <li>Disable browser extensions that might interfere with calculations</li>
               <li>Run the Diagnostics tool to see detailed technical information</li>
             </ul>
           </div>

@@ -36,14 +36,10 @@ export function DiagnosticTool() {
 
     diagnosticResults.push({
       category: 'Browser',
-      name: 'WebAssembly Support',
-      status: typeof WebAssembly === 'object' ? 'success' : 'error',
-      message: typeof WebAssembly === 'object' 
-        ? 'WebAssembly is supported' 
-        : 'WebAssembly is NOT supported - Swiss Ephemeris requires WASM',
-      details: typeof WebAssembly === 'object' 
-        ? `WebAssembly.instantiate: ${typeof WebAssembly.instantiate === 'function' ? 'Available' : 'Missing'}`
-        : 'This browser does not support WebAssembly'
+      name: 'JavaScript Engine',
+      status: 'success',
+      message: 'JavaScript calculation engine active',
+      details: 'Using built-in astronomical algorithms (WebAssembly not required)'
     })
 
     const asyncFn = async () => {}
@@ -62,48 +58,48 @@ export function DiagnosticTool() {
     })
 
     try {
-      const swissephBrowser = await import('@swisseph/browser')
+      const swissephLoader = await import('@/lib/swisseph-loader')
       diagnosticResults.push({
         category: 'Dependencies',
-        name: '@swisseph/browser',
+        name: 'Astrology Engine',
         status: 'success',
-        message: 'Module imported successfully',
-        details: `SwissEphemeris: ${swissephBrowser.SwissEphemeris ? 'Available' : 'Missing'}`
+        message: 'Built-in calculation engine loaded successfully',
+        details: `SwissEphemeris: ${swissephLoader.SwissEphemeris ? 'Available' : 'Missing'}`
       })
     } catch (error) {
       diagnosticResults.push({
         category: 'Dependencies',
-        name: '@swisseph/browser',
+        name: 'Astrology Engine',
         status: 'error',
-        message: 'Failed to import module',
+        message: 'Failed to load calculation engine',
         details: error instanceof Error ? error.message : String(error)
       })
     }
 
     try {
-      const swissephCore = await import('@swisseph/core')
+      const swissephLoader = await import('@/lib/swisseph-loader')
       diagnosticResults.push({
         category: 'Dependencies',
-        name: '@swisseph/core',
+        name: 'Calculation Enums',
         status: 'success',
-        message: 'Module imported successfully',
+        message: 'Planet and house system enums loaded',
         details: [
-          `Planet: ${swissephCore.Planet ? 'Available' : 'Missing'}`,
-          `HouseSystem: ${swissephCore.HouseSystem ? 'Available' : 'Missing'}`
+          `Planet: ${swissephLoader.Planet ? 'Available' : 'Missing'}`,
+          `HouseSystem: ${swissephLoader.HouseSystem ? 'Available' : 'Missing'}`
         ].join('\n')
       })
     } catch (error) {
       diagnosticResults.push({
         category: 'Dependencies',
-        name: '@swisseph/core',
+        name: 'Calculation Enums',
         status: 'error',
-        message: 'Failed to import module',
+        message: 'Failed to load enums',
         details: error instanceof Error ? error.message : String(error)
       })
     }
 
     try {
-      const { SwissEphemeris } = await import('@swisseph/browser')
+      const { SwissEphemeris } = await import('@/lib/swisseph-loader')
       const instance = new SwissEphemeris()
       
       diagnosticResults.push({
@@ -114,35 +110,12 @@ export function DiagnosticTool() {
         details: `Type: ${typeof instance}`
       })
 
-      if (typeof instance.init === 'function') {
-        try {
-          const initResult = instance.init()
-          if (initResult && typeof initResult.then === 'function') {
-            await initResult
-          }
-          diagnosticResults.push({
-            category: 'Library',
-            name: 'Initialization',
-            status: 'success',
-            message: 'Library initialized successfully'
-          })
-        } catch (error) {
-          diagnosticResults.push({
-            category: 'Library',
-            name: 'Initialization',
-            status: 'error',
-            message: 'Initialization failed',
-            details: error instanceof Error ? error.message : String(error)
-          })
-        }
-      } else {
-        diagnosticResults.push({
-          category: 'Library',
-          name: 'Initialization',
-          status: 'warning',
-          message: 'No init method found (may be auto-initialized)'
-        })
-      }
+      diagnosticResults.push({
+        category: 'Library',
+        name: 'Initialization',
+        status: 'success',
+        message: 'Built-in engine ready (no initialization required)'
+      })
 
       const requiredMethods = ['dateToJulianDay', 'calculateHouses', 'calculatePosition']
       const availableMethods = requiredMethods.filter(method => typeof (instance as any)[method] === 'function')
@@ -181,7 +154,7 @@ export function DiagnosticTool() {
       }
 
       try {
-        const { Planet } = await import('@swisseph/core')
+        const { Planet } = await import('@/lib/swisseph-loader')
         const testJD = 2451545.0
         const sunPosition = instance.calculatePosition(testJD, Planet.Sun)
         diagnosticResults.push({
@@ -191,7 +164,7 @@ export function DiagnosticTool() {
           message: sunPosition && typeof sunPosition.longitude === 'number'
             ? 'Planet calculation successful'
             : 'Invalid calculation result',
-          details: sunPosition ? `Sun longitude: ${sunPosition.longitude}°` : 'No result returned'
+          details: sunPosition ? `Sun longitude: ${sunPosition.longitude.toFixed(2)}°` : 'No result returned'
         })
       } catch (error) {
         diagnosticResults.push({
@@ -204,18 +177,17 @@ export function DiagnosticTool() {
       }
 
       try {
-        const { HouseSystem } = await import('@swisseph/core')
+        const { HouseSystem } = await import('@/lib/swisseph-loader')
         const testJD = 2451545.0
         const houses = instance.calculateHouses(testJD, 51.5074, -0.1278, HouseSystem.Placidus)
-        const housesData = houses as any
         diagnosticResults.push({
           category: 'Calculations',
           name: 'House System',
-          status: housesData && Array.isArray(housesData.houses) ? 'success' : 'error',
-          message: housesData && Array.isArray(housesData.houses)
+          status: houses && Array.isArray(houses.cusps) ? 'success' : 'error',
+          message: houses && Array.isArray(houses.cusps)
             ? 'House calculation successful'
             : 'Invalid house calculation result',
-          details: housesData ? `Houses: ${housesData.houses?.length || 0} cusps` : 'No result returned'
+          details: houses ? `Houses: ${houses.cusps?.length || 0} cusps, Ascendant: ${houses.ascendant?.toFixed(2)}°` : 'No result returned'
         })
       } catch (error) {
         diagnosticResults.push({
