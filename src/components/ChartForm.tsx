@@ -9,7 +9,7 @@ import { toast } from 'sonner'
 import { BirthTimeRectification } from '@/components/BirthTimeRectification'
 import { LocationSearch } from '@/components/LocationSearch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { findTimezoneByCoordinates, formatTimezoneDisplay, formatDSTDisplay } from '@/lib/timezone-db'
+import { findTimezoneByCoordinates, formatTimezoneDisplay, formatDSTDisplay, getTimezoneOffset } from '@/lib/timezone-db'
 import { calculateDST, formatDSTInfo, formatDSTDetails } from '@/lib/dst-calculator'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
@@ -107,15 +107,20 @@ export function ChartForm({ onSubmit }: ChartFormProps) {
   ]
 
   const setCity = (city: typeof popularCities[0]) => {
-    const timezone = findTimezoneByCoordinates(city.lat, city.lng)
+    const timezoneIdentifier = findTimezoneByCoordinates(city.lat, city.lng)
+    const timezoneOffset = getTimezoneOffset(timezoneIdentifier)
     setFormData(prev => ({
       ...prev,
       location: city.name,
       latitude: city.lat,
       longitude: city.lng,
-      timezone
+      timezone: timezoneOffset
     }))
   }
+
+  const timezoneIdentifierForDisplay = formData.timezone.match(/^[+-]\d{2}:\d{2}$/) 
+    ? findTimezoneByCoordinates(formData.latitude, formData.longitude)
+    : formData.timezone
 
   return (
     <>
@@ -223,14 +228,14 @@ export function ChartForm({ onSubmit }: ChartFormProps) {
                           <div className="flex items-center gap-2">
                             <Sun size={16} className="text-accent" weight="fill" />
                             <p className="text-xs text-accent font-medium">
-                              {formatTimezoneDisplay(formData.timezone)}
+                              {formatTimezoneDisplay(timezoneIdentifierForDisplay)}
                             </p>
                           </div>
                           
                           <div className="flex items-start gap-2 pl-6">
                             <Moon size={14} className="text-muted-foreground mt-0.5" weight="fill" />
                             <p className="text-xs text-muted-foreground leading-relaxed">
-                              {formatDSTDisplay(formData.timezone)}
+                              {formatDSTDisplay(timezoneIdentifierForDisplay)}
                             </p>
                           </div>
                         </div>
