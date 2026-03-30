@@ -23,7 +23,6 @@ export default defineConfig({
     }
   },
   optimizeDeps: {
-    exclude: ['@swisseph/browser', '@swisseph/core'],
     esbuildOptions: {
       define: {
         global: 'globalThis'
@@ -34,18 +33,10 @@ export default defineConfig({
     commonjsOptions: {
       include: [/node_modules/],
       transformMixedEsModules: true
-    },
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'swisseph': ['@swisseph/browser', '@swisseph/core']
-        }
-      }
     }
   },
   define: {
     'process.env': {},
     global: 'globalThis'
-  },
-  assetsInclude: ['**/*.wasm']
+  }
 });
