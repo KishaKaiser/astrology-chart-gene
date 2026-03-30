@@ -185,7 +185,7 @@ function App() {
                 <CrystalBallLogo className="w-12 h-12" />
               </div>
               <div className="flex flex-col gap-0.5">
-                <h1 className="text-5xl font-semibold leading-none text-white font-display">Psychic Link Charts</h1>
+                <h1 className="text-5xl font-bold leading-none text-white font-display">Psychic Link Charts</h1>
                 <p className="text-sm text-muted-foreground leading-none">Professional Astrology Software</p>
               </div>
             </motion.div>
