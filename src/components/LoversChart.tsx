@@ -1,14 +1,15 @@
 import { useState } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { ChartData } from '@/lib/astrology-types'
-import { SynastryData, generateSynastryData } from '@/lib/synastry-calc'
+import { SynastryData, generateSynastryData, RelationshipType } from '@/lib/synastry-calc'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { Heart, Sparkle, Fire, MagicWand, ArrowsClockwise } from '@phosphor-icons/react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Heart, Sparkle, Fire, MagicWand, ArrowsClockwise, Users, Briefcase } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 
@@ -16,6 +17,7 @@ export function LoversChart() {
   const [charts] = useKV<ChartData[]>('astrology-charts', [])
   const [person1Id, setPerson1Id] = useState<string>('')
   const [person2Id, setPerson2Id] = useState<string>('')
+  const [relationshipType, setRelationshipType] = useState<RelationshipType>('romantic')
   const [synastryData, setSynastryData] = useState<SynastryData | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [aiInterpretation, setAiInterpretation] = useState<string>('')
@@ -44,7 +46,7 @@ export function LoversChart() {
     setAiInterpretation('')
     try {
       await new Promise(resolve => setTimeout(resolve, 500))
-      const data = generateSynastryData(chart1, chart2)
+      const data = generateSynastryData(chart1, chart2, relationshipType)
       setSynastryData(data)
       toast.success('Compatibility analysis complete!')
     } catch (error) {
@@ -77,9 +79,12 @@ export function LoversChart() {
         .map(s => `${s.category}: ${s.score}%`)
         .join('\n')
 
-      const prompt = (window.spark.llmPrompt as any)`You are an expert astrologer specializing in relationship compatibility and synastry analysis.
+      let promptText = ''
+      
+      if (relationshipType === 'romantic') {
+        promptText = `You are an expert astrologer specializing in relationship compatibility and synastry analysis.
 
-Generate a detailed, personalized compatibility interpretation for these two individuals:
+Generate a detailed, personalized compatibility interpretation for these two individuals in a ROMANTIC relationship:
 
 Person 1: ${chart1.name}
 Birth: ${chart1.date} at ${chart1.time} in ${chart1.location}
@@ -97,17 +102,84 @@ ${scoresSummary}
 Key Planetary Aspects:
 ${aspectsSummary}
 
-Provide a comprehensive compatibility interpretation that includes:
-1. An opening summary of their overall relationship dynamic (2-3 sentences)
-2. Emotional Connection: How they connect emotionally and support each other
-3. Communication Style: How they communicate and understand each other
+Provide a comprehensive romantic compatibility interpretation that includes:
+1. An opening summary of their overall romantic dynamic (2-3 sentences)
+2. Emotional Connection: How they connect emotionally and support each other romantically
+3. Communication Style: How they communicate as romantic partners
 4. Romantic Chemistry: Their physical attraction and romantic expression
 5. Shared Values: What they have in common and their life goals alignment
-6. Growth Potential: Areas where they can help each other grow
+6. Growth Potential: Areas where they can help each other grow as partners
 7. Challenges: Potential friction points and how to navigate them
-8. Long-term Outlook: Advice for sustaining the relationship
+8. Long-term Outlook: Advice for sustaining the romantic relationship
 
 Write in a warm, insightful, professional tone. Be honest about both strengths and challenges. Make it personal and specific to their charts. Use "you" and "your partner" language as if speaking to one person about their relationship. Keep each section concise but meaningful (2-4 sentences per section).`
+      } else if (relationshipType === 'friendship') {
+        promptText = `You are an expert astrologer specializing in relationship compatibility and synastry analysis.
+
+Generate a detailed, personalized compatibility interpretation for these two individuals in a FRIENDSHIP:
+
+Person 1: ${chart1.name}
+Birth: ${chart1.date} at ${chart1.time} in ${chart1.location}
+Sun Sign: ${chart1.planets.find(p => p.name === 'Sun')?.sign || 'Unknown'}
+
+Person 2: ${chart2.name}
+Birth: ${chart2.date} at ${chart2.time} in ${chart2.location}
+Sun Sign: ${chart2.planets.find(p => p.name === 'Sun')?.sign || 'Unknown'}
+
+Overall Compatibility Score: ${synastryData.overallScore}%
+
+Category Scores:
+${scoresSummary}
+
+Key Planetary Aspects:
+${aspectsSummary}
+
+Provide a comprehensive friendship compatibility interpretation that includes:
+1. An opening summary of their overall friendship dynamic (2-3 sentences)
+2. Emotional Support: How they provide mutual emotional support and understanding
+3. Communication Style: How they communicate and share ideas as friends
+4. Fun & Activities: Their compatibility for shared activities and adventures
+5. Loyalty & Trust: The depth and reliability of their friendship bond
+6. Social Harmony: How well they get along in social settings
+7. Challenges: Potential friction points in the friendship and how to navigate them
+8. Long-term Outlook: Advice for maintaining a lasting friendship
+
+Write in a warm, insightful, professional tone. Be honest about both strengths and challenges. Make it personal and specific to their charts. Use "you" and "your friend" language as if speaking to one person about their friendship. Keep each section concise but meaningful (2-4 sentences per section).`
+      } else {
+        promptText = `You are an expert astrologer specializing in professional compatibility and business partnerships.
+
+Generate a detailed, personalized compatibility interpretation for these two individuals in a BUSINESS relationship:
+
+Person 1: ${chart1.name}
+Birth: ${chart1.date} at ${chart1.time} in ${chart1.location}
+Sun Sign: ${chart1.planets.find(p => p.name === 'Sun')?.sign || 'Unknown'}
+
+Person 2: ${chart2.name}
+Birth: ${chart2.date} at ${chart2.time} in ${chart2.location}
+Sun Sign: ${chart2.planets.find(p => p.name === 'Sun')?.sign || 'Unknown'}
+
+Overall Compatibility Score: ${synastryData.overallScore}%
+
+Category Scores:
+${scoresSummary}
+
+Key Planetary Aspects:
+${aspectsSummary}
+
+Provide a comprehensive business partnership compatibility interpretation that includes:
+1. An opening summary of their overall professional dynamic (2-3 sentences)
+2. Work Style Alignment: How their professional approaches complement each other
+3. Communication Efficiency: How they communicate in business contexts
+4. Shared Vision: Their alignment on goals, strategy, and business philosophy
+5. Decision-Making: How they collaborate on important decisions
+6. Strengths & Synergies: What each brings to the partnership
+7. Challenges: Potential conflicts in the business relationship and how to manage them
+8. Long-term Partnership Outlook: Advice for building a successful long-term business relationship
+
+Write in a professional, insightful tone. Be honest about both strengths and challenges. Make it practical and specific to their charts. Use "you" and "your business partner" language as if speaking to one person about their professional relationship. Keep each section concise but meaningful (2-4 sentences per section).`
+      }
+
+      const prompt = (window.spark.llmPrompt as any)`${promptText}`
 
       const response = await window.spark.llm(prompt, 'gpt-4o')
       setAiInterpretation(response)
@@ -132,12 +204,44 @@ Write in a warm, insightful, professional tone. Be honest about both strengths a
     return 'from-orange-500 to-red-500'
   }
 
-  const getCompatibilityMessage = (score: number) => {
-    if (score >= 80) return 'Exceptional compatibility! This is a powerful connection.'
-    if (score >= 65) return 'Strong compatibility with great potential for lasting love.'
-    if (score >= 50) return 'Good compatibility with some challenges to work through.'
-    if (score >= 35) return 'Moderate compatibility requiring effort and understanding.'
-    return 'Challenging compatibility requiring significant work.'
+  const getCompatibilityMessage = (score: number, type: RelationshipType) => {
+    if (type === 'romantic') {
+      if (score >= 80) return 'Exceptional compatibility! This is a powerful romantic connection.'
+      if (score >= 65) return 'Strong compatibility with great potential for lasting love.'
+      if (score >= 50) return 'Good compatibility with some challenges to work through.'
+      if (score >= 35) return 'Moderate compatibility requiring effort and understanding.'
+      return 'Challenging compatibility requiring significant work.'
+    } else if (type === 'friendship') {
+      if (score >= 80) return 'Exceptional friendship! You complement each other beautifully.'
+      if (score >= 65) return 'Strong friendship with great mutual understanding.'
+      if (score >= 50) return 'Good friendship potential with some differences.'
+      if (score >= 35) return 'Moderate friendship compatibility requiring patience.'
+      return 'Friendship may require significant effort to maintain.'
+    } else {
+      if (score >= 80) return 'Exceptional business compatibility! Strong partnership potential.'
+      if (score >= 65) return 'Strong professional alignment with good collaboration prospects.'
+      if (score >= 50) return 'Workable business relationship with clear communication needed.'
+      if (score >= 35) return 'Moderate professional compatibility requiring structure.'
+      return 'Challenging business dynamic requiring careful management.'
+    }
+  }
+
+  const getRelationshipTitle = (type: RelationshipType) => {
+    if (type === 'romantic') return "Romantic Compatibility"
+    if (type === 'friendship') return "Friendship Compatibility"
+    return "Business Compatibility"
+  }
+
+  const getRelationshipDescription = (type: RelationshipType) => {
+    if (type === 'romantic') return "Discover the romantic potential between two souls through synastry analysis"
+    if (type === 'friendship') return "Explore the friendship dynamics and mutual understanding"
+    return "Analyze professional compatibility and partnership potential"
+  }
+
+  const getRelationshipIcon = (type: RelationshipType) => {
+    if (type === 'romantic') return <Heart className="w-12 h-12 text-white" weight="fill" />
+    if (type === 'friendship') return <Users className="w-12 h-12 text-white" weight="fill" />
+    return <Briefcase className="w-12 h-12 text-white" weight="fill" />
   }
 
   if (!charts || charts.length < 2) {
@@ -178,15 +282,35 @@ Write in a warm, insightful, professional tone. Be honest about both strengths a
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
               <div className="p-4 rounded-full bg-gradient-to-br from-accent to-pink-500">
-                <Heart className="w-12 h-12 text-white" weight="fill" />
+                {getRelationshipIcon(relationshipType)}
               </div>
             </div>
-            <CardTitle className="text-3xl font-semibold text-white">Lover's Compatibility Chart</CardTitle>
+            <CardTitle className="text-3xl font-semibold text-white">{getRelationshipTitle(relationshipType)}</CardTitle>
             <CardDescription className="text-white/70 text-base">
-              Discover the romantic potential between two souls through synastry analysis
+              {getRelationshipDescription(relationshipType)}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-white">Relationship Type</label>
+              <Tabs value={relationshipType} onValueChange={(v) => setRelationshipType(v as RelationshipType)} className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="romantic" className="gap-2">
+                    <Heart weight="fill" />
+                    Romantic
+                  </TabsTrigger>
+                  <TabsTrigger value="friendship" className="gap-2">
+                    <Users weight="fill" />
+                    Friendship
+                  </TabsTrigger>
+                  <TabsTrigger value="business" className="gap-2">
+                    <Briefcase weight="fill" />
+                    Business
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-3">
                 <label className="text-sm font-medium text-white">First Person</label>
@@ -233,7 +357,7 @@ Write in a warm, insightful, professional tone. Be honest about both strengths a
                 </>
               ) : (
                 <>
-                  <Heart className="mr-2" weight="fill" />
+                  <Sparkle className="mr-2" weight="fill" />
                   Generate Compatibility Report
                 </>
               )}
@@ -280,7 +404,7 @@ Write in a warm, insightful, professional tone. Be honest about both strengths a
                 />
               </div>
               <p className="text-center text-lg text-white/90">
-                {getCompatibilityMessage(synastryData.overallScore)}
+                {getCompatibilityMessage(synastryData.overallScore, synastryData.relationshipType)}
               </p>
             </CardContent>
           </Card>
