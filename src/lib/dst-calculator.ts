@@ -116,6 +116,11 @@ function getDSTDatesForTimezone(timezone: string, date: Date): { start: Date; en
     if (timezone === 'America/Phoenix' || timezone === 'Pacific/Honolulu') {
       return null
     }
+    
+    if ((timezone === 'America/Indiana/Indianapolis' || timezone === 'America/Indianapolis') && year < 2006) {
+      return null
+    }
+    
     return calculateUSADSTDates(year)
   }
   

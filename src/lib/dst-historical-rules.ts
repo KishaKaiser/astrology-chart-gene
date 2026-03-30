@@ -20,6 +20,39 @@ export interface RegionalDSTHistory {
 
 export const DST_HISTORICAL_RULES: RegionalDSTHistory[] = [
   {
+    region: 'Indiana (Indianapolis)',
+    timezones: [
+      'America/Indiana/Indianapolis',
+      'America/Indianapolis'
+    ],
+    notes: 'Indianapolis/Indiana did not observe DST from 1970 until April 2, 2006',
+    rules: [
+      {
+        startYear: 2006,
+        startMonth: 2,
+        startRule: { type: 'week', week: 2, weekday: 0 },
+        startTime: 2,
+        endMonth: 10,
+        endRule: { type: 'week', week: 1, weekday: 0 },
+        endTime: 2,
+        offset: 1,
+        description: 'Indiana adopted DST starting April 2, 2006 (Energy Policy Act of 2005)'
+      },
+      {
+        startYear: 1970,
+        endYear: 2005,
+        startMonth: 0,
+        startRule: { type: 'date', day: 1 },
+        startTime: 0,
+        endMonth: 11,
+        endRule: { type: 'date', day: 31 },
+        endTime: 23,
+        offset: 0,
+        description: 'Indiana did not observe DST (year-round Eastern Standard Time)'
+      }
+    ]
+  },
+  {
     region: 'United States',
     timezones: [
       'America/New_York',

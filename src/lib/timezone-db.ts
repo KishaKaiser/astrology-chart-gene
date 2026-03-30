@@ -23,6 +23,15 @@ export const TIMEZONE_DATABASE: Record<string, TimezoneData> = {
     countries: ['US', 'CA'],
     bounds: { minLat: 24.5, maxLat: 47.5, minLon: -87.5, maxLon: -67 }
   },
+  'America/Indiana/Indianapolis': {
+    name: 'Eastern Time (Indianapolis)',
+    offset: '-05:00',
+    dstObserved: true,
+    dstOffset: '-04:00',
+    dstRules: 'Second Sunday in March to First Sunday in November (since April 2, 2006)',
+    countries: ['US'],
+    bounds: { minLat: 38.5, maxLat: 41.5, minLon: -88, maxLon: -84.5 }
+  },
   'America/Chicago': {
     name: 'Central Time',
     offset: '-06:00',
@@ -462,7 +471,11 @@ export function findTimezoneByCoordinates(latitude: number, longitude: number): 
       const lonDistance = Math.abs(longitude - lonCenter)
       const distance = Math.sqrt(latDistance ** 2 + lonDistance ** 2)
       
-      const score = 1 / (distance + 0.1)
+      let score = 1 / (distance + 0.1)
+      
+      if (timezone === 'America/Indiana/Indianapolis') {
+        score *= 1.5
+      }
 
       if (!bestMatch || score > bestMatch.score) {
         bestMatch = { timezone, score }
