@@ -82,6 +82,10 @@ body {
   font-family: 'IBM Plex Mono', monospace;
 }
 
+.font-display {
+  font-family: 'Corinthia', cursive;
+}
+
 @keyframes star-pulse {
   0%, 100% {
     opacity: 1;
