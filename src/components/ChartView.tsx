@@ -8,6 +8,7 @@ import { ChartWheel } from './ChartWheel'
 import { AspectPatternDiagram } from './AspectPatternDiagram'
 import { DailyHoroscope } from './DailyHoroscope'
 import { LifeEventsTimeline } from './LifeEventsTimeline'
+import { TransitInterpretation } from './TransitInterpretation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
@@ -360,7 +361,7 @@ Write each section with depth and nuance. Be specific about how energies manifes
       </div>
 
       <Tabs defaultValue="planets" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-12">
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-13">
           <TabsTrigger value="planets">Planetary Positions</TabsTrigger>
           <TabsTrigger value="houses">House Cusps</TabsTrigger>
           <TabsTrigger value="house-meanings">House Meanings</TabsTrigger>
@@ -379,6 +380,10 @@ Write each section with depth and nuance. Be specific about how energies manifes
           <TabsTrigger value="timeline">Life Events</TabsTrigger>
           <TabsTrigger value="transits" disabled={!showTransits}>Current Transits</TabsTrigger>
           <TabsTrigger value="transit-aspects" disabled={!showTransits}>Transit Aspects</TabsTrigger>
+          <TabsTrigger value="transit-interpretation">
+            <Sparkle className="mr-1.5" size={16} weight="fill" />
+            Transit Interpretation
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="planets">
@@ -1131,6 +1136,10 @@ Write each section with depth and nuance. Be specific about how energies manifes
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="transit-interpretation">
+          <TransitInterpretation chart={chart} />
         </TabsContent>
       </Tabs>
     </div>
