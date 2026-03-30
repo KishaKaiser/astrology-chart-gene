@@ -1,6 +1,6 @@
-import { ChartData } from '@/lib/astrology-types'
+import { ChartData, PLANET_SYMBOLS, ZODIAC_SYMBOLS, ZodiacSign } from '@/lib/astrology-types'
+import { getPlanetaryDignity, getDignityDescription } from '@/lib/zodiac-info'
 import jsPDF from 'jspdf'
-import { toast } from 'sonner'
 
 export async function exportChartToPDF(chart: ChartData, chartSvgElement: SVGSVGElement | null, interpretation?: string) {
   try {
@@ -9,6 +9,20 @@ export async function exportChartToPDF(chart: ChartData, chartSvgElement: SVGSVG
     const pageHeight = pdf.internal.pageSize.getHeight()
     const margin = 20
     let yPos = margin
+
+    const elementCount = { Fire: 0, Earth: 0, Air: 0, Water: 0 }
+    const modalityCount = { Cardinal: 0, Fixed: 0, Mutable: 0 }
+
+    chart.planets.forEach(p => {
+      if (['Aries', 'Leo', 'Sagittarius'].includes(p.sign)) elementCount.Fire++
+      if (['Taurus', 'Virgo', 'Capricorn'].includes(p.sign)) elementCount.Earth++
+      if (['Gemini', 'Libra', 'Aquarius'].includes(p.sign)) elementCount.Air++
+      if (['Cancer', 'Scorpio', 'Pisces'].includes(p.sign)) elementCount.Water++
+
+      if (['Aries', 'Cancer', 'Libra', 'Capricorn'].includes(p.sign)) modalityCount.Cardinal++
+      if (['Taurus', 'Leo', 'Scorpio', 'Aquarius'].includes(p.sign)) modalityCount.Fixed++
+      if (['Gemini', 'Virgo', 'Sagittarius', 'Pisces'].includes(p.sign)) modalityCount.Mutable++
+    })
 
     pdf.setFillColor(68, 21, 104)
     pdf.rect(0, 0, pageWidth, 45, 'F')
@@ -40,7 +54,9 @@ export async function exportChartToPDF(chart: ChartData, chartSvgElement: SVGSVG
     yPos += 6
     pdf.setFontSize(9)
     pdf.setTextColor(120, 120, 120)
-    pdf.text(`${chart.latitude.toFixed(4)}°N / ${chart.longitude.toFixed(4)}°E • Timezone: ${chart.timezone}`, pageWidth / 2, yPos, { align: 'center' })
+    const latDir = chart.latitude >= 0 ? 'N' : 'S'
+    const lonDir = chart.longitude >= 0 ? 'E' : 'W'
+    pdf.text(`${Math.abs(chart.latitude).toFixed(4)}°${latDir} / ${Math.abs(chart.longitude).toFixed(4)}°${lonDir} • Timezone: UTC${chart.timezone}`, pageWidth / 2, yPos, { align: 'center' })
     
     yPos += 15
 
@@ -79,6 +95,99 @@ export async function exportChartToPDF(chart: ChartData, chartSvgElement: SVGSVG
         console.error('Error rendering chart:', error)
       }
     }
+
+    const sun = chart.planets.find(p => p.name === 'Sun')
+    const moon = chart.planets.find(p => p.name === 'Moon')
+    const risingSign = chart.houses.find(h => h.number === 1)?.sign || 'Unknown'
+
+    if (sun || moon || risingSign) {
+      if (yPos > pageHeight - 50) {
+        pdf.addPage()
+        yPos = margin
+      }
+
+      pdf.setFillColor(250, 248, 253)
+      pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 35, 3, 3, 'F')
+      
+      pdf.setFont('helvetica', 'bold')
+      pdf.setFontSize(11)
+      pdf.setTextColor(68, 21, 104)
+      pdf.text('Core Identity', margin + 5, yPos + 7)
+      
+      yPos += 14
+      pdf.setFont('helvetica', 'normal')
+      pdf.setFontSize(9)
+      pdf.setTextColor(60, 60, 60)
+      
+      if (sun) {
+        pdf.setFont('helvetica', 'bold')
+        pdf.text(`Sun Sign:`, margin + 5, yPos)
+        pdf.setFont('helvetica', 'normal')
+        pdf.text(`${sun.sign} (${sun.degree.toFixed(1)}° in House ${sun.house})`, margin + 30, yPos)
+        yPos += 6
+      }
+      
+      if (moon) {
+        pdf.setFont('helvetica', 'bold')
+        pdf.text(`Moon Sign:`, margin + 5, yPos)
+        pdf.setFont('helvetica', 'normal')
+        pdf.text(`${moon.sign} (${moon.degree.toFixed(1)}° in House ${moon.house})`, margin + 30, yPos)
+        yPos += 6
+      }
+      
+      pdf.setFont('helvetica', 'bold')
+      pdf.text(`Rising Sign:`, margin + 5, yPos)
+      pdf.setFont('helvetica', 'normal')
+      pdf.text(`${risingSign} (Ascendant at ${chart.ascendant.toFixed(1)}°)`, margin + 30, yPos)
+      yPos += 10
+    }
+
+    yPos += 5
+    if (yPos > pageHeight - 50) {
+      pdf.addPage()
+      yPos = margin
+    }
+
+    pdf.setFillColor(245, 250, 255)
+    pdf.roundedRect(margin, yPos, (pageWidth - 2 * margin - 5) / 2, 40, 3, 3, 'F')
+    pdf.setFillColor(250, 245, 255)
+    pdf.roundedRect(margin + (pageWidth - 2 * margin + 5) / 2, yPos, (pageWidth - 2 * margin - 5) / 2, 40, 3, 3, 'F')
+    
+    pdf.setFont('helvetica', 'bold')
+    pdf.setFontSize(10)
+    pdf.setTextColor(68, 21, 104)
+    pdf.text('Element Distribution', margin + 5, yPos + 7)
+    
+    yPos += 13
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(8)
+    pdf.setTextColor(60, 60, 60)
+    pdf.text(`Fire: ${elementCount.Fire} planets`, margin + 5, yPos)
+    yPos += 5
+    pdf.text(`Earth: ${elementCount.Earth} planets`, margin + 5, yPos)
+    yPos += 5
+    pdf.text(`Air: ${elementCount.Air} planets`, margin + 5, yPos)
+    yPos += 5
+    pdf.text(`Water: ${elementCount.Water} planets`, margin + 5, yPos)
+    
+    yPos -= 20
+    const xPos2 = margin + (pageWidth - 2 * margin + 5) / 2
+    pdf.setFont('helvetica', 'bold')
+    pdf.setFontSize(10)
+    pdf.setTextColor(68, 21, 104)
+    pdf.text('Modality Distribution', xPos2 + 5, yPos)
+    
+    yPos += 13
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(8)
+    pdf.setTextColor(60, 60, 60)
+    pdf.text(`Cardinal: ${modalityCount.Cardinal} planets`, xPos2 + 5, yPos)
+    yPos += 5
+    pdf.text(`Fixed: ${modalityCount.Fixed} planets`, xPos2 + 5, yPos)
+    yPos += 5
+    pdf.text(`Mutable: ${modalityCount.Mutable} planets`, xPos2 + 5, yPos)
+    
+    yPos += 15
 
     pdf.addPage()
     yPos = margin
@@ -125,6 +234,55 @@ export async function exportChartToPDF(chart: ChartData, chartSvgElement: SVGSVG
       pdf.text(`${planet.degree.toFixed(2)}°`, margin + 78, yPos)
       pdf.text(planet.house.toString(), margin + 108, yPos)
       pdf.text(`${planet.longitude.toFixed(2)}°`, margin + 138, yPos)
+      yPos += 7
+    })
+
+    yPos += 12
+    if (yPos > pageHeight - 80) {
+      pdf.addPage()
+      yPos = margin
+    }
+
+    pdf.setFillColor(68, 21, 104)
+    pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 12, 2, 2, 'F')
+    
+    pdf.setFontSize(14)
+    pdf.setFont('helvetica', 'bold')
+    pdf.setTextColor(255, 255, 255)
+    pdf.text('Planetary Dignities', margin + 3, yPos + 8)
+    yPos += 18
+
+    pdf.setFillColor(245, 245, 250)
+    pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 8, 1, 1, 'F')
+
+    pdf.setFontSize(9)
+    pdf.setFont('helvetica', 'bold')
+    pdf.setTextColor(68, 21, 104)
+    pdf.text('Planet', margin + 3, yPos + 5.5)
+    pdf.text('Sign', margin + 50, yPos + 5.5)
+    pdf.text('Dignity', margin + 100, yPos + 5.5)
+    yPos += 10
+
+    pdf.setFont('helvetica', 'normal')
+    pdf.setTextColor(40, 40, 40)
+    chart.planets.forEach((planet, index) => {
+      if (yPos > pageHeight - 25) {
+        pdf.addPage()
+        yPos = margin
+      }
+      
+      if (index % 2 === 0) {
+        pdf.setFillColor(252, 252, 254)
+        pdf.roundedRect(margin, yPos - 4, pageWidth - 2 * margin, 7, 1, 1, 'F')
+      }
+      
+      const dignity = getPlanetaryDignity(planet.name, planet.sign as ZodiacSign)
+      
+      pdf.setFont('helvetica', 'bold')
+      pdf.text(planet.name, margin + 3, yPos)
+      pdf.setFont('helvetica', 'normal')
+      pdf.text(planet.sign, margin + 50, yPos)
+      pdf.text(dignity || 'Peregrine', margin + 100, yPos)
       yPos += 7
     })
 
@@ -301,29 +459,32 @@ export async function exportChartToPDF(chart: ChartData, chartSvgElement: SVGSVG
       interpretationLines.forEach((line: string) => {
         if (yPos > pageHeight - 25) {
           pdf.addPage()
-          yPos = margin
+          yPos = margin + 5
         }
         
         if (line.match(/^\*\*[0-9]+\.\s/)) {
-          yPos += 4
+          if (yPos > margin + 10) {
+            yPos += 5
+          }
           pdf.setFont('helvetica', 'bold')
-          pdf.setFontSize(11)
+          pdf.setFontSize(12)
           pdf.setTextColor(68, 21, 104)
           const cleanLine = line.replace(/\*\*/g, '')
           pdf.text(cleanLine, margin, yPos)
-          yPos += 6
-        } else if (line.match(/^\*\*[A-Z\s]+:/)) {
+          yPos += 7
+        } else if (line.match(/^\*\*[A-Z\s&]+:\s*\*\*/)) {
           yPos += 3
           pdf.setFont('helvetica', 'bold')
-          pdf.setFontSize(9)
+          pdf.setFontSize(10)
           pdf.setTextColor(90, 40, 120)
-          const cleanLine = line.replace(/\*\*/g, '')
+          const cleanLine = line.replace(/\*\*/g, '').trim()
           pdf.text(cleanLine, margin, yPos)
-          yPos += 5
-        } else if (line.match(/^\*\*/)) {
+          yPos += 6
+        } else if (line.match(/^\*\*[^*]+\*\*$/)) {
+          yPos += 2
           pdf.setFont('helvetica', 'bold')
           pdf.setFontSize(9)
-          pdf.setTextColor(40, 40, 40)
+          pdf.setTextColor(60, 60, 60)
           const cleanLine = line.replace(/\*\*/g, '')
           pdf.text(cleanLine, margin, yPos)
           yPos += 5
@@ -333,7 +494,7 @@ export async function exportChartToPDF(chart: ChartData, chartSvgElement: SVGSVG
           pdf.setFont('helvetica', 'normal')
           pdf.setFontSize(9)
           pdf.setTextColor(50, 50, 50)
-          const cleanLine = line.replace(/\*\*/g, '')
+          const cleanLine = line.replace(/\*\*/g, '').replace(/^[-•]\s*/, '  • ')
           pdf.text(cleanLine, margin, yPos)
           yPos += 5
         }
@@ -366,12 +527,8 @@ export async function exportChartToPDF(chart: ChartData, chartSvgElement: SVGSVG
     }
 
     pdf.save(`${chart.name.replace(/[^a-z0-9]/gi, '_')}_natal_chart.pdf`)
-    const message = interpretation 
-      ? 'PDF exported successfully with comprehensive interpretation!' 
-      : 'PDF exported successfully!'
-    toast.success(message)
   } catch (error) {
     console.error('PDF export error:', error)
-    toast.error('Failed to export PDF. Please try again.')
+    throw error
   }
 }
