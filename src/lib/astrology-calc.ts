@@ -303,15 +303,59 @@ export async function generateChartData(
     
     console.log('Timezone offset parsed:', { sign, offsetHours, offsetMinutes })
     console.log('Conversion logic: Converting local time to UTC')
-    console.log('  - For timezone -05:00 (5 hours BEHIND UTC): add 5 hours')
-    console.log('  - For timezone +05:30 (5.5 hours AHEAD of UTC): subtract 5.5 hours')
+    console.log('  - For timezone -05:00 (5 hours BEHIND UTC): UTC = local + 5 hours')
+    console.log('  - For timezone +05:30 (5.5 hours AHEAD of UTC): UTC = local - 5.5 hours')
     
-    const offsetTotalMinutes = (sign === '-' ? 1 : -1) * (offsetHours * 60 + offsetMinutes)
-    console.log('Offset adjustment minutes (positive = add to get UTC):', offsetTotalMinutes)
+    const localHour = hour
+    const localMinute = minute
+    let utcHour = localHour
+    let utcMinute = localMinute
+    let utcDay = day
+    let utcMonth = month
+    let utcYear = year
     
-    const localTimestamp = Date.UTC(year, month - 1, day, hour, minute, 0, 0)
-    const utcTimestamp = localTimestamp + (offsetTotalMinutes * 60 * 1000)
-    dateTime = new Date(utcTimestamp)
+    if (sign === '-') {
+      utcHour += offsetHours
+      utcMinute += offsetMinutes
+    } else {
+      utcHour -= offsetHours
+      utcMinute -= offsetMinutes
+    }
+    
+    if (utcMinute >= 60) {
+      utcHour += 1
+      utcMinute -= 60
+    } else if (utcMinute < 0) {
+      utcHour -= 1
+      utcMinute += 60
+    }
+    
+    if (utcHour >= 24) {
+      utcDay += 1
+      utcHour -= 24
+      const daysInMonth = new Date(utcYear, utcMonth, 0).getDate()
+      if (utcDay > daysInMonth) {
+        utcDay = 1
+        utcMonth += 1
+        if (utcMonth > 12) {
+          utcMonth = 1
+          utcYear += 1
+        }
+      }
+    } else if (utcHour < 0) {
+      utcDay -= 1
+      utcHour += 24
+      if (utcDay < 1) {
+        utcMonth -= 1
+        if (utcMonth < 1) {
+          utcMonth = 12
+          utcYear -= 1
+        }
+        utcDay = new Date(utcYear, utcMonth, 0).getDate()
+      }
+    }
+    
+    dateTime = new Date(Date.UTC(utcYear, utcMonth - 1, utcDay, utcHour, utcMinute, 0, 0))
     
     console.log('Input local time:', `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')} ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')} (${timezone})`)
     console.log('Calculated UTC time:', dateTime.toISOString())
