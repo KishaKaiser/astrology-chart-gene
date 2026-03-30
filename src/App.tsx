@@ -10,12 +10,13 @@ import { GeneralHoroscope } from '@/components/GeneralHoroscope'
 import { LoversChart } from '@/components/LoversChart'
 import { PastLifeChart } from '@/components/PastLifeChart'
 import { KarmicRelationship } from '@/components/KarmicRelationship'
+import { KarmicDebtCalculator } from '@/components/KarmicDebtCalculator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 import { CrystalBallLogo } from '@/components/CrystalBallLogo'
-import { BookOpen, Sparkle, Star, ArrowsClockwise, Heart, ClockCounterClockwise, Infinity } from '@phosphor-icons/react'
+import { BookOpen, Sparkle, Star, ArrowsClockwise, Heart, ClockCounterClockwise, Infinity, Scales } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { DiagnosticTool } from '@/components/DiagnosticTool'
 import { TroubleshootingWizard } from '@/components/TroubleshootingWizard'
@@ -24,7 +25,7 @@ function App() {
   const [charts, setCharts] = useKV<ChartData[]>('astrology-charts', [])
   const [selectedChart, setSelectedChart] = useState<ChartData | null>(null)
   const [view, setView] = useState<'library' | 'chart'>('library')
-  const [activeTab, setActiveTab] = useState<'charts' | 'personal-horoscope' | 'zodiac-horoscope' | 'lovers-chart' | 'karmic-relationship' | 'past-life'>('charts')
+  const [activeTab, setActiveTab] = useState<'charts' | 'personal-horoscope' | 'zodiac-horoscope' | 'lovers-chart' | 'karmic-relationship' | 'past-life' | 'karmic-debt'>('charts')
   const [ephemerisError, setEphemerisError] = useState(false)
 
   useEffect(() => {
@@ -206,8 +207,8 @@ function App() {
 
       <main className="container mx-auto px-6 py-12">
         {view === 'library' ? (
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'charts' | 'personal-horoscope' | 'zodiac-horoscope' | 'lovers-chart' | 'karmic-relationship' | 'past-life')} className="space-y-6">
-            <TabsList className="grid w-full max-w-5xl mx-auto grid-cols-6">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'charts' | 'personal-horoscope' | 'zodiac-horoscope' | 'lovers-chart' | 'karmic-relationship' | 'past-life' | 'karmic-debt')} className="space-y-6">
+            <TabsList className="grid w-full max-w-7xl mx-auto grid-cols-7">
               <TabsTrigger value="charts" className="gap-2 text-white">
                 <BookOpen weight="bold" />
                 Chart Library
@@ -231,6 +232,10 @@ function App() {
               <TabsTrigger value="past-life" className="gap-2">
                 <ClockCounterClockwise weight="fill" />
                 Past Life
+              </TabsTrigger>
+              <TabsTrigger value="karmic-debt" className="gap-2">
+                <Scales weight="fill" />
+                Karmic Debt
               </TabsTrigger>
             </TabsList>
 
@@ -271,6 +276,21 @@ function App() {
 
             <TabsContent value="past-life">
               <PastLifeChart />
+            </TabsContent>
+
+            <TabsContent value="karmic-debt">
+              {charts && charts.length > 0 ? (
+                <KarmicDebtCalculator charts={charts} />
+              ) : (
+                <div className="text-center py-20">
+                  <p className="text-muted-foreground mb-4">
+                    You need to create a natal chart first to calculate karmic debts.
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Switch to the Chart Library tab and generate your first chart.
+                  </p>
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         ) : selectedChart ? (
