@@ -34,6 +34,13 @@ This is a sophisticated tool requiring astronomical calculations, data visualiza
 - Progression: Horoscope tab → Select timeframe (daily/weekly/monthly) → For personal: Calculate current transits → Generate button → AI analyzes transit aspects → Display reading | For zodiac: Select sign → Generate button → AI creates general forecast → Display reading
 - Success criteria: Personal horoscopes consider current Sun/Moon positions and significant transit aspects to natal planets; Zodiac horoscopes provide general guidance for all 12 signs with sign selector; Both include practical guidance for emotions/relationships/work/growth; Display includes current date and timeframe badge; Allows regeneration for fresh perspectives; Separate tabs for personalized vs general horoscopes
 
+**Lover's Compatibility Chart (Synastry Analysis)**
+- Functionality: Compare two saved natal charts to analyze romantic compatibility through synastry aspects, calculating compatibility scores across multiple dimensions (core connection, romantic attraction, communication, passion, long-term potential)
+- Purpose: Enables relationship astrology readings by revealing how two individuals' planetary positions interact, highlighting areas of harmony and challenge in romantic partnerships
+- Trigger: User navigates to "Compatibility" tab and selects two different saved charts from dropdowns
+- Progression: Compatibility tab → Select first person → Select second person → Generate compatibility report → Calculate synastry aspects → Display overall compatibility score → Show breakdown by category with scores and descriptions → List planetary aspects with interpretations
+- Success criteria: Calculates inter-chart aspects between major planets (Sun, Moon, Mercury, Venus, Mars, Jupiter, Saturn); Provides overall compatibility percentage; Shows category breakdowns with visual progress bars; Displays harmonious/challenging/intense aspect classifications; Color-coded scores (green for high, yellow for moderate, orange for low); Lists top 12 most significant aspects with orbs; Requires at least 2 saved charts in library to function
+
 **Chart Library Management**
 - Functionality: Save generated charts with client names and notes, view all saved charts, search and filter charts
 - Purpose: Enables astrologers to build a client database for ongoing readings and reference
