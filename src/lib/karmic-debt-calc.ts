@@ -82,10 +82,10 @@ function analyzeKarmicDebtNumbers(karmicNumbers: number[]): NumerologyDebt[] {
   if (karmicNumbers.includes(13)) {
     debts.push({
       debtNumber: 'Karmic Debt 13',
-      area: 'Laziness & Superficiality',
-      description: 'The karmic debt 13 represents past life patterns of taking shortcuts, avoiding hard work, and manipulating others to do your work for you.',
-      pastLifePattern: 'In previous incarnations, you may have been self-centered, lazy, or unwilling to complete tasks. You sought the easy way out and let others carry your burdens.',
-      resolution: 'Focus on discipline, commitment, and completing what you start. Transform obstacles into opportunities for growth. Develop a strong work ethic and reliability.',
+      area: 'Discipline, Work Ethic & Following Through',
+      description: 'The karmic debt 13 represents past life patterns of avoiding hard work, taking shortcuts, and leaving tasks incomplete. In previous incarnations, you manipulated others to carry your responsibilities, abandoned projects when they became difficult, or used charm and excuses to evade real effort. This number combines the transformative power of 13 (1+3=4), demanding you build the solid foundation (4) that you neglected before. You may find yourself facing repeated obstacles that force you to work harder than others, as the universe ensures you develop the discipline you previously avoided.',
+      pastLifePattern: 'You lived multiple lives where you chose the path of least resistance, relying on others\' labor while taking credit for their work. You may have been someone who started many ventures but finished none, or who used superficial charm to avoid depth and commitment. You accumulated karmic debt by wasting opportunities for growth, by being unreliable when others depended on you, and by prioritizing immediate comfort over long-term development. Your soul avoided learning patience, persistence, and the satisfaction of earned achievement.',
+      resolution: 'Your path to freedom requires developing unwavering discipline and completing everything you begin, no matter how small. Start with daily routines: make your bed, finish meals before starting new activities, complete work projects before their deadlines. When obstacles arise, recognize them as karmic tests - push through rather than around them. Practice the "finish line principle": commit publicly to goals to hold yourself accountable. Transform your relationship with work from burden to meditation. Keep detailed records of completed tasks to track your progress. Apologize and make amends when you\'ve let others down. Most importantly, take pride in honest effort rather than clever shortcuts. Over time, you\'ll notice obstacles decreasing as your karmic debt reduces.',
       severity: 'high'
     })
   }
@@ -93,10 +93,10 @@ function analyzeKarmicDebtNumbers(karmicNumbers: number[]): NumerologyDebt[] {
   if (karmicNumbers.includes(14)) {
     debts.push({
       debtNumber: 'Karmic Debt 14',
-      area: 'Freedom & Commitment',
-      description: 'The karmic debt 14 indicates past life abuse of freedom, including substance abuse, sexual excess, or reckless behavior that harmed yourself and others.',
-      pastLifePattern: 'You may have lived lives focused on immediate gratification, sensory pleasures, and personal freedom at the expense of responsibility and consideration for others.',
-      resolution: 'Learn moderation in all things. Develop self-discipline and healthy boundaries. Use your freedom constructively to help others. Balance pleasure with responsibility.',
+      area: 'Freedom, Moderation & Responsible Pleasure',
+      description: 'The karmic debt 14 signals past life abuse of personal freedom and the five senses. You lived lifetimes dominated by hedonism, addiction, reckless behavior, and sensory excess that harmed both yourself and innocent others. This may have manifested as substance dependencies, sexual exploitation, gambling, gluttony, or any form of overindulgence that destroyed relationships and opportunities. The number 14 reduces to 5 (1+4=5), the vibration of freedom and change, but karmic 14 teaches that true freedom only comes through self-mastery. You\'ll face constant temptations in this life - alcohol, drugs, food, sex, shopping, technology - and your soul\'s evolution depends on learning healthy boundaries with all pleasurable experiences.',
+      pastLifePattern: 'In past incarnations, you may have been a merchant who cheated customers, a person who abandoned families for selfish pursuits, or someone whose addictions caused suffering to dependents. You prioritized instant gratification over long-term wellbeing, believing your freedom was more important than others\' safety. You may have spread diseases, financial ruin, or emotional devastation through your reckless choices. The pattern repeated across multiple lifetimes because you refused to learn moderation, always believing "this time will be different" while making the same destructive choices. Your soul now carries the accumulated pain you caused others and yourself.',
+      resolution: 'Healing karmic debt 14 requires radical honesty about your relationship with pleasure and freedom. Begin by identifying your "gateway" indulgences - those seemingly innocent pleasures that lead to excess (one drink becomes five, one episode becomes all night). Establish firm, non-negotiable boundaries: no alcohol on weeknights, technology curfews, budget limits on non-essentials. Practice delayed gratification daily - wait 24 hours before purchases, fast from a favorite food weekly, build "boredom tolerance." When temptation strikes, ask: "Who will this harm?" Remember that others depend on your stability. Join support groups if addictive patterns exist. Replace compulsive behaviors with constructive ones: exercise, creative projects, service work. Document your journey to see progress. Most crucially, redefine freedom not as "doing whatever I want" but as "having the power to choose what serves my highest good." True liberation comes from mastery over impulses, not surrender to them.',
       severity: 'critical'
     })
   }
@@ -104,10 +104,10 @@ function analyzeKarmicDebtNumbers(karmicNumbers: number[]): NumerologyDebt[] {
   if (karmicNumbers.includes(16)) {
     debts.push({
       debtNumber: 'Karmic Debt 16',
-      area: 'Ego & Relationships',
-      description: 'The karmic debt 16 reflects a fall from grace due to ego, pride, and selfishness in relationships. This is about learning humility through loss.',
-      pastLifePattern: 'In past lives, you may have destroyed relationships through arrogance, infidelity, or putting yourself above others. You may have used your charisma or position to manipulate.',
-      resolution: 'Cultivate genuine humility and empathy. Rebuild trust through consistent, honest behavior. Accept that losses are teaching tools. Put others\' needs alongside your own.',
+      area: 'Ego, Humility & Authentic Relationships',
+      description: 'The karmic debt 16 is considered the most challenging, representing a "fall from grace" caused by ego, pride, and misuse of love. In past lives, you built an inflated self-image, possibly achieving positions of power, beauty, or status that you used to dominate, betray, or manipulate others in intimate relationships. This number often manifests as sudden, unexpected losses in this lifetime - the tower card moment where everything built on false foundations crumbles. The 16 reduces to 7 (1+6=7), the spiritual seeker, indicating that loss of external validation forces you to find internal truth and genuine humility. Relationships may repeatedly end dramatically, teaching you that love cannot be controlled or possessed.',
+      pastLifePattern: 'You may have been unfaithful to devoted partners, used your attractiveness or position to seduce and abandon others, or destroyed families through selfish choices. Perhaps you were royalty who abused privilege, a religious leader who betrayed vows, or a charismatic figure who left emotional wreckage in your wake. You placed yourself above others, believing rules didn\'t apply to you. You may have publicly humiliated those who loved you, broken sacred bonds for momentary pleasure, or used people as stepping stones to higher status. The common thread: you valued your ego\'s desires over others\' hearts and wellbeing, accumulating immense karmic debt through intimate betrayals.',
+      resolution: 'Healing karmic debt 16 requires complete ego dissolution and rebuilding yourself on authentic foundations. Expect this lifetime to humble you through loss - relationships ending, career setbacks, public embarrassments - and understand these are corrections, not punishments. When loss comes, resist blame and victimhood. Instead, ask: "What is my ego attached to that needs releasing?" Practice radical honesty in all relationships, even when it makes you look bad. Apologize sincerely for past wrongs without justification. Develop genuine empathy by volunteering with vulnerable populations. In relationships, practice daily acts of humble service: making coffee, listening without interrupting, acknowledging others\' contributions. Catch yourself when positioning yourself above others and immediately course-correct. Study spiritual traditions emphasizing egolessness: Buddhism, Sufi mysticism, Christian humility. Journal on the difference between healthy self-esteem and ego inflation. Accept that rebuilding trust takes years of consistent integrity. The ultimate lesson: true greatness comes from uplifting others, not standing on their shoulders. When you can celebrate others\' successes more than your own, you\'re healing.',
       severity: 'critical'
     })
   }
@@ -115,10 +115,10 @@ function analyzeKarmicDebtNumbers(karmicNumbers: number[]): NumerologyDebt[] {
   if (karmicNumbers.includes(19)) {
     debts.push({
       debtNumber: 'Karmic Debt 19',
-      area: 'Power & Independence',
-      description: 'The karmic debt 19 stems from misuse of power and refusing to help others. You may have been a tyrant, oppressor, or someone who abused authority.',
-      pastLifePattern: 'Past lives involved wielding power selfishly, refusing assistance to those in need, or demanding others serve you without reciprocity.',
-      resolution: 'Learn to serve others selflessly. Share your power and resources. Develop independence without arrogance. Help others without expecting return.',
+      area: 'Power, Service & Interdependence',
+      description: 'The karmic debt 19 stems from past life misuse of power and stubborn refusal to cooperate with or assist others. In previous incarnations, you wielded authority selfishly, ruled as a tyrant, or accumulated resources while ignoring others\' suffering. This number indicates you learned to be completely self-sufficient but forgot that humanity thrives through mutual support and compassion. The 19 reduces to 1 (1+9=10=1), the number of independence and leadership, but karmic 19 teaches that true leaders serve rather than dominate. You may struggle with both asking for help and offering it, feeling that any dependence is weakness. This lifetime forces you to learn that strength includes vulnerability and that power is meant to be shared for the collective good.',
+      pastLifePattern: 'You may have been a ruler who hoarded wealth while subjects starved, a business owner who exploited workers, or a warrior who conquered without mercy. Perhaps you were someone who achieved great self-sufficiency - a hermit, a wealthy merchant, an isolated landowner - but turned away those seeking assistance, believing they should "help themselves" as you did. You may have refused to acknowledge your own privileges, claiming all success was purely self-made while ignoring those who supported your rise. You lorded your accomplishments over others, using your power to keep people subordinate rather than empowering them. The pattern: you took from the community but refused to give back, accumulating karmic debt through selfish independence.',
+      resolution: 'Healing karmic debt 19 requires learning service, cooperation, and humble interdependence. Begin by acknowledging every person who has helped you reach your current position - write thank you letters to teachers, mentors, family members, and even service workers who make your life possible. Practice asking for help with small things daily, even when you could do it yourself - this builds the humility your soul needs. Volunteer regularly in service roles where you help others without recognition: food banks, tutoring, elder care. When you achieve success, immediately ask "Who can I lift up with this?" and take concrete action. In leadership positions, focus on empowering others rather than maintaining control - delegate, train, celebrate team wins over personal glory. Practice generosity without keeping score: anonymous donations, helping without being asked, giving more than is comfortable. Notice when you feel superior to those needing help and transform that judgment into compassion. Study servant leadership models and interdependence philosophies. Remember: the same creative force flows through all beings. Your power is not "yours" but life expressing through you, meant to be shared freely. When you can receive help gracefully and give it generously, you balance this karmic debt.',
       severity: 'high'
     })
   }
@@ -367,29 +367,43 @@ function generateResolutionPaths(
 
 function generateActionsForNumerology(debt: NumerologyDebt): string[] {
   const actionMap: Record<string, string[]> = {
-    'Laziness & Superficiality': [
-      'Complete one task fully before starting another',
-      'Keep commitments no matter how small',
-      'Face obstacles directly instead of avoiding them',
-      'Take responsibility for your own work and decisions'
+    'Discipline, Work Ethic & Following Through': [
+      'Create a daily "completion log" where you record every task finished, no matter how small - build evidence of your reliability',
+      'Use the "two-minute rule": if something takes less than two minutes, do it immediately rather than postponing',
+      'When starting new projects, publicly commit to a completion date and accountability partner',
+      'Set a timer and work for focused 25-minute sessions (Pomodoro Technique) to build sustained effort muscles',
+      'Practice finishing books, meals, conversations, and activities completely before moving to the next',
+      'When you encounter obstacles, pause and say "This is my karmic test" - then push through instead of around',
+      'Apologize and make amends to anyone you\'ve let down through incompletions or unreliability'
     ],
-    'Freedom & Commitment': [
-      'Practice moderation in pleasure-seeking activities',
-      'Establish healthy routines and stick to them',
-      'Consider consequences before acting on impulses',
-      'Balance personal freedom with responsibility to others'
+    'Freedom, Moderation & Responsible Pleasure': [
+      'Identify your three biggest temptations and create non-negotiable boundaries (e.g., no alcohol Monday-Thursday, $50 monthly discretionary spending limit)',
+      'Practice the 24-hour rule: wait a full day before indulging any impulse purchase, binge activity, or sensory craving',
+      'Join a support group (AA, DA, SA, OA, etc.) even if you don\'t think you have an "addiction" - learn from others working on moderation',
+      'Replace one compulsive behavior weekly with a constructive alternative: meditation instead of scrolling, exercise instead of drinking, creative work instead of shopping',
+      'Before indulging, ask yourself: "Who depends on my stability? How will tomorrow-me feel about today-me\'s choice?"',
+      'Build "boredom tolerance" by sitting quietly for 10 minutes daily without phones, food, or entertainment',
+      'Keep a consequences journal: record every time overindulgence caused harm (financial, relational, health, time) to build awareness'
     ],
-    'Ego & Relationships': [
-      'Practice genuine humility in daily interactions',
-      'Apologize sincerely when you\'re wrong',
-      'Listen to understand rather than to respond',
-      'Put others\' needs on equal footing with your own'
+    'Ego, Humility & Authentic Relationships': [
+      'Practice the "credit others first" rule: in any success story, name three people who helped before mentioning your contribution',
+      'When you catch yourself positioning yourself above others, immediately perform an act of humble service for that person',
+      'Apologize sincerely to anyone you\'ve betrayed or hurt, taking full responsibility without justifications or "but you also..." statements',
+      'In conversations, track your "I/me" statements versus questions about others - aim for 2:1 ratio of questions to self-references',
+      'Volunteer in roles where you serve people you might normally consider "beneath you" - this dissolves ego barriers',
+      'When relationships end, ask "What did my ego need that my heart didn\'t?" and journal on the difference',
+      'Study and practice Loving-Kindness meditation, specifically directing compassion toward people you feel superior to',
+      'Accept compliments with simple "thank you" rather than agreement or false modesty - neither inflating nor deflating'
     ],
-    'Power & Independence': [
-      'Volunteer or help others without seeking recognition',
-      'Share your resources and knowledge freely',
-      'Ask for help when needed - interdependence is strength',
-      'Empower others rather than dominating them'
+    'Power, Service & Interdependence': [
+      'Write thank-you letters to 10 people who helped you reach your current position, acknowledging how their support made your success possible',
+      'Practice asking for help with small things daily, even when you could easily do it yourself - this builds humility and connection',
+      'Volunteer 4-8 hours monthly in direct service roles: food banks, tutoring, elder care, crisis hotlines - serve without recognition',
+      'When you achieve success, immediately identify three people you can "bring up with you" and take concrete supportive action',
+      'Create a personal giving policy: donate X% of income/time before calculating your own needs - prioritize generosity',
+      'Notice when you feel superior to people asking for help; immediately reframe as "the same life force flows through both of us"',
+      'In leadership positions, measure success by team members empowered rather than personal accomplishments',
+      'Practice receiving help graciously: when someone offers assistance, say "yes, thank you" instead of "I\'ve got it"'
     ]
   }
   
@@ -404,38 +418,63 @@ function generateActionsForNumerology(debt: NumerologyDebt): string[] {
 function generateActionsForAstrology(debt: AstrologicalDebt): string[] {
   if (debt.indicator.includes('South Node')) {
     return [
-      'Identify when you\'re falling back into comfortable old patterns',
-      'Consciously develop opposite sign qualities (North Node)',
-      'Notice what triggers regression to South Node behavior',
-      'Celebrate small steps toward your North Node growth'
+      'Keep a "pattern journal" noting when you fall back into comfortable South Node behaviors - awareness is the first step to change',
+      'Study your North Node sign and house thoroughly - read books, consult astrologers, understand the qualities you\'re here to develop',
+      'Set monthly "North Node challenges" - small experiments with the opposite energy (if South Node is in solitary Capricorn, try group creative activities)',
+      'Notice what triggers regression: stress, fear, relationships? Develop alternative responses aligned with your North Node',
+      'Celebrate progress toward North Node qualities, even tiny steps - this builds momentum for soul growth',
+      'Create affirmations embodying North Node energy and speak them daily',
+      'Find mentors or role models who embody your North Node qualities - learn by observation and conversation'
     ]
   } else if (debt.indicator.includes('Saturn')) {
     return [
-      'Accept that mastery takes time in this area',
-      'Work consistently without expecting quick results',
-      'View restrictions as teachers rather than enemies',
-      'Build slowly and solidly rather than seeking shortcuts'
+      'Reframe Saturn\'s challenges as your "mastery curriculum" - this is where you\'re becoming an expert through lived experience',
+      'Set long-term goals (5-10 years) in this house/sign area - Saturn rewards patience and consistent effort over time',
+      'When restrictions appear, ask "What is this teaching me?" rather than "Why is this happening to me?"',
+      'Study the work of masters in this area - if Saturn is in your career house, study biographies of people who achieved lasting success',
+      'Build slowly and thoroughly: if Saturn is in your financial house, create detailed budgets and investment plans; in relationships, move at a measured pace',
+      'Track your progress annually - Saturn works incrementally, and you need to see how far you\'ve come to stay motivated',
+      'Seek mentorship from someone older or more experienced in this Saturn area - you\'re meant to learn from tradition and wisdom'
     ]
   } else if (debt.indicator.includes('Pluto')) {
     return [
-      'Surrender control and trust the transformation process',
-      'Face your shadows and hidden aspects directly',
-      'Release attachments that no longer serve growth',
-      'Embrace endings as necessary for new beginnings'
+      'Accept that transformation in this area is non-negotiable - resistance creates suffering, surrender creates metamorphosis',
+      'Work with a therapist, counselor, or depth psychologist to explore your shadow aspects safely',
+      'Practice "ego death" exercises: meditation on impermanence, contemplating "Who am I without [this identity/possession/relationship]?"',
+      'When crisis or loss occurs in this area, trust it\'s clearing space for something more authentic - don\'t rush to fill the void',
+      'Study psychology, especially shadow work and transformation processes - understanding Pluto intellectually helps you navigate it emotionally',
+      'Release attachments consciously before they\'re ripped away: regularly give away possessions, practice non-attachment meditations',
+      'Embrace endings as sacred: create rituals for closure, honor what was while releasing what no longer serves'
     ]
   } else if (debt.indicator.includes('Chiron')) {
     return [
-      'Acknowledge your wound without shame',
-      'Seek healing through therapy, counseling, or spiritual work',
-      'Use your healing journey to help others with similar pain',
-      'Transform your wound into your greatest gift to the world'
+      'Acknowledge your wound openly and without shame - write about it, talk about it with trusted others, honor that this pain is real',
+      'Pursue professional healing: therapy, somatic work, energy healing, or whatever modality resonates with your wound type',
+      'When healed enough, volunteer or work in areas related to your wound - help others struggling with similar pain',
+      'Study the archetype of the "wounded healer" - understand that your greatest pain becomes your greatest gift',
+      'Create art, writing, or other expressions from your wound - transformation happens when we give voice to our pain',
+      'Join support groups where others share your type of wound - mutual healing is powerful and reminds you you\'re not alone',
+      'Develop compassion practices specifically for the part of you that carries this wound - self-compassion accelerates healing'
+    ]
+  } else if (debt.indicator.includes('Retrograde')) {
+    return [
+      'Honor your need for extra processing time - don\'t let others rush you into decisions or actions in retrograde planet areas',
+      'Keep detailed journals in areas ruled by your retrograde planets - you\'re here to deeply understand these energies',
+      'Embrace revision and reworking as your gift, not a flaw - you see nuances others miss and create more thoroughly',
+      'Study past lives or reincarnation philosophy - your multiple retrogrades suggest you\'re an old soul completing unfinished business',
+      'In areas ruled by retrograde planets, expect to revisit themes multiple times before mastery - this is by design, not failure',
+      'Develop strong internal validation in retrograde areas - you process differently than the mainstream and must trust your unique timing',
+      'Consider that your retrograde planets may indicate wisdom from past lives - meditate on what you already know innately'
     ]
   } else {
     return [
-      'Study this placement in depth',
-      'Journal about how it manifests in your life',
-      'Work with an astrologer for personalized guidance',
-      'Be patient with karmic timing and lessons'
+      'Study this placement deeply through books, astrology consultations, and online resources - understanding creates mastery',
+      'Journal weekly on how this placement manifests in your current life circumstances',
+      'Work with a professional astrologer for personalized guidance on integrating this karmic indicator',
+      'Connect with others who share this placement to compare experiences and coping strategies',
+      'Be patient with karmic timing - soul lessons unfold across years and decades, not days and weeks',
+      'Notice patterns across your life related to this placement - karmic themes repeat until learned',
+      'Practice self-compassion - you\'re working on soul-level growth that transcends this single lifetime'
     ]
   }
 }
