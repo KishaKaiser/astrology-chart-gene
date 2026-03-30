@@ -394,52 +394,54 @@ export function DiagnosticTool() {
         <Separator />
 
         <ScrollArea className="h-[50vh]">
-          {isRunning ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="text-center space-y-3">
-                <ArrowsClockwise className="animate-spin mx-auto text-accent" size={32} />
-                <p className="text-sm text-white">Running diagnostics...</p>
+          <div className="pr-4">
+            {isRunning ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center space-y-3">
+                  <ArrowsClockwise className="animate-spin mx-auto text-accent" size={32} />
+                  <p className="text-sm text-white">Running diagnostics...</p>
+                </div>
               </div>
-            </div>
-          ) : results.length === 0 ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="text-center space-y-3">
-                <Wrench className="mx-auto text-muted-foreground" size={32} />
-                <p className="text-sm text-white">Click "Run Diagnostics" to begin</p>
+            ) : results.length === 0 ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center space-y-3">
+                  <Wrench className="mx-auto text-muted-foreground" size={32} />
+                  <p className="text-sm text-white">Click "Run Diagnostics" to begin</p>
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {Object.entries(groupedResults).map(([category, categoryResults]) => (
-                <Card key={category} className="border-border/50">
-                  <CardHeader>
-                    <CardTitle className="text-lg text-white">{category}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {categoryResults.map((result, idx) => (
-                      <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
-                        <div className="mt-0.5">
-                          {getStatusIcon(result.status)}
-                        </div>
-                        <div className="flex-1 space-y-1">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="font-medium text-sm text-white">{result.name}</span>
-                            {getStatusBadge(result.status)}
+            ) : (
+              <div className="space-y-6">
+                {Object.entries(groupedResults).map(([category, categoryResults]) => (
+                  <Card key={category} className="border-border/50">
+                    <CardHeader>
+                      <CardTitle className="text-lg text-white">{category}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {categoryResults.map((result, idx) => (
+                        <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+                          <div className="mt-0.5">
+                            {getStatusIcon(result.status)}
                           </div>
-                          <p className="text-sm text-white">{result.message}</p>
-                          {result.details && (
-                            <pre className="text-xs text-white bg-background/50 p-2 rounded mt-2 overflow-x-auto font-mono">
-                              {result.details}
-                            </pre>
-                          )}
+                          <div className="flex-1 space-y-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-medium text-sm text-white">{result.name}</span>
+                              {getStatusBadge(result.status)}
+                            </div>
+                            <p className="text-sm text-white">{result.message}</p>
+                            {result.details && (
+                              <pre className="text-xs text-white bg-background/50 p-2 rounded mt-2 overflow-x-auto font-mono">
+                                {result.details}
+                              </pre>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+                      ))}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
         </ScrollArea>
       </DialogContent>
     </Dialog>
