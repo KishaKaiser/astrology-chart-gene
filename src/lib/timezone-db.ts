@@ -21,7 +21,7 @@ export const TIMEZONE_DATABASE: Record<string, TimezoneData> = {
     dstOffset: '-04:00',
     dstRules: 'Second Sunday in March to First Sunday in November',
     countries: ['US', 'CA'],
-    bounds: { minLat: 24.5, maxLat: 47.5, minLon: -85, maxLon: -67 }
+    bounds: { minLat: 24.5, maxLat: 47.5, minLon: -87.5, maxLon: -67 }
   },
   'America/Chicago': {
     name: 'Central Time',
@@ -30,7 +30,7 @@ export const TIMEZONE_DATABASE: Record<string, TimezoneData> = {
     dstOffset: '-05:00',
     dstRules: 'Second Sunday in March to First Sunday in November',
     countries: ['US', 'CA', 'MX'],
-    bounds: { minLat: 25, maxLat: 49, minLon: -106, maxLon: -85 }
+    bounds: { minLat: 25, maxLat: 49, minLon: -106, maxLon: -87.5 }
   },
   'America/Denver': {
     name: 'Mountain Time',
