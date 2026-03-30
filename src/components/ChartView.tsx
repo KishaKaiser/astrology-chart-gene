@@ -322,7 +322,7 @@ Write each section with depth and nuance. Be specific about how energies manifes
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Timezone:</span>
-                  <span className="font-mono">{chart.timezone}</span>
+                  <span className="font-mono">UTC{chart.timezone}</span>
                 </div>
               </div>
             </div>
