@@ -31,8 +31,32 @@ function julianDay(date: Date): number {
 function calculatePlanetPosition(jd: number, planet: number): { longitude: number; latitude: number; distance: number } {
   const T = (jd - 2451545.0) / 36525
   
+  if (planet === 0) {
+    const L0 = 280.46646 + 36000.76983 * T + 0.0003032 * T * T
+    const M = 357.52911 + 35999.05029 * T - 0.0001537 * T * T
+    const M_rad = M * DEG_TO_RAD
+    
+    const C = (1.914602 - 0.004817 * T - 0.000014 * T * T) * Math.sin(M_rad) +
+              (0.019993 - 0.000101 * T) * Math.sin(2 * M_rad) +
+              0.000289 * Math.sin(3 * M_rad)
+    
+    const trueLongitude = L0 + C
+    const omega = 125.04 - 1934.136 * T
+    const apparentLongitude = trueLongitude - 0.00569 - 0.00478 * Math.sin(omega * DEG_TO_RAD)
+    
+    let longitude = apparentLongitude % 360
+    if (longitude < 0) longitude += 360
+    
+    console.log(`[Sun Calculation] JD: ${jd}, T: ${T.toFixed(6)}, M: ${M.toFixed(4)}°, C: ${C.toFixed(4)}°, True Long: ${trueLongitude.toFixed(4)}°, Final: ${longitude.toFixed(4)}°`)
+    
+    return {
+      longitude,
+      latitude: 0,
+      distance: 1.0
+    }
+  }
+  
   const planetData: Record<number, { L: number[]; P: number[]; e: number[]; a: number; i: number; N: number[] }> = {
-    0: { L: [280.4665, 36000.7698], P: [0, 0], e: [0, 0], a: 0, i: 0, N: [0, 0] },
     1: { L: [218.3164, 481267.8813], P: [83.3532, 4069.0137], e: [0.0549, -0.0001], a: 384400, i: 5.145, N: [125.0445, -1934.1363] },
     2: { L: [252.2509, 149472.6746], P: [77.4561, 1.5550], e: [0.2056, -0.0006], a: 0.3871, i: 7.005, N: [48.3313, 1.1861] },
     3: { L: [181.9798, 58517.8156], P: [131.5637, 1.4022], e: [0.0068, -0.0005], a: 0.7233, i: 3.395, N: [76.6799, 0.9011] },
@@ -57,7 +81,13 @@ function calculatePlanetPosition(jd: number, planet: number): { longitude: numbe
   const M = (L - P) % 360
   const M_rad = M * DEG_TO_RAD
   
-  const E = M + (e * RAD_TO_DEG * Math.sin(M_rad) * (1 + e * Math.cos(M_rad)))
+  let E = M
+  for (let iter = 0; iter < 10; iter++) {
+    const E_rad = E * DEG_TO_RAD
+    const deltaE = (E - e * RAD_TO_DEG * Math.sin(E_rad) - M) / (1 - e * Math.cos(E_rad))
+    E -= deltaE
+    if (Math.abs(deltaE) < 0.0001) break
+  }
   const E_rad = E * DEG_TO_RAD
   
   const xv = data.a * (Math.cos(E_rad) - e)
