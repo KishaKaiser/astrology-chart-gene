@@ -393,7 +393,7 @@ export function DiagnosticTool() {
 
         <Separator />
 
-        <ScrollArea className="h-[50vh] pr-4 -mr-4">
+        <ScrollArea className="h-[50vh]">
           {isRunning ? (
             <div className="flex items-center justify-center py-12">
               <div className="text-center space-y-3">
@@ -409,7 +409,7 @@ export function DiagnosticTool() {
               </div>
             </div>
           ) : (
-            <div className="space-y-6 pr-4">
+            <div className="space-y-6">
               {Object.entries(groupedResults).map(([category, categoryResults]) => (
                 <Card key={category} className="border-border/50">
                   <CardHeader>
