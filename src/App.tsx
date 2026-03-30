@@ -20,6 +20,7 @@ import { BookOpen, Sparkle, Star, ArrowsClockwise, Heart, ClockCounterClockwise,
 import { Button } from '@/components/ui/button'
 import { DiagnosticTool } from '@/components/DiagnosticTool'
 import { TroubleshootingWizard } from '@/components/TroubleshootingWizard'
+import { TimezoneTestTool } from '@/components/TimezoneTestTool'
 
 function App() {
   const [charts, setCharts] = useKV<ChartData[]>('astrology-charts', [])
@@ -190,6 +191,7 @@ function App() {
             </motion.div>
             
             <div className="flex items-center gap-3">
+              <TimezoneTestTool />
               <TroubleshootingWizard />
               <DiagnosticTool />
               {ephemerisError && (
