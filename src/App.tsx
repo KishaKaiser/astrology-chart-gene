@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button'
 import { DiagnosticTool } from '@/components/DiagnosticTool'
 import { TroubleshootingWizard } from '@/components/TroubleshootingWizard'
 import { TimezoneTestTool } from '@/components/TimezoneTestTool'
+import { SunSignTest } from '@/components/SunSignTest'
 
 function App() {
   const [charts, setCharts] = useKV<ChartData[]>('astrology-charts', [])
@@ -212,6 +213,8 @@ function App() {
       </header>
 
       <main className="container mx-auto px-6 py-12">
+        <SunSignTest />
+        
         {view === 'library' ? (
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'charts' | 'personal-horoscope' | 'zodiac-horoscope' | 'lovers-chart' | 'karmic-relationship' | 'past-life' | 'karmic-debt')} className="space-y-6">
             <TabsList className="grid w-full max-w-7xl mx-auto grid-cols-7">
