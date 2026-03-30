@@ -19,10 +19,11 @@
 ## How to Test
 1. Open the application
 2. A test component will be visible at the top of the page
-3. Click "Run Sun Sign Test" button
-4. Check the results displayed on screen
+3. The test will **automatically run** within 1 second of page load
+4. Check the results displayed on screen - look for the badge showing "Virgo ✓" (success) or the sign name with "✗" (failure)
 5. Check the browser console (F12) for detailed calculation logs
 6. Verify the Sun sign shows as **Virgo** in the test results
+7. You can re-run the test anytime by clicking "Re-run Sun Sign Test" button
 
 ## Alternative Manual Test
 1. Click "Generate Chart" button in the header
