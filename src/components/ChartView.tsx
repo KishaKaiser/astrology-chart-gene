@@ -248,14 +248,14 @@ Write each section with depth and nuance. Be specific about how energies manifes
     <div className="space-y-6">
       <div className="print-only" style={{ display: 'none' }}>
         <div style={{ textAlign: 'center', paddingTop: '20px', paddingBottom: '30px', backgroundColor: '#441568', color: 'white' }}>
-          <img src={logoImage} alt="Logo" style={{ width: '80px', height: '80px', margin: '0 auto 15px', display: 'block' }} />
           <h1 className="chart-title" style={{ fontSize: '48px', marginBottom: '10px' }}>Psychic Link Charts</h1>
           <p style={{ fontSize: '14px', marginBottom: '0' }}>What Do The Stars Say About You?</p>
         </div>
         <div style={{ textAlign: 'center', paddingTop: '20px', paddingBottom: '10px' }}>
           <h2 className="client-name" style={{ fontSize: '36px', marginBottom: '10px', color: '#441568' }}>{chart.name}</h2>
           <p style={{ fontSize: '13px', color: '#505050' }}>{chart.date} at {chart.time}</p>
-          <p style={{ fontSize: '13px', color: '#505050' }}>{chart.location}</p>
+          <p style={{ fontSize: '13px', color: '#505050', marginBottom: '15px' }}>{chart.location}</p>
+          <img src={logoImage} alt="Logo" style={{ width: '80px', height: '80px', margin: '0 auto', display: 'block' }} />
         </div>
       </div>
 

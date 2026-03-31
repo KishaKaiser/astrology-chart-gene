@@ -54,7 +54,7 @@ export const ChartWheel = forwardRef<SVGSVGElement, ChartWheelProps>(({ chart, t
         cx={center}
         cy={center}
         r={outerRadius}
-        fill="url(#chartBg)"
+        fill="transparent"
         stroke="oklch(0.78 0.15 85)"
         strokeWidth="2"
       />
@@ -147,7 +147,7 @@ export const ChartWheel = forwardRef<SVGSVGElement, ChartWheelProps>(({ chart, t
         cx={center}
         cy={center}
         r={innerRadius}
-        fill="oklch(0.15 0.08 270)"
+        fill="transparent"
         stroke="oklch(0.78 0.15 85)"
         strokeWidth="2"
       />

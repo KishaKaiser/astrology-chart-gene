@@ -83,16 +83,6 @@ export async function exportChartToPDF(
     
     yPos = 80
 
-    try {
-      const logoWidth = 40
-      const logoHeight = 40
-      pdf.addImage(logoImage, 'JPEG', (pageWidth - logoWidth) / 2, yPos, logoWidth, logoHeight)
-      yPos += logoHeight + 12
-    } catch (error) {
-      console.error('Error adding logo:', error)
-      yPos += 12
-    }
-
     pdf.setFont('times', 'italic')
     pdf.setFontSize(28)
     pdf.setTextColor(68, 21, 104)
@@ -105,6 +95,18 @@ export async function exportChartToPDF(
     pdf.text(`${chart.date} at ${chart.time}`, pageWidth / 2, yPos, { align: 'center' })
     yPos += 6
     pdf.text(chart.location, pageWidth / 2, yPos, { align: 'center' })
+
+    yPos += 12
+
+    try {
+      const logoWidth = 40
+      const logoHeight = 40
+      pdf.addImage(logoImage, 'JPEG', (pageWidth - logoWidth) / 2, yPos, logoWidth, logoHeight)
+      yPos += logoHeight + 12
+    } catch (error) {
+      console.error('Error adding logo:', error)
+      yPos += 12
+    }
     yPos += 6
     pdf.setFontSize(9)
     pdf.setTextColor(120, 120, 120)
