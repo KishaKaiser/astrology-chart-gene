@@ -1,3 +1,4 @@
+import { forwardRef } from 'react'
 import { ChartData, TransitData, ZODIAC_SIGNS, ZODIAC_SYMBOLS, PLANET_SYMBOLS } from '@/lib/astrology-types'
 
 interface ChartWheelProps {
@@ -6,7 +7,7 @@ interface ChartWheelProps {
   size?: number
 }
 
-export function ChartWheel({ chart, transits, size = 500 }: ChartWheelProps) {
+export const ChartWheel = forwardRef<SVGSVGElement, ChartWheelProps>(({ chart, transits, size = 500 }, ref) => {
   const center = size / 2
   const outerRadius = size / 2 - 10
   const innerRadius = outerRadius * 0.35
@@ -35,6 +36,7 @@ export function ChartWheel({ chart, transits, size = 500 }: ChartWheelProps) {
 
   return (
     <svg
+      ref={ref}
       width={size}
       height={size}
       viewBox={`0 0 ${size} ${size}`}
@@ -287,4 +289,6 @@ export function ChartWheel({ chart, transits, size = 500 }: ChartWheelProps) {
       </text>
     </svg>
   )
-}
+})
+
+ChartWheel.displayName = 'ChartWheel'

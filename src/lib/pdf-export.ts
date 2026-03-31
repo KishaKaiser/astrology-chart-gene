@@ -97,9 +97,9 @@ export async function exportChartToPDF(
     })
 
     pdf.setFillColor(68, 21, 104)
-    pdf.rect(0, 0, pageWidth, 55, 'F')
+    pdf.rect(0, 0, pageWidth, 70, 'F')
 
-    yPos += 3
+    yPos += 8
     pdf.setFont('Corinthia', 'bold')
     pdf.setFontSize(48)
     pdf.setTextColor(255, 255, 255)
@@ -111,15 +111,16 @@ export async function exportChartToPDF(
     pdf.setTextColor(230, 230, 230)
     pdf.text('What Do The Stars Say About You?', pageWidth / 2, yPos, { align: 'center' })
     
-    yPos = 65
+    yPos = 80
 
     try {
-      const logoWidth = 50
-      const logoHeight = 50
+      const logoWidth = 40
+      const logoHeight = 40
       pdf.addImage(logoImage, 'JPEG', (pageWidth - logoWidth) / 2, yPos, logoWidth, logoHeight)
-      yPos += logoHeight + 10
+      yPos += logoHeight + 12
     } catch (error) {
       console.error('Error adding logo:', error)
+      yPos += 12
     }
 
     pdf.setFont('Birthstone', 'normal')
@@ -147,8 +148,8 @@ export async function exportChartToPDF(
       try {
         console.log('Starting chart wheel capture for PDF...')
         const svgClone = chartSvgElement.cloneNode(true) as SVGSVGElement
-        svgClone.setAttribute('width', '600')
-        svgClone.setAttribute('height', '600')
+        svgClone.setAttribute('width', '800')
+        svgClone.setAttribute('height', '800')
         
         const svgString = new XMLSerializer().serializeToString(svgClone)
         console.log('SVG serialized, length:', svgString.length)
@@ -160,12 +161,12 @@ export async function exportChartToPDF(
         await new Promise<void>((resolve, reject) => {
           img.onload = () => {
             console.log('SVG image loaded successfully')
-            canvas.width = 600
-            canvas.height = 600
+            canvas.width = 800
+            canvas.height = 800
             if (ctx) {
               ctx.fillStyle = '#0f0820'
               ctx.fillRect(0, 0, canvas.width, canvas.height)
-              ctx.drawImage(img, 0, 0, 600, 600)
+              ctx.drawImage(img, 0, 0, 800, 800)
             }
             resolve()
           }
@@ -173,8 +174,14 @@ export async function exportChartToPDF(
             console.error('SVG image load error:', e)
             reject(new Error('Failed to load SVG into image'))
           }
-          const encodedSvg = btoa(unescape(encodeURIComponent(svgString)))
-          img.src = 'data:image/svg+xml;base64,' + encodedSvg
+          
+          try {
+            const encodedSvg = btoa(unescape(encodeURIComponent(svgString)))
+            img.src = 'data:image/svg+xml;base64,' + encodedSvg
+          } catch (encodeError) {
+            console.error('SVG encoding error:', encodeError)
+            reject(encodeError)
+          }
         })
         
         const imgData = canvas.toDataURL('image/png')
@@ -191,6 +198,7 @@ export async function exportChartToPDF(
         yPos += imgHeight + 15
       } catch (error) {
         console.error('Error rendering chart wheel to PDF:', error)
+        console.error('Error details:', error instanceof Error ? error.message : String(error))
         
         pdf.setFillColor(250, 248, 253)
         pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 30, 2, 2, 'F')
@@ -198,7 +206,8 @@ export async function exportChartToPDF(
         pdf.setFontSize(10)
         pdf.setFont('helvetica', 'italic')
         pdf.setTextColor(120, 120, 120)
-        pdf.text('Chart wheel could not be rendered. Please use the print function instead.', pageWidth / 2, yPos + 15, { align: 'center' })
+        pdf.text('Chart wheel could not be rendered in PDF.', pageWidth / 2, yPos + 10, { align: 'center' })
+        pdf.text('Please use the print function for visual chart output.', pageWidth / 2, yPos + 18, { align: 'center' })
         yPos += 40
       }
     }
@@ -682,12 +691,41 @@ export async function exportChartToPDF(
       pdf.setFont('helvetica', 'normal')
       pdf.setTextColor(40, 40, 40)
       
-      const processedInterpretation = interpretation
+      const iconMap: { [key: string]: string } = {
+        '☉': '☀',  
+        '☽': '🌙',  
+        '☿': '☿',  
+        '♀': '♀',  
+        '♂': '♂',  
+        '♃': '♃',  
+        '♄': '♄',  
+        '♅': '♅',  
+        '♆': '♆',  
+        '♇': '♇',  
+        '⚸': '⚷',  
+        '♈': 'Aries',
+        '♉': 'Taurus',
+        '♊': 'Gemini',
+        '♋': 'Cancer',
+        '♌': 'Leo',
+        '♍': 'Virgo',
+        '♎': 'Libra',
+        '♏': 'Scorpio',
+        '♐': 'Sagittarius',
+        '♑': 'Capricorn',
+        '♒': 'Aquarius',
+        '♓': 'Pisces'
+      }
+      
+      let processedInterpretation = interpretation
         .replace(/^##\s+(.+)$/gm, '\n=SECTION_HEADER=$1')
         .replace(/^###\s+(.+)$/gm, '\n=SUBSECTION_HEADER=$1')
         .replace(/####\s+(.+)$/gm, '\n=MINOR_HEADER=$1')
-        .replace(/^[☉☽☿♀♂♃♄♅♆♇⚸]+\s*/gm, '')
-        .replace(/[♈♉♊♋♌♍♎♏♐♑♒♓]/g, '')
+      
+      Object.keys(iconMap).forEach(icon => {
+        const replacement = iconMap[icon]
+        processedInterpretation = processedInterpretation.replace(new RegExp(icon, 'g'), replacement)
+      })
       
       const interpretationLines = pdf.splitTextToSize(processedInterpretation, pageWidth - 2 * margin)
       interpretationLines.forEach((line: string) => {

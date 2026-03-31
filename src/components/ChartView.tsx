@@ -58,7 +58,8 @@ export function ChartView({ chart, onBack, onEdit, onUpdateChart }: ChartViewPro
   const handleExport = async (options: PDFExportOptions) => {
     toast.loading('Preparing PDF export...', { id: 'pdf-export' })
     try {
-      const svg = document.querySelector('svg')
+      const svg = svgRef.current
+      console.log('SVG element for export:', svg)
       await exportChartToPDF(chart, svg, interpretation, options)
       toast.success(
         interpretation 
@@ -67,7 +68,8 @@ export function ChartView({ chart, onBack, onEdit, onUpdateChart }: ChartViewPro
         { id: 'pdf-export', duration: 4000 }
       )
     } catch (error) {
-      toast.error('Failed to export PDF. Please try again.', { id: 'pdf-export' })
+      console.error('PDF export error in ChartView:', error)
+      toast.error(`Failed to export PDF: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: 'pdf-export' })
     }
   }
 
@@ -309,7 +311,7 @@ Write each section with depth and nuance. Be specific about how energies manifes
             </div>
           </CardHeader>
           <CardContent>
-            <ChartWheel chart={chart} transits={showTransits ? transits || undefined : undefined} />
+            <ChartWheel ref={svgRef} chart={chart} transits={showTransits ? transits || undefined : undefined} />
             {showTransits && transits && (
               <div className="mt-4 p-3 bg-muted/50 rounded-md border border-border">
                 <p className="text-xs text-muted-foreground text-center">
