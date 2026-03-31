@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { ChartData } from '@/lib/astrology-types'
 import { SynastryData, generateSynastryData, RelationshipType } from '@/lib/synastry-calc'
+import { analyzeSoulmateConnection, SoulmateAnalysis } from '@/lib/soulmate-detection'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -9,7 +10,7 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Heart, Sparkle, Fire, MagicWand, ArrowsClockwise, Users, Briefcase } from '@phosphor-icons/react'
+import { Heart, Sparkle, Fire, MagicWand, ArrowsClockwise, Users, Briefcase, Flame, StarFour, Infinity } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 
@@ -19,6 +20,7 @@ export function LoversChart() {
   const [person2Id, setPerson2Id] = useState<string>('')
   const [relationshipType, setRelationshipType] = useState<RelationshipType>('romantic')
   const [synastryData, setSynastryData] = useState<SynastryData | null>(null)
+  const [soulmateAnalysis, setSoulmateAnalysis] = useState<SoulmateAnalysis | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [aiInterpretation, setAiInterpretation] = useState<string>('')
   const [isGeneratingAI, setIsGeneratingAI] = useState(false)
@@ -48,6 +50,14 @@ export function LoversChart() {
       await new Promise(resolve => setTimeout(resolve, 500))
       const data = generateSynastryData(chart1, chart2, relationshipType)
       setSynastryData(data)
+      
+      if (relationshipType === 'romantic') {
+        const soulmate = analyzeSoulmateConnection(chart1, chart2, data.aspects)
+        setSoulmateAnalysis(soulmate)
+      } else {
+        setSoulmateAnalysis(null)
+      }
+      
       toast.success('Compatibility analysis complete!')
     } catch (error) {
       console.error('Synastry generation error:', error)
@@ -79,6 +89,19 @@ export function LoversChart() {
         .map(s => `${s.category}: ${s.score}%`)
         .join('\n')
 
+      let soulmateContext = ''
+      if (soulmateAnalysis && relationshipType === 'romantic') {
+        soulmateContext = `\n\nSOUL CONNECTION ANALYSIS:
+Connection Type: ${soulmateAnalysis.connectionType}
+Twin Flame Score: ${soulmateAnalysis.twinFlameScore}%
+Soulmate Score: ${soulmateAnalysis.soulmateScore}%
+
+Key Soul Indicators Found:
+${soulmateAnalysis.indicators.slice(0, 5).map(i => `- ${i.name}: ${i.description}`).join('\n')}
+
+Please acknowledge and incorporate these soul connection findings into your interpretation.`
+      }
+
       let promptText = ''
       
       if (relationshipType === 'romantic') {
@@ -100,17 +123,17 @@ Category Scores:
 ${scoresSummary}
 
 Key Planetary Aspects:
-${aspectsSummary}
+${aspectsSummary}${soulmateContext}
 
 Provide a comprehensive romantic compatibility interpretation that includes:
-1. An opening summary of their overall romantic dynamic (2-3 sentences)
+1. An opening summary of their overall romantic dynamic (2-3 sentences)${soulmateAnalysis && (soulmateAnalysis.isTwinFlame || soulmateAnalysis.isSoulmate) ? ' - Be sure to mention the significant soul connection detected (twin flame/soulmate indicators)' : ''}
 2. Emotional Connection: How they connect emotionally and support each other romantically
 3. Communication Style: How they communicate as romantic partners
 4. Romantic Chemistry: Their physical attraction and romantic expression
 5. Shared Values: What they have in common and their life goals alignment
 6. Growth Potential: Areas where they can help each other grow as partners
 7. Challenges: Potential friction points and how to navigate them
-8. Long-term Outlook: Advice for sustaining the romantic relationship
+8. Long-term Outlook: Advice for sustaining the romantic relationship${soulmateAnalysis && (soulmateAnalysis.isTwinFlame || soulmateAnalysis.isSoulmate) ? ' (consider the deep soul connection in this assessment)' : ''}
 
 Write in a warm, insightful, professional tone. Be honest about both strengths and challenges. Make it personal and specific to their charts. Use "you" and "your partner" language as if speaking to one person about their relationship. Keep each section concise but meaningful (2-4 sentences per section).`
       } else if (relationshipType === 'friendship') {
@@ -442,6 +465,129 @@ Write in a professional, insightful tone. Be honest about both strengths and cha
               ))}
             </CardContent>
           </Card>
+
+          {soulmateAnalysis && relationshipType === 'romantic' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <Card className="border-accent/20 bg-gradient-to-br from-purple-900/30 to-pink-900/30 backdrop-blur">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-2xl text-white flex items-center gap-3">
+                        {soulmateAnalysis.isTwinFlame && <Flame className="w-8 h-8 text-orange-400 animate-pulse" weight="fill" />}
+                        {soulmateAnalysis.isSoulmate && !soulmateAnalysis.isTwinFlame && <StarFour className="w-8 h-8 text-yellow-400" weight="fill" />}
+                        {!soulmateAnalysis.isSoulmate && !soulmateAnalysis.isTwinFlame && <Infinity className="w-8 h-8 text-purple-400" weight="fill" />}
+                        Soul Connection Analysis
+                      </CardTitle>
+                      <CardDescription className="text-white/80 text-base mt-2">
+                        {soulmateAnalysis.connectionType}
+                      </CardDescription>
+                    </div>
+                    <div className="text-center">
+                      <div className="flex gap-4">
+                        {soulmateAnalysis.twinFlameScore > 0 && (
+                          <div className="text-center">
+                            <div className="text-3xl font-bold text-orange-400">
+                              {soulmateAnalysis.twinFlameScore}%
+                            </div>
+                            <div className="text-xs text-muted-foreground">Twin Flame</div>
+                          </div>
+                        )}
+                        {soulmateAnalysis.soulmateScore > 0 && (
+                          <div className="text-center">
+                            <div className="text-3xl font-bold text-yellow-400">
+                              {soulmateAnalysis.soulmateScore}%
+                            </div>
+                            <div className="text-xs text-muted-foreground">Soulmate</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="p-4 rounded-lg bg-background/40 border border-accent/20">
+                    <p className="text-white/90 leading-relaxed">
+                      {soulmateAnalysis.summary}
+                    </p>
+                  </div>
+
+                  {soulmateAnalysis.indicators.length > 0 && (
+                    <>
+                      <Separator className="bg-border/50" />
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                          <Sparkle weight="fill" className="text-accent" />
+                          Soul Connection Indicators ({soulmateAnalysis.indicators.length} found)
+                        </h3>
+                        <div className="space-y-3">
+                          {soulmateAnalysis.indicators.map((indicator, index) => (
+                            <motion.div
+                              key={index}
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: 0.1 * index }}
+                              className="p-4 rounded-lg bg-background/30 border border-border/30 space-y-2"
+                            >
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <Badge 
+                                      variant={
+                                        indicator.type === 'twin-flame' ? 'destructive' :
+                                        indicator.type === 'soulmate' ? 'default' :
+                                        indicator.type === 'karmic' ? 'secondary' :
+                                        'outline'
+                                      }
+                                      className="capitalize"
+                                    >
+                                      {indicator.type === 'twin-flame' ? '🔥 Twin Flame' :
+                                       indicator.type === 'soulmate' ? '⭐ Soulmate' :
+                                       indicator.type === 'karmic' ? '♾️ Karmic' :
+                                       '✨ Divine'}
+                                    </Badge>
+                                    <span className="font-semibold text-white">
+                                      {indicator.name}
+                                    </span>
+                                  </div>
+                                  <p className="text-sm text-white/70 mb-2">
+                                    {indicator.description}
+                                  </p>
+                                  {indicator.details && (
+                                    <p className="text-sm text-accent/90 italic">
+                                      {indicator.details}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="text-center shrink-0">
+                                  <div className="text-2xl font-bold text-accent">
+                                    {indicator.strength}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground">Strength</div>
+                                </div>
+                              </div>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {soulmateAnalysis.indicators.length === 0 && (
+                    <div className="text-center py-8">
+                      <p className="text-white/70">
+                        No strong soul connection indicators detected. This doesn't mean the relationship lacks value - 
+                        every connection offers opportunities for growth and learning.
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
 
           <Card className="border-accent/20 bg-card/50 backdrop-blur">
             <CardHeader>
