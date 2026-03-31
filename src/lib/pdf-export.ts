@@ -117,72 +117,6 @@ export async function exportChartToPDF(
     
     yPos += 15
 
-    if (options.includeChartWheel && chartSvgElement) {
-      try {
-        console.log('Starting chart wheel capture for PDF...')
-        const svgClone = chartSvgElement.cloneNode(true) as SVGSVGElement
-        svgClone.setAttribute('width', '800')
-        svgClone.setAttribute('height', '800')
-        
-        const svgString = new XMLSerializer().serializeToString(svgClone)
-        console.log('SVG serialized, length:', svgString.length)
-        
-        const canvas = document.createElement('canvas')
-        const ctx = canvas.getContext('2d')
-        const img = new Image()
-        
-        await new Promise<void>((resolve, reject) => {
-          img.onload = () => {
-            console.log('SVG image loaded successfully')
-            canvas.width = 800
-            canvas.height = 800
-            if (ctx) {
-              ctx.drawImage(img, 0, 0, 800, 800)
-            }
-            resolve()
-          }
-          img.onerror = (e) => {
-            console.error('SVG image load error:', e)
-            reject(new Error('Failed to load SVG into image'))
-          }
-          
-          try {
-            const encodedSvg = btoa(unescape(encodeURIComponent(svgString)))
-            img.src = 'data:image/svg+xml;base64,' + encodedSvg
-          } catch (encodeError) {
-            console.error('SVG encoding error:', encodeError)
-            reject(encodeError)
-          }
-        })
-        
-        const imgData = canvas.toDataURL('image/png')
-        console.log('Canvas converted to PNG, data URL length:', imgData.length)
-        
-        const imgWidth = 140
-        const imgHeight = 140
-        
-        pdf.setFillColor(250, 250, 255)
-        pdf.roundedRect((pageWidth - imgWidth - 6) / 2, yPos - 3, imgWidth + 6, imgHeight + 6, 3, 3, 'F')
-        
-        pdf.addImage(imgData, 'PNG', (pageWidth - imgWidth) / 2, yPos, imgWidth, imgHeight)
-        console.log('Chart wheel added to PDF successfully')
-        yPos += imgHeight + 15
-      } catch (error) {
-        console.error('Error rendering chart wheel to PDF:', error)
-        console.error('Error details:', error instanceof Error ? error.message : String(error))
-        
-        pdf.setFillColor(250, 248, 253)
-        pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 30, 2, 2, 'F')
-        
-        pdf.setFontSize(10)
-        pdf.setFont('helvetica', 'italic')
-        pdf.setTextColor(120, 120, 120)
-        pdf.text('Chart wheel could not be rendered in PDF.', pageWidth / 2, yPos + 10, { align: 'center' })
-        pdf.text('Please use the print function for visual chart output.', pageWidth / 2, yPos + 18, { align: 'center' })
-        yPos += 40
-      }
-    }
-
     const sun = chart.planets.find(p => p.name === 'Sun')
     const moon = chart.planets.find(p => p.name === 'Moon')
     const risingSign = chart.houses.find(h => h.number === 1)?.sign || 'Unknown'
@@ -275,6 +209,72 @@ export async function exportChartToPDF(
     pdf.text(`Mutable: ${modalityCount.Mutable} planets`, xPos2 + 5, yPos)
     
     yPos += 15
+
+    if (options.includeChartWheel && chartSvgElement) {
+      try {
+        console.log('Starting chart wheel capture for PDF...')
+        const svgClone = chartSvgElement.cloneNode(true) as SVGSVGElement
+        svgClone.setAttribute('width', '800')
+        svgClone.setAttribute('height', '800')
+        
+        const svgString = new XMLSerializer().serializeToString(svgClone)
+        console.log('SVG serialized, length:', svgString.length)
+        
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d')
+        const img = new Image()
+        
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => {
+            console.log('SVG image loaded successfully')
+            canvas.width = 800
+            canvas.height = 800
+            if (ctx) {
+              ctx.drawImage(img, 0, 0, 800, 800)
+            }
+            resolve()
+          }
+          img.onerror = (e) => {
+            console.error('SVG image load error:', e)
+            reject(new Error('Failed to load SVG into image'))
+          }
+          
+          try {
+            const encodedSvg = btoa(unescape(encodeURIComponent(svgString)))
+            img.src = 'data:image/svg+xml;base64,' + encodedSvg
+          } catch (encodeError) {
+            console.error('SVG encoding error:', encodeError)
+            reject(encodeError)
+          }
+        })
+        
+        const imgData = canvas.toDataURL('image/png')
+        console.log('Canvas converted to PNG, data URL length:', imgData.length)
+        
+        const imgWidth = 140
+        const imgHeight = 140
+        
+        pdf.setFillColor(250, 250, 255)
+        pdf.roundedRect((pageWidth - imgWidth - 6) / 2, yPos - 3, imgWidth + 6, imgHeight + 6, 3, 3, 'F')
+        
+        pdf.addImage(imgData, 'PNG', (pageWidth - imgWidth) / 2, yPos, imgWidth, imgHeight)
+        console.log('Chart wheel added to PDF successfully')
+        yPos += imgHeight + 15
+      } catch (error) {
+        console.error('Error rendering chart wheel to PDF:', error)
+        console.error('Error details:', error instanceof Error ? error.message : String(error))
+        
+        pdf.setFillColor(250, 248, 253)
+        pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 30, 2, 2, 'F')
+        
+        pdf.setFontSize(10)
+        pdf.setFont('helvetica', 'italic')
+        pdf.setTextColor(120, 120, 120)
+        pdf.text('Chart wheel could not be rendered in PDF.', pageWidth / 2, yPos + 10, { align: 'center' })
+        pdf.text('Please use the print function for visual chart output.', pageWidth / 2, yPos + 18, { align: 'center' })
+        yPos += 40
+      }
+    }
 
     pdf.addPage()
     yPos = margin
