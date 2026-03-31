@@ -96,6 +96,13 @@ export async function exportChartToPDF(
     yPos += 6
     pdf.text(chart.location, pageWidth / 2, yPos, { align: 'center' })
 
+    yPos += 8
+    pdf.setFontSize(9)
+    pdf.setTextColor(120, 120, 120)
+    const latDir = chart.latitude >= 0 ? 'N' : 'S'
+    const lonDir = chart.longitude >= 0 ? 'E' : 'W'
+    pdf.text(`${Math.abs(chart.latitude).toFixed(4)}°${latDir} / ${Math.abs(chart.longitude).toFixed(4)}°${lonDir} • Timezone: UTC${chart.timezone}`, pageWidth / 2, yPos, { align: 'center' })
+    
     yPos += 12
 
     try {
@@ -107,12 +114,6 @@ export async function exportChartToPDF(
       console.error('Error adding logo:', error)
       yPos += 12
     }
-    yPos += 6
-    pdf.setFontSize(9)
-    pdf.setTextColor(120, 120, 120)
-    const latDir = chart.latitude >= 0 ? 'N' : 'S'
-    const lonDir = chart.longitude >= 0 ? 'E' : 'W'
-    pdf.text(`${Math.abs(chart.latitude).toFixed(4)}°${latDir} / ${Math.abs(chart.longitude).toFixed(4)}°${lonDir} • Timezone: UTC${chart.timezone}`, pageWidth / 2, yPos, { align: 'center' })
     
     yPos += 15
 
@@ -136,8 +137,6 @@ export async function exportChartToPDF(
             canvas.width = 800
             canvas.height = 800
             if (ctx) {
-              ctx.fillStyle = '#0f0820'
-              ctx.fillRect(0, 0, canvas.width, canvas.height)
               ctx.drawImage(img, 0, 0, 800, 800)
             }
             resolve()
