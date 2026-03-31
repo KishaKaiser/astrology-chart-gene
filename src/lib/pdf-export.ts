@@ -69,13 +69,15 @@ export async function exportChartToPDF(
     let yPos = margin
 
     try {
-      const corinthiaFont = await loadFontAsBase64('https://fonts.gstatic.com/s/corinthia/v11/wEO_EBrAnchaJyPMHE0FUfAL3EsHiA.woff2')
-      pdf.addFileToVFS('Corinthia-Bold.woff2', corinthiaFont)
-      pdf.addFont('Corinthia-Bold.woff2', 'Corinthia', 'bold')
+      const corinthiaFont = await loadFontAsBase64('https://fonts.gstatic.com/s/corinthia/v14/wEO_EBrAnchaJyPMHE0FUfAL3EsHiA.ttf')
+      pdf.addFileToVFS('Corinthia-Bold.ttf', corinthiaFont)
+      pdf.addFont('Corinthia-Bold.ttf', 'Corinthia', 'bold')
 
-      const birthstoneFont = await loadFontAsBase64('https://fonts.gstatic.com/s/birthstone/v11/8AtsGs2xO5ryh5I6b1E-qJh1YGo.woff2')
-      pdf.addFileToVFS('Birthstone-Regular.woff2', birthstoneFont)
-      pdf.addFont('Birthstone-Regular.woff2', 'Birthstone', 'normal')
+      const birthstoneFont = await loadFontAsBase64('https://fonts.gstatic.com/s/birthstone/v13/8AtsGs2xO5ryh5I6b1E-qJh1YGo.ttf')
+      pdf.addFileToVFS('Birthstone-Regular.ttf', birthstoneFont)
+      pdf.addFont('Birthstone-Regular.ttf', 'Birthstone', 'normal')
+      
+      console.log('Custom fonts loaded successfully')
     } catch (error) {
       console.error('Error loading custom fonts, using defaults:', error)
     }
@@ -143,27 +145,41 @@ export async function exportChartToPDF(
 
     if (options.includeChartWheel && chartSvgElement) {
       try {
-        const svgString = new XMLSerializer().serializeToString(chartSvgElement)
+        console.log('Starting chart wheel capture for PDF...')
+        const svgClone = chartSvgElement.cloneNode(true) as SVGSVGElement
+        svgClone.setAttribute('width', '600')
+        svgClone.setAttribute('height', '600')
+        
+        const svgString = new XMLSerializer().serializeToString(svgClone)
+        console.log('SVG serialized, length:', svgString.length)
+        
         const canvas = document.createElement('canvas')
         const ctx = canvas.getContext('2d')
         const img = new Image()
         
         await new Promise<void>((resolve, reject) => {
           img.onload = () => {
+            console.log('SVG image loaded successfully')
             canvas.width = 600
             canvas.height = 600
             if (ctx) {
               ctx.fillStyle = '#0f0820'
               ctx.fillRect(0, 0, canvas.width, canvas.height)
-              ctx.drawImage(img, 0, 0)
+              ctx.drawImage(img, 0, 0, 600, 600)
             }
             resolve()
           }
-          img.onerror = () => reject(new Error('Failed to load SVG'))
-          img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)))
+          img.onerror = (e) => {
+            console.error('SVG image load error:', e)
+            reject(new Error('Failed to load SVG into image'))
+          }
+          const encodedSvg = btoa(unescape(encodeURIComponent(svgString)))
+          img.src = 'data:image/svg+xml;base64,' + encodedSvg
         })
         
         const imgData = canvas.toDataURL('image/png')
+        console.log('Canvas converted to PNG, data URL length:', imgData.length)
+        
         const imgWidth = 140
         const imgHeight = 140
         
@@ -171,9 +187,19 @@ export async function exportChartToPDF(
         pdf.roundedRect((pageWidth - imgWidth - 6) / 2, yPos - 3, imgWidth + 6, imgHeight + 6, 3, 3, 'F')
         
         pdf.addImage(imgData, 'PNG', (pageWidth - imgWidth) / 2, yPos, imgWidth, imgHeight)
+        console.log('Chart wheel added to PDF successfully')
         yPos += imgHeight + 15
       } catch (error) {
-        console.error('Error rendering chart:', error)
+        console.error('Error rendering chart wheel to PDF:', error)
+        
+        pdf.setFillColor(250, 248, 253)
+        pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 30, 2, 2, 'F')
+        
+        pdf.setFontSize(10)
+        pdf.setFont('helvetica', 'italic')
+        pdf.setTextColor(120, 120, 120)
+        pdf.text('Chart wheel could not be rendered. Please use the print function instead.', pageWidth / 2, yPos + 15, { align: 'center' })
+        yPos += 40
       }
     }
 
@@ -657,9 +683,11 @@ export async function exportChartToPDF(
       pdf.setTextColor(40, 40, 40)
       
       const processedInterpretation = interpretation
-        .replace(/^##\s+(.+)$/gm, '$1')
-        .replace(/^###\s+(.+)$/gm, '$1')
-        .replace(/####\s+(.+)$/gm, '$1')
+        .replace(/^##\s+(.+)$/gm, '\n=SECTION_HEADER=$1')
+        .replace(/^###\s+(.+)$/gm, '\n=SUBSECTION_HEADER=$1')
+        .replace(/####\s+(.+)$/gm, '\n=MINOR_HEADER=$1')
+        .replace(/^[☉☽☿♀♂♃♄♅♆♇⚸]+\s*/gm, '')
+        .replace(/[♈♉♊♋♌♍♎♏♐♑♒♓]/g, '')
       
       const interpretationLines = pdf.splitTextToSize(processedInterpretation, pageWidth - 2 * margin)
       interpretationLines.forEach((line: string) => {
@@ -668,21 +696,49 @@ export async function exportChartToPDF(
           yPos = margin + 5
         }
         
-        if (line.match(/^(Sun Sign|Moon Sign|Rising Sign|Planetary Positions|House Analysis|Major Aspects|Aspect Patterns|Life Purpose|Career|Relationships|Challenges|Strengths|Spiritual Path|Personality|Emotions|Communication|Love|Career Path|Home Life|Creative Expression|Daily Life|Relationships & Partnerships|Transformation|Philosophy|Career Ambitions|Community|Spirituality):/)) {
+        if (line.startsWith('=SECTION_HEADER=')) {
+          if (yPos > margin + 10) {
+            yPos += 8
+          }
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(14)
+          pdf.setTextColor(68, 21, 104)
+          const headerText = line.replace('=SECTION_HEADER=', '').trim()
+          pdf.text(headerText, margin, yPos)
+          yPos += 8
+        } else if (line.startsWith('=SUBSECTION_HEADER=')) {
           if (yPos > margin + 10) {
             yPos += 6
           }
           pdf.setFont('helvetica', 'bold')
-          pdf.setFontSize(13)
+          pdf.setFontSize(12)
+          pdf.setTextColor(90, 40, 120)
+          const headerText = line.replace('=SUBSECTION_HEADER=', '').trim()
+          pdf.text(headerText, margin, yPos)
+          yPos += 7
+        } else if (line.startsWith('=MINOR_HEADER=')) {
+          yPos += 4
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(10)
+          pdf.setTextColor(90, 40, 120)
+          const headerText = line.replace('=MINOR_HEADER=', '').trim()
+          pdf.text(headerText, margin, yPos)
+          yPos += 6
+        } else if (line.match(/^(Sun Sign|Moon Sign|Rising Sign|Planetary Positions|House Analysis|Major Aspects|Aspect Patterns|Life Purpose|Career|Relationships|Challenges|Strengths|Spiritual Path|Personality|Emotions|Communication|Love|Career Path|Home Life|Creative Expression|Daily Life|Relationships & Partnerships|Transformation|Philosophy|Career Ambitions|Community|Spirituality):/)) {
+          if (yPos > margin + 10) {
+            yPos += 6
+          }
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(11)
           pdf.setTextColor(68, 21, 104)
           pdf.text(line, margin, yPos)
-          yPos += 8
+          yPos += 7
         } else if (line.match(/^\*\*[0-9]+\.\s/)) {
           if (yPos > margin + 10) {
             yPos += 5
           }
           pdf.setFont('helvetica', 'bold')
-          pdf.setFontSize(12)
+          pdf.setFontSize(11)
           pdf.setTextColor(68, 21, 104)
           const cleanLine = line.replace(/\*\*/g, '')
           pdf.text(cleanLine, margin, yPos)
@@ -726,7 +782,7 @@ export async function exportChartToPDF(
       pdf.setFontSize(14)
       pdf.setFont('helvetica', 'bold')
       pdf.setTextColor(255, 255, 255)
-      pdf.text('🌙 Personal Horoscope', margin + 3, yPos + 8)
+      pdf.text('PERSONAL HOROSCOPE', margin + 3, yPos + 8)
       yPos += 18
 
       pdf.setFontSize(9)
@@ -753,7 +809,7 @@ export async function exportChartToPDF(
       pdf.setFontSize(14)
       pdf.setFont('helvetica', 'bold')
       pdf.setTextColor(255, 255, 255)
-      pdf.text('💕 Romantic Compatibility', margin + 3, yPos + 8)
+      pdf.text('ROMANTIC COMPATIBILITY', margin + 3, yPos + 8)
       yPos += 18
 
       pdf.setFontSize(9)
@@ -780,7 +836,7 @@ export async function exportChartToPDF(
       pdf.setFontSize(14)
       pdf.setFont('helvetica', 'bold')
       pdf.setTextColor(255, 255, 255)
-      pdf.text('♾️ Karmic Bond', margin + 3, yPos + 8)
+      pdf.text('KARMIC BOND', margin + 3, yPos + 8)
       yPos += 18
 
       pdf.setFontSize(9)
@@ -807,7 +863,7 @@ export async function exportChartToPDF(
       pdf.setFontSize(14)
       pdf.setFont('helvetica', 'bold')
       pdf.setTextColor(255, 255, 255)
-      pdf.text('🔄 Past Life', margin + 3, yPos + 8)
+      pdf.text('PAST LIFE', margin + 3, yPos + 8)
       yPos += 18
 
       pdf.setFontSize(9)
@@ -834,7 +890,7 @@ export async function exportChartToPDF(
       pdf.setFontSize(14)
       pdf.setFont('helvetica', 'bold')
       pdf.setTextColor(255, 255, 255)
-      pdf.text('⚖️ Karmic Debt', margin + 3, yPos + 8)
+      pdf.text('KARMIC DEBT', margin + 3, yPos + 8)
       yPos += 18
 
       pdf.setFontSize(9)
@@ -861,7 +917,7 @@ export async function exportChartToPDF(
       pdf.setFontSize(14)
       pdf.setFont('helvetica', 'bold')
       pdf.setTextColor(255, 255, 255)
-      pdf.text('👨‍👩‍👧‍👦 Family Dynamics', margin + 3, yPos + 8)
+      pdf.text('FAMILY DYNAMICS', margin + 3, yPos + 8)
       yPos += 18
 
       pdf.setFontSize(9)
