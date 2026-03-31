@@ -1,8 +1,46 @@
 import { ChartData, PLANET_SYMBOLS, ZODIAC_SYMBOLS, ZodiacSign } from '@/lib/astrology-types'
-import { getPlanetaryDignity, getDignityDescription } from '@/lib/zodiac-info'
+import { getPlanetaryDignity, getDignityDescription, HOUSE_INFO } from '@/lib/zodiac-info'
+import { detectAspectPatterns } from '@/lib/aspect-patterns'
+import { getAspectInterpretation } from '@/lib/aspect-interpretations'
 import jsPDF from 'jspdf'
+import logoImage from '@/assets/images/logo.jpg'
 
-export async function exportChartToPDF(chart: ChartData, chartSvgElement: SVGSVGElement | null, interpretation?: string) {
+export interface PDFExportOptions {
+  includeChartWheel: boolean
+  includeHouseMeanings: boolean
+  includeMajorAspects: boolean
+  includeAspectPatterns: boolean
+  includePlanetaryDignities: boolean
+  includeInterpretation: boolean
+  includePersonalHoroscope: string
+  includeCompatibility: string
+  includeKarmicBond: string
+  includePastLife: string
+  includeKarmicDebt: string
+  includeFamily: string
+}
+
+export const defaultPDFOptions: PDFExportOptions = {
+  includeChartWheel: true,
+  includeHouseMeanings: false,
+  includeMajorAspects: true,
+  includeAspectPatterns: false,
+  includePlanetaryDignities: false,
+  includeInterpretation: true,
+  includePersonalHoroscope: '',
+  includeCompatibility: '',
+  includeKarmicBond: '',
+  includePastLife: '',
+  includeKarmicDebt: '',
+  includeFamily: '',
+}
+
+export async function exportChartToPDF(
+  chart: ChartData, 
+  chartSvgElement: SVGSVGElement | null, 
+  interpretation?: string,
+  options: PDFExportOptions = defaultPDFOptions
+) {
   try {
     const pdf = new jsPDF('p', 'mm', 'a4')
     const pageWidth = pdf.internal.pageSize.getWidth()
@@ -25,22 +63,31 @@ export async function exportChartToPDF(chart: ChartData, chartSvgElement: SVGSVG
     })
 
     pdf.setFillColor(68, 21, 104)
-    pdf.rect(0, 0, pageWidth, 45, 'F')
+    pdf.rect(0, 0, pageWidth, 50, 'F')
 
-    pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(32)
+    try {
+      const logoWidth = 15
+      const logoHeight = 15
+      pdf.addImage(logoImage, 'JPEG', margin, yPos - 2, logoWidth, logoHeight)
+    } catch (error) {
+      console.error('Error adding logo:', error)
+    }
+
+    pdf.setFont('times', 'italic')
+    pdf.setFontSize(36)
     pdf.setTextColor(255, 255, 255)
-    pdf.text('Psychic Link Charts', pageWidth / 2, yPos + 5, { align: 'center' })
+    pdf.text('Psychic Link Charts', pageWidth / 2, yPos + 6, { align: 'center' })
     
-    yPos += 12
-    pdf.setFontSize(12)
+    yPos += 14
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(11)
     pdf.setTextColor(230, 230, 230)
-    pdf.text('Professional Astrology Software', pageWidth / 2, yPos, { align: 'center' })
+    pdf.text('What Do The Stars Say About You?', pageWidth / 2, yPos, { align: 'center' })
     
-    yPos = 55
+    yPos = 60
 
-    pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(24)
+    pdf.setFont('times', 'italic')
+    pdf.setFontSize(28)
     pdf.setTextColor(68, 21, 104)
     pdf.text(chart.name, pageWidth / 2, yPos, { align: 'center' })
     
@@ -60,7 +107,7 @@ export async function exportChartToPDF(chart: ChartData, chartSvgElement: SVGSVG
     
     yPos += 15
 
-    if (chartSvgElement) {
+    if (options.includeChartWheel && chartSvgElement) {
       try {
         const svgString = new XMLSerializer().serializeToString(chartSvgElement)
         const canvas = document.createElement('canvas')
@@ -112,7 +159,7 @@ export async function exportChartToPDF(chart: ChartData, chartSvgElement: SVGSVG
       pdf.setFont('helvetica', 'bold')
       pdf.setFontSize(11)
       pdf.setTextColor(68, 21, 104)
-      pdf.text('Core Identity', margin + 5, yPos + 7)
+      pdf.text('✨ Core Identity', margin + 5, yPos + 7)
       
       yPos += 14
       pdf.setFont('helvetica', 'normal')
@@ -156,7 +203,7 @@ export async function exportChartToPDF(chart: ChartData, chartSvgElement: SVGSVG
     pdf.setFont('helvetica', 'bold')
     pdf.setFontSize(10)
     pdf.setTextColor(68, 21, 104)
-    pdf.text('Element Distribution', margin + 5, yPos + 7)
+    pdf.text('🔥 Element Distribution', margin + 5, yPos + 7)
     
     yPos += 13
     pdf.setFont('helvetica', 'normal')
@@ -175,7 +222,7 @@ export async function exportChartToPDF(chart: ChartData, chartSvgElement: SVGSVG
     pdf.setFont('helvetica', 'bold')
     pdf.setFontSize(10)
     pdf.setTextColor(68, 21, 104)
-    pdf.text('Modality Distribution', xPos2 + 5, yPos)
+    pdf.text('⚡ Modality Distribution', xPos2 + 5, yPos)
     
     yPos += 13
     pdf.setFont('helvetica', 'normal')
@@ -198,7 +245,7 @@ export async function exportChartToPDF(chart: ChartData, chartSvgElement: SVGSVG
     pdf.setFontSize(14)
     pdf.setFont('helvetica', 'bold')
     pdf.setTextColor(255, 255, 255)
-    pdf.text('Planetary Positions', margin + 3, yPos + 8)
+    pdf.text('🌟 Planetary Positions', margin + 3, yPos + 8)
     yPos += 18
 
     pdf.setFillColor(245, 245, 250)
@@ -237,54 +284,56 @@ export async function exportChartToPDF(chart: ChartData, chartSvgElement: SVGSVG
       yPos += 7
     })
 
-    yPos += 12
-    if (yPos > pageHeight - 80) {
-      pdf.addPage()
-      yPos = margin
-    }
-
-    pdf.setFillColor(68, 21, 104)
-    pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 12, 2, 2, 'F')
-    
-    pdf.setFontSize(14)
-    pdf.setFont('helvetica', 'bold')
-    pdf.setTextColor(255, 255, 255)
-    pdf.text('Planetary Dignities', margin + 3, yPos + 8)
-    yPos += 18
-
-    pdf.setFillColor(245, 245, 250)
-    pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 8, 1, 1, 'F')
-
-    pdf.setFontSize(9)
-    pdf.setFont('helvetica', 'bold')
-    pdf.setTextColor(68, 21, 104)
-    pdf.text('Planet', margin + 3, yPos + 5.5)
-    pdf.text('Sign', margin + 50, yPos + 5.5)
-    pdf.text('Dignity', margin + 100, yPos + 5.5)
-    yPos += 10
-
-    pdf.setFont('helvetica', 'normal')
-    pdf.setTextColor(40, 40, 40)
-    chart.planets.forEach((planet, index) => {
-      if (yPos > pageHeight - 25) {
+    if (options.includePlanetaryDignities) {
+      yPos += 12
+      if (yPos > pageHeight - 80) {
         pdf.addPage()
         yPos = margin
       }
+
+      pdf.setFillColor(68, 21, 104)
+      pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 12, 2, 2, 'F')
       
-      if (index % 2 === 0) {
-        pdf.setFillColor(252, 252, 254)
-        pdf.roundedRect(margin, yPos - 4, pageWidth - 2 * margin, 7, 1, 1, 'F')
-      }
-      
-      const dignity = getPlanetaryDignity(planet.name, planet.sign as ZodiacSign)
-      
+      pdf.setFontSize(14)
       pdf.setFont('helvetica', 'bold')
-      pdf.text(planet.name, margin + 3, yPos)
+      pdf.setTextColor(255, 255, 255)
+      pdf.text('👑 Planetary Dignities', margin + 3, yPos + 8)
+      yPos += 18
+
+      pdf.setFillColor(245, 245, 250)
+      pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 8, 1, 1, 'F')
+
+      pdf.setFontSize(9)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(68, 21, 104)
+      pdf.text('Planet', margin + 3, yPos + 5.5)
+      pdf.text('Sign', margin + 50, yPos + 5.5)
+      pdf.text('Dignity', margin + 100, yPos + 5.5)
+      yPos += 10
+
       pdf.setFont('helvetica', 'normal')
-      pdf.text(planet.sign, margin + 50, yPos)
-      pdf.text(dignity || 'Peregrine', margin + 100, yPos)
-      yPos += 7
-    })
+      pdf.setTextColor(40, 40, 40)
+      chart.planets.forEach((planet, index) => {
+        if (yPos > pageHeight - 25) {
+          pdf.addPage()
+          yPos = margin
+        }
+        
+        if (index % 2 === 0) {
+          pdf.setFillColor(252, 252, 254)
+          pdf.roundedRect(margin, yPos - 4, pageWidth - 2 * margin, 7, 1, 1, 'F')
+        }
+        
+        const dignity = getPlanetaryDignity(planet.name, planet.sign as ZodiacSign)
+        
+        pdf.setFont('helvetica', 'bold')
+        pdf.text(planet.name, margin + 3, yPos)
+        pdf.setFont('helvetica', 'normal')
+        pdf.text(planet.sign, margin + 50, yPos)
+        pdf.text(dignity || 'Peregrine', margin + 100, yPos)
+        yPos += 7
+      })
+    }
 
     yPos += 12
     if (yPos > pageHeight - 80) {
@@ -298,7 +347,7 @@ export async function exportChartToPDF(chart: ChartData, chartSvgElement: SVGSVG
     pdf.setFontSize(14)
     pdf.setFont('helvetica', 'bold')
     pdf.setTextColor(255, 255, 255)
-    pdf.text('House Cusps', margin + 3, yPos + 8)
+    pdf.text('🏠 House Cusps', margin + 3, yPos + 8)
     yPos += 18
 
     pdf.setFillColor(245, 245, 250)
@@ -333,62 +382,180 @@ export async function exportChartToPDF(chart: ChartData, chartSvgElement: SVGSVG
       yPos += 7
     })
 
-    yPos += 12
-    if (yPos > pageHeight - 80) {
-      pdf.addPage()
-      yPos = margin
-    }
+    if (options.includeHouseMeanings) {
+      yPos += 12
+      if (yPos > pageHeight - 80) {
+        pdf.addPage()
+        yPos = margin
+      }
 
-    pdf.setFillColor(68, 21, 104)
-    pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 12, 2, 2, 'F')
-    
-    pdf.setFontSize(14)
-    pdf.setFont('helvetica', 'bold')
-    pdf.setTextColor(255, 255, 255)
-    pdf.text('Major Aspects', margin + 3, yPos + 8)
-    yPos += 18
-
-    if (chart.aspects.length === 0) {
-      pdf.setFillColor(250, 248, 253)
-      pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 15, 2, 2, 'F')
+      pdf.setFillColor(68, 21, 104)
+      pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 12, 2, 2, 'F')
       
-      pdf.setFontSize(9)
-      pdf.setFont('helvetica', 'italic')
-      pdf.setTextColor(120, 120, 120)
-      pdf.text('No major aspects found within orb', pageWidth / 2, yPos + 10, { align: 'center' })
-      yPos += 20
-    } else {
-      pdf.setFillColor(245, 245, 250)
-      pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 8, 1, 1, 'F')
-
-      pdf.setFontSize(9)
+      pdf.setFontSize(14)
       pdf.setFont('helvetica', 'bold')
-      pdf.setTextColor(68, 21, 104)
-      pdf.text('Planet 1', margin + 3, yPos + 5.5)
-      pdf.text('Aspect', margin + 48, yPos + 5.5)
-      pdf.text('Planet 2', margin + 98, yPos + 5.5)
-      pdf.text('Orb', margin + 148, yPos + 5.5)
-      yPos += 10
+      pdf.setTextColor(255, 255, 255)
+      pdf.text('🏛️ House Meanings', margin + 3, yPos + 8)
+      yPos += 18
 
-      pdf.setFont('helvetica', 'normal')
-      pdf.setTextColor(40, 40, 40)
-      chart.aspects.forEach((aspect, index) => {
-        if (yPos > pageHeight - 25) {
+      for (let houseNum = 1; houseNum <= 12; houseNum++) {
+        const houseInfo = HOUSE_INFO[houseNum]
+        
+        if (yPos > pageHeight - 50) {
           pdf.addPage()
           yPos = margin
         }
+
+        pdf.setFillColor(250, 248, 253)
+        pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, -1, 2, 2, 'F')
+
+        pdf.setFont('helvetica', 'bold')
+        pdf.setFontSize(10)
+        pdf.setTextColor(68, 21, 104)
+        pdf.text(houseInfo.name, margin + 3, yPos + 6)
+        yPos += 10
+
+        pdf.setFont('helvetica', 'normal')
+        pdf.setFontSize(8)
+        pdf.setTextColor(60, 60, 60)
+        const descLines = pdf.splitTextToSize(houseInfo.description, pageWidth - 2 * margin - 6)
         
-        if (index % 2 === 0) {
-          pdf.setFillColor(252, 252, 254)
-          pdf.roundedRect(margin, yPos - 4, pageWidth - 2 * margin, 7, 1, 1, 'F')
+        const boxHeight = 10 + (descLines.length * 4)
+        pdf.setFillColor(250, 248, 253)
+        pdf.roundedRect(margin, yPos - 10, pageWidth - 2 * margin, boxHeight, 2, 2, 'F')
+        
+        descLines.forEach((line: string) => {
+          if (yPos > pageHeight - 25) {
+            pdf.addPage()
+            yPos = margin
+          }
+          pdf.text(line, margin + 3, yPos)
+          yPos += 4
+        })
+        yPos += 8
+      }
+    }
+
+    if (options.includeMajorAspects) {
+      yPos += 12
+      if (yPos > pageHeight - 80) {
+        pdf.addPage()
+        yPos = margin
+      }
+
+      pdf.setFillColor(68, 21, 104)
+      pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 12, 2, 2, 'F')
+      
+      pdf.setFontSize(14)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(255, 255, 255)
+      pdf.text('🔮 Major Aspects', margin + 3, yPos + 8)
+      yPos += 18
+
+      if (chart.aspects.length === 0) {
+        pdf.setFillColor(250, 248, 253)
+        pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 15, 2, 2, 'F')
+        
+        pdf.setFontSize(9)
+        pdf.setFont('helvetica', 'italic')
+        pdf.setTextColor(120, 120, 120)
+        pdf.text('No major aspects found within orb', pageWidth / 2, yPos + 10, { align: 'center' })
+        yPos += 20
+      } else {
+        pdf.setFillColor(245, 245, 250)
+        pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 8, 1, 1, 'F')
+
+        pdf.setFontSize(9)
+        pdf.setFont('helvetica', 'bold')
+        pdf.setTextColor(68, 21, 104)
+        pdf.text('Planet 1', margin + 3, yPos + 5.5)
+        pdf.text('Aspect', margin + 48, yPos + 5.5)
+        pdf.text('Planet 2', margin + 98, yPos + 5.5)
+        pdf.text('Orb', margin + 148, yPos + 5.5)
+        yPos += 10
+
+        pdf.setFont('helvetica', 'normal')
+        pdf.setTextColor(40, 40, 40)
+        chart.aspects.forEach((aspect, index) => {
+          if (yPos > pageHeight - 25) {
+            pdf.addPage()
+            yPos = margin
+          }
+          
+          if (index % 2 === 0) {
+            pdf.setFillColor(252, 252, 254)
+            pdf.roundedRect(margin, yPos - 4, pageWidth - 2 * margin, 7, 1, 1, 'F')
+          }
+          
+          pdf.text(aspect.planet1, margin + 3, yPos)
+          pdf.text(aspect.type, margin + 48, yPos)
+          pdf.text(aspect.planet2, margin + 98, yPos)
+          pdf.text(`${aspect.orb.toFixed(2)}°`, margin + 148, yPos)
+          yPos += 7
+        })
+      }
+    }
+
+    if (options.includeAspectPatterns) {
+      const patterns = detectAspectPatterns(chart.planets, chart.aspects)
+      
+      if (patterns.length > 0) {
+        yPos += 12
+        if (yPos > pageHeight - 80) {
+          pdf.addPage()
+          yPos = margin
         }
+
+        pdf.setFillColor(68, 21, 104)
+        pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 12, 2, 2, 'F')
         
-        pdf.text(aspect.planet1, margin + 3, yPos)
-        pdf.text(aspect.type, margin + 48, yPos)
-        pdf.text(aspect.planet2, margin + 98, yPos)
-        pdf.text(`${aspect.orb.toFixed(2)}°`, margin + 148, yPos)
-        yPos += 7
-      })
+        pdf.setFontSize(14)
+        pdf.setFont('helvetica', 'bold')
+        pdf.setTextColor(255, 255, 255)
+        pdf.text('🔗 Aspect Patterns', margin + 3, yPos + 8)
+        yPos += 18
+
+        patterns.forEach((pattern) => {
+          if (yPos > pageHeight - 50) {
+            pdf.addPage()
+            yPos = margin
+          }
+
+          pdf.setFillColor(250, 248, 253)
+          pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, -1, 2, 2, 'F')
+
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(11)
+          pdf.setTextColor(68, 21, 104)
+          pdf.text(pattern.type, margin + 3, yPos + 6)
+          yPos += 10
+
+          pdf.setFont('helvetica', 'normal')
+          pdf.setFontSize(8)
+          pdf.setTextColor(60, 60, 60)
+          
+          pdf.setFont('helvetica', 'bold')
+          pdf.text('Planets:', margin + 3, yPos)
+          pdf.setFont('helvetica', 'normal')
+          pdf.text(pattern.planets.join(', '), margin + 20, yPos)
+          yPos += 5
+
+          const interpLines = pdf.splitTextToSize(pattern.interpretation, pageWidth - 2 * margin - 6)
+          const boxHeight = 15 + (interpLines.length * 4)
+          pdf.setFillColor(250, 248, 253)
+          pdf.roundedRect(margin, yPos - 15, pageWidth - 2 * margin, boxHeight, 2, 2, 'F')
+          
+          interpLines.forEach((line: string) => {
+            if (yPos > pageHeight - 25) {
+              pdf.addPage()
+              yPos = margin
+            }
+            pdf.text(line, margin + 3, yPos)
+            yPos += 4
+          })
+          yPos += 8
+        })
+      }
     }
 
     if (chart.notes) {
@@ -404,7 +571,7 @@ export async function exportChartToPDF(chart: ChartData, chartSvgElement: SVGSVG
       pdf.setFontSize(14)
       pdf.setFont('helvetica', 'bold')
       pdf.setTextColor(255, 255, 255)
-      pdf.text('Notes', margin + 3, yPos + 8)
+      pdf.text('📝 Notes', margin + 3, yPos + 8)
       yPos += 18
 
       pdf.setFillColor(250, 248, 253)
@@ -415,7 +582,7 @@ export async function exportChartToPDF(chart: ChartData, chartSvgElement: SVGSVG
       pdf.setTextColor(60, 60, 60)
       const noteLines = pdf.splitTextToSize(chart.notes, pageWidth - 2 * margin - 6)
       
-      let notesBoxHeight = 10 + (noteLines.length * 5)
+      const notesBoxHeight = 10 + (noteLines.length * 5)
       pdf.setFillColor(250, 248, 253)
       pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, notesBoxHeight, 2, 2, 'F')
       
@@ -431,7 +598,7 @@ export async function exportChartToPDF(chart: ChartData, chartSvgElement: SVGSVG
       yPos += 5
     }
 
-    if (interpretation) {
+    if (interpretation && options.includeInterpretation) {
       pdf.addPage()
       yPos = margin
 
@@ -441,7 +608,7 @@ export async function exportChartToPDF(chart: ChartData, chartSvgElement: SVGSVG
       pdf.setFont('helvetica', 'bold')
       pdf.setFontSize(20)
       pdf.setTextColor(255, 255, 255)
-      pdf.text('Chart Interpretation', pageWidth / 2, yPos + 6, { align: 'center' })
+      pdf.text('✨ Chart Interpretation', pageWidth / 2, yPos + 6, { align: 'center' })
       
       yPos += 12
       pdf.setFontSize(10)
@@ -498,6 +665,168 @@ export async function exportChartToPDF(chart: ChartData, chartSvgElement: SVGSVG
           pdf.text(cleanLine, margin, yPos)
           yPos += 5
         }
+      })
+    }
+
+    if (options.includePersonalHoroscope) {
+      pdf.addPage()
+      yPos = margin
+
+      pdf.setFillColor(68, 21, 104)
+      pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 12, 2, 2, 'F')
+      
+      pdf.setFontSize(14)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(255, 255, 255)
+      pdf.text('🌙 Personal Horoscope', margin + 3, yPos + 8)
+      yPos += 18
+
+      pdf.setFontSize(9)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setTextColor(40, 40, 40)
+      const horoscopeLines = pdf.splitTextToSize(options.includePersonalHoroscope, pageWidth - 2 * margin)
+      horoscopeLines.forEach((line: string) => {
+        if (yPos > pageHeight - 25) {
+          pdf.addPage()
+          yPos = margin
+        }
+        pdf.text(line, margin, yPos)
+        yPos += 5
+      })
+    }
+
+    if (options.includeCompatibility) {
+      pdf.addPage()
+      yPos = margin
+
+      pdf.setFillColor(68, 21, 104)
+      pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 12, 2, 2, 'F')
+      
+      pdf.setFontSize(14)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(255, 255, 255)
+      pdf.text('💕 Romantic Compatibility', margin + 3, yPos + 8)
+      yPos += 18
+
+      pdf.setFontSize(9)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setTextColor(40, 40, 40)
+      const compatLines = pdf.splitTextToSize(options.includeCompatibility, pageWidth - 2 * margin)
+      compatLines.forEach((line: string) => {
+        if (yPos > pageHeight - 25) {
+          pdf.addPage()
+          yPos = margin
+        }
+        pdf.text(line, margin, yPos)
+        yPos += 5
+      })
+    }
+
+    if (options.includeKarmicBond) {
+      pdf.addPage()
+      yPos = margin
+
+      pdf.setFillColor(68, 21, 104)
+      pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 12, 2, 2, 'F')
+      
+      pdf.setFontSize(14)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(255, 255, 255)
+      pdf.text('♾️ Karmic Bond', margin + 3, yPos + 8)
+      yPos += 18
+
+      pdf.setFontSize(9)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setTextColor(40, 40, 40)
+      const karmicLines = pdf.splitTextToSize(options.includeKarmicBond, pageWidth - 2 * margin)
+      karmicLines.forEach((line: string) => {
+        if (yPos > pageHeight - 25) {
+          pdf.addPage()
+          yPos = margin
+        }
+        pdf.text(line, margin, yPos)
+        yPos += 5
+      })
+    }
+
+    if (options.includePastLife) {
+      pdf.addPage()
+      yPos = margin
+
+      pdf.setFillColor(68, 21, 104)
+      pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 12, 2, 2, 'F')
+      
+      pdf.setFontSize(14)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(255, 255, 255)
+      pdf.text('🔄 Past Life', margin + 3, yPos + 8)
+      yPos += 18
+
+      pdf.setFontSize(9)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setTextColor(40, 40, 40)
+      const pastLifeLines = pdf.splitTextToSize(options.includePastLife, pageWidth - 2 * margin)
+      pastLifeLines.forEach((line: string) => {
+        if (yPos > pageHeight - 25) {
+          pdf.addPage()
+          yPos = margin
+        }
+        pdf.text(line, margin, yPos)
+        yPos += 5
+      })
+    }
+
+    if (options.includeKarmicDebt) {
+      pdf.addPage()
+      yPos = margin
+
+      pdf.setFillColor(68, 21, 104)
+      pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 12, 2, 2, 'F')
+      
+      pdf.setFontSize(14)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(255, 255, 255)
+      pdf.text('⚖️ Karmic Debt', margin + 3, yPos + 8)
+      yPos += 18
+
+      pdf.setFontSize(9)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setTextColor(40, 40, 40)
+      const debtLines = pdf.splitTextToSize(options.includeKarmicDebt, pageWidth - 2 * margin)
+      debtLines.forEach((line: string) => {
+        if (yPos > pageHeight - 25) {
+          pdf.addPage()
+          yPos = margin
+        }
+        pdf.text(line, margin, yPos)
+        yPos += 5
+      })
+    }
+
+    if (options.includeFamily) {
+      pdf.addPage()
+      yPos = margin
+
+      pdf.setFillColor(68, 21, 104)
+      pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 12, 2, 2, 'F')
+      
+      pdf.setFontSize(14)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(255, 255, 255)
+      pdf.text('👨‍👩‍👧‍👦 Family Dynamics', margin + 3, yPos + 8)
+      yPos += 18
+
+      pdf.setFontSize(9)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setTextColor(40, 40, 40)
+      const familyLines = pdf.splitTextToSize(options.includeFamily, pageWidth - 2 * margin)
+      familyLines.forEach((line: string) => {
+        if (yPos > pageHeight - 25) {
+          pdf.addPage()
+          yPos = margin
+        }
+        pdf.text(line, margin, yPos)
+        yPos += 5
       })
     }
 

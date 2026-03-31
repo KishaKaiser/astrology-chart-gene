@@ -86,6 +86,10 @@ body {
   font-family: 'Corinthia', cursive;
 }
 
+.font-script {
+  font-family: 'Birthstone', cursive;
+}
+
 @keyframes star-pulse {
   0%, 100% {
     opacity: 1;
@@ -125,5 +129,15 @@ body {
 
   @page {
     margin: 1.5cm;
+  }
+
+  .chart-title {
+    font-family: 'Corinthia', cursive !important;
+    font-size: 36px !important;
+  }
+
+  .client-name {
+    font-family: 'Birthstone', cursive !important;
+    font-size: 28px !important;
   }
 }
