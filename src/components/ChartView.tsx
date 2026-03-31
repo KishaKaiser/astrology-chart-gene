@@ -21,6 +21,7 @@ import { Label } from '@/components/ui/label'
 import { Printer, PencilSimple, ArrowLeft, Sparkle } from '@phosphor-icons/react'
 import { exportChartToPDF, PDFExportOptions } from '@/lib/pdf-export'
 import { toast } from 'sonner'
+import logoImage from '@/assets/images/logo.jpg'
 
 interface ChartViewProps {
   chart: ChartData
@@ -243,7 +244,20 @@ Write each section with depth and nuance. Be specific about how energies manifes
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="print-only" style={{ display: 'none' }}>
+        <div style={{ textAlign: 'center', paddingTop: '20px', paddingBottom: '30px', backgroundColor: '#441568', color: 'white' }}>
+          <img src={logoImage} alt="Logo" style={{ width: '80px', height: '80px', margin: '0 auto 15px', display: 'block' }} />
+          <h1 className="chart-title" style={{ fontSize: '48px', marginBottom: '10px' }}>Psychic Link Charts</h1>
+          <p style={{ fontSize: '14px', marginBottom: '0' }}>What Do The Stars Say About You?</p>
+        </div>
+        <div style={{ textAlign: 'center', paddingTop: '20px', paddingBottom: '10px' }}>
+          <h2 className="client-name" style={{ fontSize: '36px', marginBottom: '10px', color: '#441568' }}>{chart.name}</h2>
+          <p style={{ fontSize: '13px', color: '#505050' }}>{chart.date} at {chart.time}</p>
+          <p style={{ fontSize: '13px', color: '#505050' }}>{chart.location}</p>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between no-print">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={onBack}>
             <ArrowLeft size={20} />

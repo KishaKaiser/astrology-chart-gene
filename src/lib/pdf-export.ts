@@ -63,31 +63,32 @@ export async function exportChartToPDF(
     })
 
     pdf.setFillColor(68, 21, 104)
-    pdf.rect(0, 0, pageWidth, 50, 'F')
+    pdf.rect(0, 0, pageWidth, 55, 'F')
 
     try {
-      const logoWidth = 15
-      const logoHeight = 15
-      pdf.addImage(logoImage, 'JPEG', margin, yPos - 2, logoWidth, logoHeight)
+      const logoWidth = 20
+      const logoHeight = 20
+      pdf.addImage(logoImage, 'JPEG', (pageWidth - logoWidth) / 2, yPos, logoWidth, logoHeight)
     } catch (error) {
       console.error('Error adding logo:', error)
     }
 
-    pdf.setFont('times', 'italic')
-    pdf.setFontSize(36)
+    yPos += 26
+    pdf.setFont('times', 'bolditalic')
+    pdf.setFontSize(40)
     pdf.setTextColor(255, 255, 255)
-    pdf.text('Psychic Link Charts', pageWidth / 2, yPos + 6, { align: 'center' })
+    pdf.text('Psychic Link Charts', pageWidth / 2, yPos, { align: 'center' })
     
-    yPos += 14
+    yPos += 9
     pdf.setFont('helvetica', 'normal')
     pdf.setFontSize(11)
     pdf.setTextColor(230, 230, 230)
     pdf.text('What Do The Stars Say About You?', pageWidth / 2, yPos, { align: 'center' })
     
-    yPos = 60
+    yPos = 65
 
-    pdf.setFont('times', 'italic')
-    pdf.setFontSize(28)
+    pdf.setFont('times', 'bolditalic')
+    pdf.setFontSize(32)
     pdf.setTextColor(68, 21, 104)
     pdf.text(chart.name, pageWidth / 2, yPos, { align: 'center' })
     
@@ -622,14 +623,42 @@ export async function exportChartToPDF(
       pdf.setFont('helvetica', 'normal')
       pdf.setTextColor(40, 40, 40)
       
-      const interpretationLines = pdf.splitTextToSize(interpretation, pageWidth - 2 * margin)
+      const processedInterpretation = interpretation
+        .replace(/^##\s+(.+)$/gm, '⭐ $1')
+        .replace(/^###\s+(.+)$/gm, '✨ $1')
+        .replace(/####\s+(.+)$/gm, '💫 $1')
+      
+      const interpretationLines = pdf.splitTextToSize(processedInterpretation, pageWidth - 2 * margin)
       interpretationLines.forEach((line: string) => {
         if (yPos > pageHeight - 25) {
           pdf.addPage()
           yPos = margin + 5
         }
         
-        if (line.match(/^\*\*[0-9]+\.\s/)) {
+        if (line.match(/^⭐\s/)) {
+          if (yPos > margin + 10) {
+            yPos += 6
+          }
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(13)
+          pdf.setTextColor(68, 21, 104)
+          pdf.text(line, margin, yPos)
+          yPos += 8
+        } else if (line.match(/^✨\s/)) {
+          yPos += 4
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(11)
+          pdf.setTextColor(90, 40, 120)
+          pdf.text(line, margin, yPos)
+          yPos += 7
+        } else if (line.match(/^💫\s/)) {
+          yPos += 3
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(10)
+          pdf.setTextColor(100, 60, 130)
+          pdf.text(line, margin, yPos)
+          yPos += 6
+        } else if (line.match(/^\*\*[0-9]+\.\s/)) {
           if (yPos > margin + 10) {
             yPos += 5
           }
@@ -645,7 +674,7 @@ export async function exportChartToPDF(
           pdf.setFontSize(10)
           pdf.setTextColor(90, 40, 120)
           const cleanLine = line.replace(/\*\*/g, '').trim()
-          pdf.text(cleanLine, margin, yPos)
+          pdf.text('✦ ' + cleanLine, margin, yPos)
           yPos += 6
         } else if (line.match(/^\*\*[^*]+\*\*$/)) {
           yPos += 2
