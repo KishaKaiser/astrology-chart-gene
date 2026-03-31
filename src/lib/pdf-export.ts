@@ -5,26 +5,6 @@ import { getAspectInterpretation } from '@/lib/aspect-interpretations'
 import jsPDF from 'jspdf'
 import logoImage from '@/assets/images/logo.jpg'
 
-async function loadFontAsBase64(url: string): Promise<string> {
-  try {
-    const response = await fetch(url)
-    const blob = await response.blob()
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        const base64 = reader.result as string
-        const base64Data = base64.split(',')[1]
-        resolve(base64Data)
-      }
-      reader.onerror = reject
-      reader.readAsDataURL(blob)
-    })
-  } catch (error) {
-    console.error('Error loading font:', error)
-    throw error
-  }
-}
-
 export interface PDFExportOptions {
   includeChartWheel: boolean
   includeHouseMeanings: boolean
@@ -68,19 +48,9 @@ export async function exportChartToPDF(
     const margin = 20
     let yPos = margin
 
-    try {
-      const corinthiaFont = await loadFontAsBase64('https://fonts.gstatic.com/s/corinthia/v14/wEO_EBrAnchaJyPMHE0FUfAL3EsHiA.ttf')
-      pdf.addFileToVFS('Corinthia-Bold.ttf', corinthiaFont)
-      pdf.addFont('Corinthia-Bold.ttf', 'Corinthia', 'bold')
-
-      const birthstoneFont = await loadFontAsBase64('https://fonts.gstatic.com/s/birthstone/v13/8AtsGs2xO5ryh5I6b1E-qJh1YGo.ttf')
-      pdf.addFileToVFS('Birthstone-Regular.ttf', birthstoneFont)
-      pdf.addFont('Birthstone-Regular.ttf', 'Birthstone', 'normal')
-      
-      console.log('Custom fonts loaded successfully')
-    } catch (error) {
-      console.error('Error loading custom fonts, using defaults:', error)
-    }
+    let useCustomFonts = false
+    
+    console.log('Custom fonts disabled for stability - using system fonts')
 
     const elementCount = { Fire: 0, Earth: 0, Air: 0, Water: 0 }
     const modalityCount = { Cardinal: 0, Fixed: 0, Mutable: 0 }
@@ -100,8 +70,8 @@ export async function exportChartToPDF(
     pdf.rect(0, 0, pageWidth, 70, 'F')
 
     yPos += 8
-    pdf.setFont('Corinthia', 'bold')
-    pdf.setFontSize(48)
+    pdf.setFont('times', 'italic')
+    pdf.setFontSize(36)
     pdf.setTextColor(255, 255, 255)
     pdf.text('Psychic Link Charts', pageWidth / 2, yPos + 10, { align: 'center' })
     
@@ -123,8 +93,8 @@ export async function exportChartToPDF(
       yPos += 12
     }
 
-    pdf.setFont('Birthstone', 'normal')
-    pdf.setFontSize(42)
+    pdf.setFont('times', 'italic')
+    pdf.setFontSize(28)
     pdf.setTextColor(68, 21, 104)
     pdf.text(chart.name, pageWidth / 2, yPos, { align: 'center' })
     
