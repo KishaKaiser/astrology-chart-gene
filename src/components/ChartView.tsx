@@ -79,6 +79,8 @@ export function ChartView({ chart, onBack, onEdit, onUpdateChart }: ChartViewPro
 
   const generateInterpretation = async () => {
     setIsGeneratingInterpretation(true)
+    toast.loading('Generating comprehensive chart interpretation in multiple parts...', { id: 'interpretation-progress' })
+    
     try {
       const sun = chart.planets.find(p => p.name === 'Sun')
       const moon = chart.planets.find(p => p.name === 'Moon')
@@ -94,16 +96,8 @@ export function ChartView({ chart, onBack, onEdit, onUpdateChart }: ChartViewPro
       const risingSign = chart.houses.find(h => h.number === 1)?.sign || 'Unknown'
       const mcSign = chart.houses.find(h => h.number === 10)?.sign || 'Unknown'
 
-      const planetList = chart.planets.map(p => 
-        `${p.name} in ${p.sign} (House ${p.house}, ${p.degree.toFixed(2)}°)`
-      ).join('\n')
-
       const aspectList = chart.aspects.map(a => 
         `${a.planet1} ${a.type} ${a.planet2} (orb: ${a.orb.toFixed(2)}°)`
-      ).join('\n')
-
-      const houseList = chart.houses.map(h =>
-        `House ${h.number}: ${h.sign} at ${h.cusp.toFixed(2)}°`
       ).join('\n')
 
       const elementCount = {
@@ -130,11 +124,7 @@ export function ChartView({ chart, onBack, onEdit, onUpdateChart }: ChartViewPro
         if (['Gemini', 'Virgo', 'Sagittarius', 'Pisces'].includes(p.sign)) modalityCount.Mutable++
       })
 
-      const promptText = (window.spark.llmPrompt as any)`You are an expert professional astrologer. Generate a COMPLETE interpretation with ALL 13 sections below.
-
-CRITICAL INSTRUCTION: You MUST write ALL sections from 1 to 13. Each section should be 2-4 paragraphs. Do NOT stop early.
-
-Birth Data: ${chart.name}, ${chart.date} at ${chart.time}, ${chart.location}
+      const chartData = `Birth Data: ${chart.name}, ${chart.date} at ${chart.time}, ${chart.location}
 Ascendant: ${risingSign} ${chart.ascendant.toFixed(1)}° | MC: ${mcSign} ${chart.midheaven.toFixed(1)}°
 
 Planets: Sun ${sun?.sign} H${sun?.house}, Moon ${moon?.sign} H${moon?.house}, Mercury ${mercury?.sign} H${mercury?.house}, Venus ${venus?.sign} H${venus?.house}, Mars ${mars?.sign} H${mars?.house}, Jupiter ${jupiter?.sign} H${jupiter?.house}, Saturn ${saturn?.sign} H${saturn?.house}, Uranus ${uranus?.sign} H${uranus?.house}, Neptune ${neptune?.sign} H${neptune?.house}, Pluto ${pluto?.sign} H${pluto?.house}
@@ -142,77 +132,114 @@ Planets: Sun ${sun?.sign} H${sun?.house}, Moon ${moon?.sign} H${moon?.house}, Me
 Elements: Fire ${elementCount.Fire}, Earth ${elementCount.Earth}, Air ${elementCount.Air}, Water ${elementCount.Water}
 Modalities: Cardinal ${modalityCount.Cardinal}, Fixed ${modalityCount.Fixed}, Mutable ${modalityCount.Mutable}
 
-Major Aspects: ${aspectList}
+Major Aspects: ${aspectList}`
 
-Write ALL 13 sections in warm, professional tone:
+      console.log('=== GENERATING CHART INTERPRETATION IN 3 PARTS ===')
+      
+      toast.loading('Part 1/3: Core identity and personal planets...', { id: 'interpretation-progress' })
+      const part1Prompt = (window.spark.llmPrompt as any)`You are an expert professional astrologer. Generate Part 1 of a comprehensive natal chart interpretation.
+
+${chartData}
+
+Write sections 1-5 in warm, professional tone. Each section should be 3-4 detailed paragraphs.
 
 ## 1. CHART OVERVIEW & DOMINANT THEMES
-[2-3 paragraphs: overall energy, dominant elements/modalities, chart shape, key themes]
+Analyze the overall chart energy. Discuss dominant elements (Fire ${elementCount.Fire}, Earth ${elementCount.Earth}, Air ${elementCount.Air}, Water ${elementCount.Water}) and modalities (Cardinal ${modalityCount.Cardinal}, Fixed ${modalityCount.Fixed}, Mutable ${modalityCount.Mutable}). What are the key themes and patterns in this chart?
 
 ## 2. CORE IDENTITY: SUN, MOON & RISING
-[3-4 paragraphs: Sun in ${sun?.sign} H${sun?.house} (identity, purpose), Moon in ${moon?.sign} H${moon?.house} (emotions, needs), Rising ${risingSign} (personality), how they work together]
+Sun in ${sun?.sign} House ${sun?.house}: Discuss core identity, life purpose, and ego expression.
+Moon in ${moon?.sign} House ${moon?.house}: Discuss emotional nature, needs, instincts, and inner world.
+Rising ${risingSign} at ${chart.ascendant.toFixed(1)}°: Discuss personality mask, approach to life, and first impressions.
+Explain how these three work together to create the person's essential nature.
 
 ## 3. COMMUNICATION & INTELLECT: MERCURY
-[2-3 paragraphs: Mercury in ${mercury?.sign} H${mercury?.house}, communication style, learning, mental processes]
+Mercury in ${mercury?.sign} House ${mercury?.house}: Discuss communication style, thinking patterns, learning preferences, mental processes, and how they share ideas.
 
 ## 4. LOVE & VALUES: VENUS
-[2-3 paragraphs: Venus in ${venus?.sign} H${venus?.house}, love language, values, relationships, aesthetics]
+Venus in ${venus?.sign} House ${venus?.house}: Discuss love language, aesthetic preferences, what they value, how they relate to others, and what brings them pleasure and harmony.
 
 ## 5. ACTION & DESIRE: MARS
-[2-3 paragraphs: Mars in ${mars?.sign} H${mars?.house}, drive, assertiveness, passion, how you pursue desires]
+Mars in ${mars?.sign} House ${mars?.house}: Discuss drive, assertiveness, anger expression, sexual nature, how they pursue desires, and what motivates action.
+
+Write all 5 sections completely. Be thorough and insightful.`
+
+      const part1 = await window.spark.llm(part1Prompt, 'gpt-4o')
+      console.log(`Part 1 generated: ${part1.length} characters`)
+      
+      toast.loading('Part 2/3: Growth planets and life areas...', { id: 'interpretation-progress' })
+      const part2Prompt = (window.spark.llmPrompt as any)`You are an expert professional astrologer. Generate Part 2 of the natal chart interpretation (sections 6-9).
+
+${chartData}
+
+Write sections 6-9 in warm, professional tone. Each section should be 3-4 detailed paragraphs.
 
 ## 6. EXPANSION & WISDOM: JUPITER
-[2-3 paragraphs: Jupiter in ${jupiter?.sign} H${jupiter?.house}, growth, philosophy, optimism, luck]
+Jupiter in ${jupiter?.sign} House ${jupiter?.house}: Discuss growth areas, philosophy, beliefs, optimism, where luck flows, teaching/learning gifts, and how they expand consciousness.
 
 ## 7. DISCIPLINE & LESSONS: SATURN
-[2-3 paragraphs: Saturn in ${saturn?.sign} H${saturn?.house}, lessons, discipline, karmic patterns, fears to overcome]
+Saturn in ${saturn?.sign} House ${saturn?.house}: Discuss life lessons, discipline, responsibilities, karmic patterns, limitations to overcome, fears, and where mastery develops through time.
 
 ## 8. TRANSFORMATION & OUTER PLANETS
-[3-4 paragraphs: Uranus in ${uranus?.sign} H${uranus?.house} (innovation), Neptune in ${neptune?.sign} H${neptune?.house} (spirituality), Pluto in ${pluto?.sign} H${pluto?.house} (transformation)]
+Uranus in ${uranus?.sign} House ${uranus?.house}: Discuss innovation, rebellion, where they break conventions, and sudden insights.
+Neptune in ${neptune?.sign} House ${neptune?.house}: Discuss spirituality, dreams, imagination, illusions, and connection to the divine.
+Pluto in ${pluto?.sign} House ${pluto?.house}: Discuss transformation, power, death/rebirth cycles, shadow work, and deep psychological patterns.
 
 ## 9. ASPECT PATTERNS & DYNAMICS
-[2-3 paragraphs: major aspects, internal tensions/harmonies, aspect patterns]
+Analyze the major aspects in the chart:
+${aspectList}
+
+Discuss internal tensions, harmonies, talent configurations, and how different parts of the personality interact. Identify any special patterns like T-squares, grand trines, stelliums, or other significant configurations.
+
+Write all 4 sections completely. Be thorough and insightful.`
+
+      const part2 = await window.spark.llm(part2Prompt, 'gpt-4o')
+      console.log(`Part 2 generated: ${part2.length} characters`)
+      
+      toast.loading('Part 3/3: Life purpose and integration...', { id: 'interpretation-progress' })
+      const part3Prompt = (window.spark.llmPrompt as any)`You are an expert professional astrologer. Generate Part 3 (final part) of the natal chart interpretation (sections 10-13).
+
+${chartData}
+
+Write sections 10-13 in warm, professional tone. Each section should be 3-4 detailed paragraphs.
 
 ## 10. LIFE PATH & CAREER
-[2-3 paragraphs: MC ${mcSign}, career indicators, vocational path, 10th/2nd/6th house themes]
+MC in ${mcSign} at ${chart.midheaven.toFixed(1)}°: Discuss career path, public role, reputation, and life direction. Consider 10th house themes, 2nd house (resources/income), and 6th house (daily work). What vocational paths suit this chart?
 
 ## 11. RELATIONSHIPS & PARTNERSHIPS
-[2-3 paragraphs: 7th house, Venus-Mars dynamics, romantic and platonic connection style]
+Analyze 7th house themes, Venus-Mars dynamics, and relationship patterns. Discuss romantic partnerships, marriage indicators, business partnerships, and how they relate one-on-one. What do they seek in partners? What challenges and gifts do they bring to relationships?
 
 ## 12. SOUL PURPOSE & SPIRITUAL PATH
-[2-3 paragraphs: life purpose, spiritual gifts/challenges, conscious evolution areas]
+Synthesize the chart to reveal soul purpose and spiritual path. What is this person here to learn and embody? Discuss spiritual gifts, psychic abilities, past life indicators, and areas for conscious evolution. How can they serve their highest purpose?
 
 ## 13. PRACTICAL GUIDANCE & INTEGRATION
-[2-3 paragraphs: concrete ways to work with this energy, shadow work, gifts to develop, actionable advice]
+Provide concrete, actionable advice for working with this chart energy. Discuss shadow work needed, gifts to develop, life areas requiring attention, and specific practices or approaches that support growth. How can they integrate all these energies into a fulfilling life?
 
-WRITE ALL 13 SECTIONS. START WITH SECTION 1 AND END WITH SECTION 13. DO NOT SKIP ANY SECTIONS.`
+Write all 4 sections completely. End with empowering, practical guidance. Be thorough and insightful.`
 
-      console.log('=== GENERATING FULL CHART INTERPRETATION ===')
-      console.log('Requesting all 13 sections from LLM...')
+      const part3 = await window.spark.llm(part3Prompt, 'gpt-4o')
+      console.log(`Part 3 generated: ${part3.length} characters`)
       
-      const result = await window.spark.llm(promptText, 'gpt-4o')
+      const fullInterpretation = `${part1}\n\n${part2}\n\n${part3}`
       
-      console.log('=== LLM RESPONSE RECEIVED ===')
-      console.log('Response length:', result.length, 'characters')
-      console.log('Response preview (first 500 chars):', result.substring(0, 500))
-      console.log('Response end (last 500 chars):', result.substring(result.length - 500))
+      console.log('=== INTERPRETATION COMPLETE ===')
+      console.log(`Total length: ${fullInterpretation.length} characters`)
       
-      const sectionMatches = result.match(/##\s*\d+\./g)
+      const sectionMatches = fullInterpretation.match(/##\s*\d+\./g)
       const sectionCount = sectionMatches ? sectionMatches.length : 0
-      console.log(`Found ${sectionCount} sections in response`)
+      console.log(`Total sections generated: ${sectionCount}`)
       
-      if (sectionCount < 13) {
-        console.warn(`⚠️ WARNING: Only ${sectionCount} sections generated instead of 13!`)
-        toast.warning(`Interpretation generated with ${sectionCount}/13 sections. You may regenerate for a more complete reading.`, { duration: 6000 })
+      if (sectionCount >= 13) {
+        toast.success('Complete 13-section interpretation generated successfully!', { id: 'interpretation-progress' })
+      } else if (sectionCount >= 10) {
+        toast.success(`Comprehensive interpretation with ${sectionCount} sections generated!`, { id: 'interpretation-progress' })
       } else {
-        console.log('✓ All 13 sections generated successfully')
-        toast.success('Complete interpretation generated and saved!')
+        toast.warning(`Generated ${sectionCount} sections. Some sections may be incomplete.`, { id: 'interpretation-progress', duration: 6000 })
       }
       
-      setInterpretation(result)
-      onUpdateChart(chart.id, result)
+      setInterpretation(fullInterpretation)
+      onUpdateChart(chart.id, fullInterpretation)
     } catch (error) {
-      toast.error('Failed to generate interpretation')
+      toast.error('Failed to generate interpretation', { id: 'interpretation-progress' })
       console.error('Interpretation error:', error)
     } finally {
       setIsGeneratingInterpretation(false)
