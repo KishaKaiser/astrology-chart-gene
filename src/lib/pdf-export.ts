@@ -700,7 +700,10 @@ export async function exportChartToPDF(
       })
       
       const interpretationLines = pdf.splitTextToSize(processedInterpretation, pageWidth - 2 * margin)
-      interpretationLines.forEach((line: string) => {
+      
+      for (let i = 0; i < interpretationLines.length; i++) {
+        const line = interpretationLines[i]
+        
         if (yPos > pageHeight - 25) {
           pdf.addPage()
           yPos = margin + 5
@@ -709,6 +712,10 @@ export async function exportChartToPDF(
         if (line.startsWith('=SECTION_HEADER=')) {
           if (yPos > margin + 10) {
             yPos += 8
+          }
+          if (yPos > pageHeight - 30) {
+            pdf.addPage()
+            yPos = margin + 5
           }
           pdf.setFont('helvetica', 'bold')
           pdf.setFontSize(14)
@@ -720,6 +727,10 @@ export async function exportChartToPDF(
           if (yPos > margin + 10) {
             yPos += 6
           }
+          if (yPos > pageHeight - 25) {
+            pdf.addPage()
+            yPos = margin + 5
+          }
           pdf.setFont('helvetica', 'bold')
           pdf.setFontSize(12)
           pdf.setTextColor(90, 40, 120)
@@ -728,6 +739,10 @@ export async function exportChartToPDF(
           yPos += 7
         } else if (line.startsWith('=MINOR_HEADER=')) {
           yPos += 4
+          if (yPos > pageHeight - 25) {
+            pdf.addPage()
+            yPos = margin + 5
+          }
           pdf.setFont('helvetica', 'bold')
           pdf.setFontSize(10)
           pdf.setTextColor(90, 40, 120)
@@ -738,6 +753,10 @@ export async function exportChartToPDF(
           if (yPos > margin + 10) {
             yPos += 6
           }
+          if (yPos > pageHeight - 25) {
+            pdf.addPage()
+            yPos = margin + 5
+          }
           pdf.setFont('helvetica', 'bold')
           pdf.setFontSize(11)
           pdf.setTextColor(68, 21, 104)
@@ -747,6 +766,10 @@ export async function exportChartToPDF(
           if (yPos > margin + 10) {
             yPos += 5
           }
+          if (yPos > pageHeight - 25) {
+            pdf.addPage()
+            yPos = margin + 5
+          }
           pdf.setFont('helvetica', 'bold')
           pdf.setFontSize(11)
           pdf.setTextColor(68, 21, 104)
@@ -755,6 +778,10 @@ export async function exportChartToPDF(
           yPos += 7
         } else if (line.match(/^\*\*[A-Z\s&]+:\s*\*\*/)) {
           yPos += 3
+          if (yPos > pageHeight - 25) {
+            pdf.addPage()
+            yPos = margin + 5
+          }
           pdf.setFont('helvetica', 'bold')
           pdf.setFontSize(10)
           pdf.setTextColor(90, 40, 120)
@@ -763,6 +790,10 @@ export async function exportChartToPDF(
           yPos += 6
         } else if (line.match(/^\*\*[^*]+\*\*$/)) {
           yPos += 2
+          if (yPos > pageHeight - 25) {
+            pdf.addPage()
+            yPos = margin + 5
+          }
           pdf.setFont('helvetica', 'bold')
           pdf.setFontSize(9)
           pdf.setTextColor(60, 60, 60)
@@ -772,6 +803,10 @@ export async function exportChartToPDF(
         } else if (line.trim() === '') {
           yPos += 2
         } else {
+          if (yPos > pageHeight - 25) {
+            pdf.addPage()
+            yPos = margin + 5
+          }
           pdf.setFont('helvetica', 'normal')
           pdf.setFontSize(9)
           pdf.setTextColor(50, 50, 50)
@@ -779,7 +814,7 @@ export async function exportChartToPDF(
           pdf.text(cleanLine, margin, yPos)
           yPos += 5
         }
-      })
+      }
     }
 
     if (options.includePersonalHoroscope) {
