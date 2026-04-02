@@ -115,7 +115,8 @@ export async function exportChartToPDF(
       yPos += 12
     }
     
-    yPos += 15
+    pdf.addPage()
+    yPos = margin
 
     const sun = chart.planets.find(p => p.name === 'Sun')
     const moon = chart.planets.find(p => p.name === 'Moon')
