@@ -130,19 +130,20 @@ export function ChartView({ chart, onBack, onEdit, onUpdateChart }: ChartViewPro
         if (['Gemini', 'Virgo', 'Sagittarius', 'Pisces'].includes(p.sign)) modalityCount.Mutable++
       })
 
-      const promptText = (window.spark.llmPrompt as any)`You are an expert professional astrologer with deep knowledge of psychological astrology, providing comprehensive chart interpretations. Write in a warm, insightful, and professional tone.
+      const promptText = (window.spark.llmPrompt as any)`You are an expert professional astrologer with deep knowledge of psychological astrology. Write in a warm, insightful, and professional tone.
 
-Generate an in-depth astrological interpretation for the following natal chart:
+CRITICAL: You MUST provide a COMPLETE interpretation covering ALL 13 sections listed below. Do NOT truncate or stop early. Generate the FULL analysis from Section 1 through Section 13.
+
+Generate a comprehensive astrological interpretation for:
 
 === BIRTH DATA ===
 Name: ${chart.name}
-Date: ${chart.date}
-Time: ${chart.time}
+Date: ${chart.date} at ${chart.time}
 Location: ${chart.location}
 
 === CHART ANGLES ===
-Ascendant (Rising Sign): ${risingSign} at ${chart.ascendant.toFixed(2)}°
-Midheaven (MC): ${mcSign} at ${chart.midheaven.toFixed(2)}°
+Ascendant: ${risingSign} at ${chart.ascendant.toFixed(2)}°
+Midheaven: ${mcSign} at ${chart.midheaven.toFixed(2)}°
 
 === PLANETARY POSITIONS ===
 Sun: ${sun?.sign} (House ${sun?.house}, ${sun?.degree.toFixed(2)}°)
@@ -156,81 +157,60 @@ Uranus: ${uranus?.sign} (House ${uranus?.house}, ${uranus?.degree.toFixed(2)}°)
 Neptune: ${neptune?.sign} (House ${neptune?.house}, ${neptune?.degree.toFixed(2)}°)
 Pluto: ${pluto?.sign} (House ${pluto?.house}, ${pluto?.degree.toFixed(2)}°)
 
-=== HOUSE CUSPS ===
-${houseList}
+=== ELEMENTAL BALANCE ===
+Fire: ${elementCount.Fire} | Earth: ${elementCount.Earth} | Air: ${elementCount.Air} | Water: ${elementCount.Water}
+Cardinal: ${modalityCount.Cardinal} | Fixed: ${modalityCount.Fixed} | Mutable: ${modalityCount.Mutable}
 
 === MAJOR ASPECTS ===
 ${aspectList}
 
-=== ELEMENTAL & MODAL BALANCE ===
-Fire: ${elementCount.Fire} planets | Earth: ${elementCount.Earth} planets | Air: ${elementCount.Air} planets | Water: ${elementCount.Water} planets
-Cardinal: ${modalityCount.Cardinal} planets | Fixed: ${modalityCount.Fixed} planets | Mutable: ${modalityCount.Mutable} planets
+Provide detailed analysis for ALL sections below:
 
-=== INTERPRETATION GUIDELINES ===
-Provide a comprehensive interpretation covering the following sections with detailed analysis:
+## 1. CHART OVERVIEW & DOMINANT THEMES
+Analyze overall energy signature, dominant elements/modalities, stelliums, chart shape, and key strengths.
 
-**1. CHART OVERVIEW & DOMINANT THEMES**
-- Overall chart pattern and energy signature
-- Dominant elements and modalities and what they mean for personality
-- Any stelliums (3+ planets in same sign/house)
-- Chart shape (bundle, bowl, bucket, splash, etc.) if applicable
-- Key strengths and natural talents
+## 2. CORE IDENTITY: SUN, MOON & RISING
+- Sun in ${sun?.sign} House ${sun?.house}: Core identity, life purpose, vitality
+- Moon in ${moon?.sign} House ${moon?.house}: Emotional nature, needs, instincts
+- Ascendant ${risingSign}: Outer personality, life approach
+Synthesize how these three work together.
 
-**2. THE CORE IDENTITY: SUN, MOON & RISING**
-- Sun in ${sun?.sign} in House ${sun?.house}: Core identity, life purpose, creative expression, vitality
-- Moon in ${moon?.sign} in House ${moon?.house}: Emotional nature, needs, instincts, subconscious patterns, how you nurture and need nurturing
-- Ascendant in ${risingSign}: Outer personality, first impressions, physical approach to life, life path
-- Synthesis of the three: How these work together to form the complete personality
+## 3. COMMUNICATION & INTELLECT: MERCURY
+Mercury in ${mercury?.sign} House ${mercury?.house}: Communication style, mental processes, learning patterns.
 
-**3. COMMUNICATION & INTELLECT: MERCURY**
-- Mercury in ${mercury?.sign} in House ${mercury?.house}: Communication style, learning patterns, mental processes, decision-making approach
+## 4. LOVE & VALUES: VENUS
+Venus in ${venus?.sign} House ${venus?.house}: Love language, values, relationship needs, aesthetic preferences.
 
-**4. LOVE & VALUES: VENUS**
-- Venus in ${venus?.sign} in House ${venus?.house}: Love language, aesthetic preferences, what you value, how you attract and relate, social graces, relationship needs
+## 5. ACTION & DESIRE: MARS
+Mars in ${mars?.sign} House ${mars?.house}: Drive, assertiveness, anger expression, desire pursuit.
 
-**5. ACTION & DESIRE: MARS**
-- Mars in ${mars?.sign} in House ${mars?.house}: How you assert yourself, take action, express anger, pursue desires, sexual energy, competitive nature
+## 6. EXPANSION & WISDOM: JUPITER
+Jupiter in ${jupiter?.sign} House ${jupiter?.house}: Growth areas, philosophy, meaning-making, optimism.
 
-**6. EXPANSION & WISDOM: JUPITER**
-- Jupiter in ${jupiter?.sign} in House ${jupiter?.house}: Areas of growth and opportunity, philosophical outlook, where you find meaning, natural optimism, teaching abilities
+## 7. DISCIPLINE & LESSONS: SATURN
+Saturn in ${saturn?.sign} House ${saturn?.house}: Life lessons, discipline areas, karmic patterns, fears to overcome.
 
-**7. DISCIPLINE & LESSONS: SATURN**
-- Saturn in ${saturn?.sign} in House ${saturn?.house}: Life lessons, areas requiring discipline, fears to overcome, where you build lasting structures, karmic patterns
+## 8. TRANSFORMATION & OUTER PLANETS
+- Uranus in ${uranus?.sign} House ${uranus?.house}: Innovation, uniqueness, sudden change
+- Neptune in ${neptune?.sign} House ${neptune?.house}: Spirituality, dreams, sensitivity
+- Pluto in ${pluto?.sign} House ${pluto?.house}: Deep transformation, power, regeneration
 
-**8. TRANSFORMATION & OUTER PLANETS**
-- Uranus in ${uranus?.sign} in House ${uranus?.house}: Areas of innovation, rebellion, sudden change, where you're unique
-- Neptune in ${neptune?.sign} in House ${neptune?.house}: Spiritual inclinations, dreams, illusions, creative imagination, areas of sensitivity
-- Pluto in ${pluto?.sign} in House ${pluto?.house}: Deep transformation, power dynamics, psychological depth, regeneration
+## 9. ASPECT PATTERNS & DYNAMICS
+Analyze the major aspects listed above, internal tensions/harmonies, aspect patterns (T-squares, Grand Trines, etc.).
 
-**9. ASPECT PATTERNS & DYNAMICS**
-- Detailed analysis of the most significant aspects between planets
-- How these aspects create internal tensions or harmonies
-- Aspect patterns (T-squares, Grand Trines, Grand Crosses, Yods, etc.) if present
-- How to work constructively with challenging aspects
+## 10. LIFE PATH & CAREER
+Midheaven ${mcSign}, career indicators, vocational inclinations, 10th/2nd/6th house themes.
 
-**10. LIFE PATH & CAREER INDICATORS**
-- Midheaven in ${mcSign}: Career path, public image, life direction, aspirations
-- 10th house themes and planets
-- 2nd and 6th house indicators for work and resources
-- Natural vocational inclinations
+## 11. RELATIONSHIPS & PARTNERSHIPS
+7th house themes, Venus-Mars dynamics, connection style romantically and platonically.
 
-**11. RELATIONSHIPS & PARTNERSHIPS**
-- 7th house themes and what you seek in partnerships
-- Venus-Mars dynamics
-- How you connect with others romantically and platonically
+## 12. SOUL PURPOSE & SPIRITUAL PATH
+Life purpose indicators, spiritual gifts/challenges, areas for conscious evolution.
 
-**12. SOUL PURPOSE & SPIRITUAL PATH**
-- Deeper life purpose indicators
-- Spiritual gifts and challenges
-- Areas for conscious evolution
+## 13. PRACTICAL GUIDANCE & INTEGRATION
+Concrete ways to work with this energy, shadow work, gifts to develop, life advice.
 
-**13. PRACTICAL GUIDANCE & INTEGRATION**
-- Concrete ways to work with this chart's energy
-- Shadow work areas
-- Gifts to develop
-- Life advice based on the chart patterns
-
-Write each section with depth and nuance. Be specific about how energies manifest in daily life. Focus on psychological growth, self-awareness, and empowerment rather than predictions. Use professional astrological language while remaining accessible. Make it feel personal and insightful.`
+REMEMBER: Complete ALL 13 sections. Do not stop at section 3 or 4. Continue through to section 13 with full detail for each.`
 
       const result = await window.spark.llm(promptText, 'gpt-4o')
       setInterpretation(result)
