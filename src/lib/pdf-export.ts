@@ -699,7 +699,26 @@ export async function exportChartToPDF(
         processedInterpretation = processedInterpretation.replace(new RegExp(icon, 'g'), replacement)
       })
       
-      const interpretationLines = pdf.splitTextToSize(processedInterpretation, pageWidth - 2 * margin)
+      const rawLines = processedInterpretation.split('\n')
+      const interpretationLines: string[] = []
+      
+      rawLines.forEach(rawLine => {
+        if (rawLine.startsWith('=SECTION_HEADER=') || 
+            rawLine.startsWith('=SUBSECTION_HEADER=') || 
+            rawLine.startsWith('=MINOR_HEADER=') ||
+            rawLine.trim() === '' ||
+            rawLine.match(/^\*\*[0-9]+\.\s/) ||
+            rawLine.match(/^\*\*[A-Z\s&]+:\s*\*\*/) ||
+            rawLine.match(/^\*\*[^*]+\*\*$/) ||
+            rawLine.match(/^(Sun Sign|Moon Sign|Rising Sign|Planetary Positions|House Analysis|Major Aspects|Aspect Patterns|Life Purpose|Career|Relationships|Challenges|Strengths|Spiritual Path|Personality|Emotions|Communication|Love|Career Path|Home Life|Creative Expression|Daily Life|Relationships & Partnerships|Transformation|Philosophy|Career Ambitions|Community|Spirituality):/)) {
+          interpretationLines.push(rawLine)
+        } else {
+          const wrappedLines = pdf.splitTextToSize(rawLine, pageWidth - 2 * margin)
+          interpretationLines.push(...wrappedLines)
+        }
+      })
+      
+      console.log(`Processing ${interpretationLines.length} lines of interpretation for PDF`)
       
       for (let i = 0; i < interpretationLines.length; i++) {
         const line = interpretationLines[i]
@@ -815,6 +834,8 @@ export async function exportChartToPDF(
           yPos += 5
         }
       }
+      
+      console.log(`Completed interpretation rendering. Final page count: ${pdf.getNumberOfPages()}`)
     }
 
     if (options.includePersonalHoroscope) {
