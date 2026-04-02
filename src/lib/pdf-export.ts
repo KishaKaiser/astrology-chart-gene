@@ -67,9 +67,9 @@ export async function exportChartToPDF(
     })
 
     pdf.setFillColor(68, 21, 104)
-    pdf.rect(0, 0, pageWidth, 70, 'F')
+    pdf.rect(0, 0, pageWidth, 50, 'F')
 
-    yPos += 8
+    yPos += 5
     pdf.setFont('times', 'italic')
     pdf.setFontSize(36)
     pdf.setTextColor(255, 255, 255)
@@ -81,7 +81,7 @@ export async function exportChartToPDF(
     pdf.setTextColor(230, 230, 230)
     pdf.text('What Do The Stars Say About You?', pageWidth / 2, yPos, { align: 'center' })
     
-    yPos = 80
+    yPos = 60
 
     pdf.setFont('times', 'italic')
     pdf.setFontSize(28)
@@ -106,8 +106,8 @@ export async function exportChartToPDF(
     yPos += 12
 
     try {
-      const logoWidth = 40
-      const logoHeight = 40
+      const logoWidth = 60
+      const logoHeight = 60
       pdf.addImage(logoImage, 'JPEG', (pageWidth - logoWidth) / 2, yPos, logoWidth, logoHeight)
       yPos += logoHeight + 12
     } catch (error) {
