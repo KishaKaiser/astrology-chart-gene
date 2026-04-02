@@ -18,7 +18,7 @@ import { Separator } from '@/components/ui/separator'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
-import { Printer, PencilSimple, ArrowLeft, Sparkle } from '@phosphor-icons/react'
+import { Printer, PencilSimple, ArrowLeft, Sparkle, ArrowsClockwise } from '@phosphor-icons/react'
 import { exportChartToPDF, PDFExportOptions } from '@/lib/pdf-export'
 import { toast } from 'sonner'
 import logoImage from '@/assets/images/logo.jpg'
@@ -36,6 +36,7 @@ export function ChartView({ chart, onBack, onEdit, onUpdateChart }: ChartViewPro
   const [transits, setTransits] = useState<TransitData | null>(null)
   const [interpretation, setInterpretation] = useState<string>(chart.interpretation || '')
   const [isGeneratingInterpretation, setIsGeneratingInterpretation] = useState(false)
+  const [regeneratingSections, setRegeneratingSections] = useState<Set<number>>(new Set())
 
   useEffect(() => {
     const loadTransits = async () => {
@@ -75,6 +76,258 @@ export function ChartView({ chart, onBack, onEdit, onUpdateChart }: ChartViewPro
 
   const handlePrint = () => {
     window.print()
+  }
+
+  const parseInterpretationSections = (text: string) => {
+    const sections: Array<{ number: number; title: string; content: string }> = []
+    const sectionRegex = /##\s*(\d+)\.\s*([^\n]+)\n([\s\S]*?)(?=##\s*\d+\.|$)/g
+    
+    let match
+    while ((match = sectionRegex.exec(text)) !== null) {
+      sections.push({
+        number: parseInt(match[1]),
+        title: match[2].trim(),
+        content: match[3].trim()
+      })
+    }
+    
+    return sections
+  }
+
+  const getSectionPromptData = (sectionNumber: number) => {
+    const sun = chart.planets.find(p => p.name === 'Sun')
+    const moon = chart.planets.find(p => p.name === 'Moon')
+    const mercury = chart.planets.find(p => p.name === 'Mercury')
+    const venus = chart.planets.find(p => p.name === 'Venus')
+    const mars = chart.planets.find(p => p.name === 'Mars')
+    const jupiter = chart.planets.find(p => p.name === 'Jupiter')
+    const saturn = chart.planets.find(p => p.name === 'Saturn')
+    const uranus = chart.planets.find(p => p.name === 'Uranus')
+    const neptune = chart.planets.find(p => p.name === 'Neptune')
+    const pluto = chart.planets.find(p => p.name === 'Pluto')
+
+    const risingSign = chart.houses.find(h => h.number === 1)?.sign || 'Unknown'
+    const mcSign = chart.houses.find(h => h.number === 10)?.sign || 'Unknown'
+
+    const aspectList = chart.aspects.map(a => 
+      `${a.planet1} ${a.type} ${a.planet2} (orb: ${a.orb.toFixed(2)}°)`
+    ).join('\n')
+
+    const elementCount = { Fire: 0, Earth: 0, Air: 0, Water: 0 }
+    const modalityCount = { Cardinal: 0, Fixed: 0, Mutable: 0 }
+
+    chart.planets.forEach(p => {
+      if (['Aries', 'Leo', 'Sagittarius'].includes(p.sign)) elementCount.Fire++
+      if (['Taurus', 'Virgo', 'Capricorn'].includes(p.sign)) elementCount.Earth++
+      if (['Gemini', 'Libra', 'Aquarius'].includes(p.sign)) elementCount.Air++
+      if (['Cancer', 'Scorpio', 'Pisces'].includes(p.sign)) elementCount.Water++
+
+      if (['Aries', 'Cancer', 'Libra', 'Capricorn'].includes(p.sign)) modalityCount.Cardinal++
+      if (['Taurus', 'Leo', 'Scorpio', 'Aquarius'].includes(p.sign)) modalityCount.Fixed++
+      if (['Gemini', 'Virgo', 'Sagittarius', 'Pisces'].includes(p.sign)) modalityCount.Mutable++
+    })
+
+    const chartData = `Birth Data: ${chart.name}, ${chart.date} at ${chart.time}, ${chart.location}
+Ascendant: ${risingSign} ${chart.ascendant.toFixed(1)}° | MC: ${mcSign} ${chart.midheaven.toFixed(1)}°
+
+Planets: Sun ${sun?.sign} H${sun?.house}, Moon ${moon?.sign} H${moon?.house}, Mercury ${mercury?.sign} H${mercury?.house}, Venus ${venus?.sign} H${venus?.house}, Mars ${mars?.sign} H${mars?.house}, Jupiter ${jupiter?.sign} H${jupiter?.house}, Saturn ${saturn?.sign} H${saturn?.house}, Uranus ${uranus?.sign} H${uranus?.house}, Neptune ${neptune?.sign} H${neptune?.house}, Pluto ${pluto?.sign} H${pluto?.house}
+
+Elements: Fire ${elementCount.Fire}, Earth ${elementCount.Earth}, Air ${elementCount.Air}, Water ${elementCount.Water}
+Modalities: Cardinal ${modalityCount.Cardinal}, Fixed ${modalityCount.Fixed}, Mutable ${modalityCount.Mutable}
+
+Major Aspects: ${aspectList}`
+
+    const prompts: Record<number, string> = {
+      1: `You are an expert professional astrologer. Generate section 1 only of a natal chart interpretation.
+
+${chartData}
+
+Write section 1 in warm, professional tone. Section should be 3-4 detailed paragraphs.
+
+## 1. CHART OVERVIEW & DOMINANT THEMES
+Analyze the overall chart energy. Discuss dominant elements (Fire ${elementCount.Fire}, Earth ${elementCount.Earth}, Air ${elementCount.Air}, Water ${elementCount.Water}) and modalities (Cardinal ${modalityCount.Cardinal}, Fixed ${modalityCount.Fixed}, Mutable ${modalityCount.Mutable}). What are the key themes and patterns in this chart?
+
+Write the complete section. Be thorough and insightful.`,
+      2: `You are an expert professional astrologer. Generate section 2 only of a natal chart interpretation.
+
+${chartData}
+
+Write section 2 in warm, professional tone. Section should be 3-4 detailed paragraphs.
+
+## 2. CORE IDENTITY: SUN, MOON & RISING
+Sun in ${sun?.sign} House ${sun?.house}: Discuss core identity, life purpose, and ego expression.
+Moon in ${moon?.sign} House ${moon?.house}: Discuss emotional nature, needs, instincts, and inner world.
+Rising ${risingSign} at ${chart.ascendant.toFixed(1)}°: Discuss personality mask, approach to life, and first impressions.
+Explain how these three work together to create the person's essential nature.
+
+Write the complete section. Be thorough and insightful.`,
+      3: `You are an expert professional astrologer. Generate section 3 only of a natal chart interpretation.
+
+${chartData}
+
+Write section 3 in warm, professional tone. Section should be 3-4 detailed paragraphs.
+
+## 3. COMMUNICATION & INTELLECT: MERCURY
+Mercury in ${mercury?.sign} House ${mercury?.house}: Discuss communication style, thinking patterns, learning preferences, mental processes, and how they share ideas.
+
+Write the complete section. Be thorough and insightful.`,
+      4: `You are an expert professional astrologer. Generate section 4 only of a natal chart interpretation.
+
+${chartData}
+
+Write section 4 in warm, professional tone. Section should be 3-4 detailed paragraphs.
+
+## 4. LOVE & VALUES: VENUS
+Venus in ${venus?.sign} House ${venus?.house}: Discuss love language, aesthetic preferences, what they value, how they relate to others, and what brings them pleasure and harmony.
+
+Write the complete section. Be thorough and insightful.`,
+      5: `You are an expert professional astrologer. Generate section 5 only of a natal chart interpretation.
+
+${chartData}
+
+Write section 5 in warm, professional tone. Section should be 3-4 detailed paragraphs.
+
+## 5. ACTION & DESIRE: MARS
+Mars in ${mars?.sign} House ${mars?.house}: Discuss drive, assertiveness, anger expression, sexual nature, how they pursue desires, and what motivates action.
+
+Write the complete section. Be thorough and insightful.`,
+      6: `You are an expert professional astrologer. Generate section 6 only of a natal chart interpretation.
+
+${chartData}
+
+Write section 6 in warm, professional tone. Section should be 3-4 detailed paragraphs.
+
+## 6. EXPANSION & WISDOM: JUPITER
+Jupiter in ${jupiter?.sign} House ${jupiter?.house}: Discuss growth areas, philosophy, beliefs, optimism, where luck flows, teaching/learning gifts, and how they expand consciousness.
+
+Write the complete section. Be thorough and insightful.`,
+      7: `You are an expert professional astrologer. Generate section 7 only of a natal chart interpretation.
+
+${chartData}
+
+Write section 7 in warm, professional tone. Section should be 3-4 detailed paragraphs.
+
+## 7. DISCIPLINE & LESSONS: SATURN
+Saturn in ${saturn?.sign} House ${saturn?.house}: Discuss life lessons, discipline, responsibilities, karmic patterns, limitations to overcome, fears, and where mastery develops through time.
+
+Write the complete section. Be thorough and insightful.`,
+      8: `You are an expert professional astrologer. Generate section 8 only of a natal chart interpretation.
+
+${chartData}
+
+Write section 8 in warm, professional tone. Section should be 3-4 detailed paragraphs.
+
+## 8. TRANSFORMATION & OUTER PLANETS
+Uranus in ${uranus?.sign} House ${uranus?.house}: Discuss innovation, rebellion, where they break conventions, and sudden insights.
+Neptune in ${neptune?.sign} House ${neptune?.house}: Discuss spirituality, dreams, imagination, illusions, and connection to the divine.
+Pluto in ${pluto?.sign} House ${pluto?.house}: Discuss transformation, power, death/rebirth cycles, shadow work, and deep psychological patterns.
+
+Write the complete section. Be thorough and insightful.`,
+      9: `You are an expert professional astrologer. Generate section 9 only of a natal chart interpretation.
+
+${chartData}
+
+Write section 9 in warm, professional tone. Section should be 3-4 detailed paragraphs.
+
+## 9. ASPECT PATTERNS & DYNAMICS
+Analyze the major aspects in the chart:
+${aspectList}
+
+Discuss internal tensions, harmonies, talent configurations, and how different parts of the personality interact. Identify any special patterns like T-squares, grand trines, stelliums, or other significant configurations.
+
+Write the complete section. Be thorough and insightful.`,
+      10: `You are an expert professional astrologer. Generate section 10 only of a natal chart interpretation.
+
+${chartData}
+
+Write section 10 in warm, professional tone. Section should be 3-4 detailed paragraphs.
+
+## 10. LIFE PATH & CAREER
+MC in ${mcSign} at ${chart.midheaven.toFixed(1)}°: Discuss career path, public role, reputation, and life direction. Consider 10th house themes, 2nd house (resources/income), and 6th house (daily work). What vocational paths suit this chart?
+
+Write the complete section. Be thorough and insightful.`,
+      11: `You are an expert professional astrologer. Generate section 11 only of a natal chart interpretation.
+
+${chartData}
+
+Write section 11 in warm, professional tone. Section should be 3-4 detailed paragraphs.
+
+## 11. RELATIONSHIPS & PARTNERSHIPS
+Analyze 7th house themes, Venus-Mars dynamics, and relationship patterns. Discuss romantic partnerships, marriage indicators, business partnerships, and how they relate one-on-one. What do they seek in partners? What challenges and gifts do they bring to relationships?
+
+Write the complete section. Be thorough and insightful.`,
+      12: `You are an expert professional astrologer. Generate section 12 only of a natal chart interpretation.
+
+${chartData}
+
+Write section 12 in warm, professional tone. Section should be 3-4 detailed paragraphs.
+
+## 12. SOUL PURPOSE & SPIRITUAL PATH
+Synthesize the chart to reveal soul purpose and spiritual path. What is this person here to learn and embody? Discuss spiritual gifts, psychic abilities, past life indicators, and areas for conscious evolution. How can they serve their highest purpose?
+
+Write the complete section. Be thorough and insightful.`,
+      13: `You are an expert professional astrologer. Generate section 13 only of a natal chart interpretation.
+
+${chartData}
+
+Write section 13 in warm, professional tone. Section should be 3-4 detailed paragraphs.
+
+## 13. PRACTICAL GUIDANCE & INTEGRATION
+Provide concrete, actionable advice for working with this chart energy. Discuss shadow work needed, gifts to develop, life areas requiring attention, and specific practices or approaches that support growth. How can they integrate all these energies into a fulfilling life?
+
+Write the complete section. End with empowering, practical guidance. Be thorough and insightful.`
+    }
+
+    return prompts[sectionNumber] || ''
+  }
+
+  const regenerateSection = async (sectionNumber: number) => {
+    setRegeneratingSections(prev => new Set(prev).add(sectionNumber))
+    toast.loading(`Regenerating section ${sectionNumber}...`, { id: `regen-${sectionNumber}` })
+    
+    try {
+      const promptText = getSectionPromptData(sectionNumber)
+      if (!promptText) {
+        throw new Error('Invalid section number')
+      }
+
+      const prompt = (window.spark.llmPrompt as any)`${promptText}`
+      const newSectionContent = await window.spark.llm(prompt, 'gpt-4o')
+      
+      const sections = parseInterpretationSections(interpretation)
+      const sectionIndex = sections.findIndex(s => s.number === sectionNumber)
+      
+      if (sectionIndex === -1) {
+        toast.error(`Section ${sectionNumber} not found in interpretation`, { id: `regen-${sectionNumber}` })
+        return
+      }
+      
+      const cleanedContent = newSectionContent.replace(/^##\s*\d+\.\s*[^\n]+\n/, '').trim()
+      
+      const updatedSections = sections.map(section => 
+        section.number === sectionNumber 
+          ? { ...section, content: cleanedContent }
+          : section
+      )
+      
+      const newInterpretation = updatedSections
+        .map(s => `## ${s.number}. ${s.title}\n${s.content}`)
+        .join('\n\n')
+      
+      setInterpretation(newInterpretation)
+      onUpdateChart(chart.id, newInterpretation)
+      
+      toast.success(`Section ${sectionNumber} regenerated successfully!`, { id: `regen-${sectionNumber}` })
+    } catch (error) {
+      console.error('Section regeneration error:', error)
+      toast.error(`Failed to regenerate section ${sectionNumber}`, { id: `regen-${sectionNumber}` })
+    } finally {
+      setRegeneratingSections(prev => {
+        const updated = new Set(prev)
+        updated.delete(sectionNumber)
+        return updated
+      })
+    }
   }
 
   const generateInterpretation = async () => {
@@ -983,11 +1236,57 @@ Write all 4 sections completely. End with empowering, practical guidance. Be tho
                     />
                   </div>
                   
-                  <div className="prose prose-invert max-w-none">
-                    <div className="space-y-6 text-sm leading-relaxed whitespace-pre-wrap text-foreground">
-                      {interpretation}
-                    </div>
-                  </div>
+                  {(() => {
+                    const sections = parseInterpretationSections(interpretation)
+                    
+                    if (sections.length === 0) {
+                      return (
+                        <div className="prose prose-invert max-w-none">
+                          <div className="space-y-6 text-sm leading-relaxed whitespace-pre-wrap text-foreground">
+                            {interpretation}
+                          </div>
+                        </div>
+                      )
+                    }
+                    
+                    return (
+                      <div className="space-y-6">
+                        {sections.map((section) => (
+                          <div 
+                            key={section.number} 
+                            className="border border-border rounded-lg p-5 bg-card hover:border-accent/30 transition-colors"
+                          >
+                            <div className="flex items-start justify-between gap-4 mb-4">
+                              <div className="flex-1">
+                                <h3 className="text-lg font-semibold text-foreground mb-1">
+                                  {section.number}. {section.title}
+                                </h3>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => regenerateSection(section.number)}
+                                disabled={regeneratingSections.has(section.number)}
+                                className="gap-2 text-xs hover:bg-accent/10 hover:text-accent shrink-0"
+                              >
+                                <ArrowsClockwise 
+                                  size={16} 
+                                  weight="bold"
+                                  className={regeneratingSections.has(section.number) ? 'animate-spin' : ''}
+                                />
+                                {regeneratingSections.has(section.number) ? 'Regenerating...' : 'Regenerate'}
+                              </Button>
+                            </div>
+                            <div className="prose prose-invert max-w-none">
+                              <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">
+                                {section.content}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )
+                  })()}
 
                   <Separator />
 
@@ -995,7 +1294,7 @@ Write all 4 sections completely. End with empowering, practical guidance. Be tho
                     <div className="flex items-center gap-2">
                       <Sparkle size={18} weight="fill" className="text-muted-foreground" />
                       <p className="text-xs text-muted-foreground">
-                        Need a fresh perspective? You can regenerate this interpretation at any time.
+                        Need a fresh perspective? You can regenerate individual sections or the entire reading at any time.
                       </p>
                     </div>
                   </div>
