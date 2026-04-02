@@ -130,92 +130,87 @@ export function ChartView({ chart, onBack, onEdit, onUpdateChart }: ChartViewPro
         if (['Gemini', 'Virgo', 'Sagittarius', 'Pisces'].includes(p.sign)) modalityCount.Mutable++
       })
 
-      const promptText = (window.spark.llmPrompt as any)`You are an expert professional astrologer with deep knowledge of psychological astrology. Write in a warm, insightful, and professional tone.
+      const promptText = (window.spark.llmPrompt as any)`You are an expert professional astrologer. Generate a COMPLETE interpretation with ALL 13 sections below.
 
-CRITICAL: You MUST provide a COMPLETE interpretation covering ALL 13 sections listed below. Do NOT truncate or stop early. Generate the FULL analysis from Section 1 through Section 13.
+CRITICAL INSTRUCTION: You MUST write ALL sections from 1 to 13. Each section should be 2-4 paragraphs. Do NOT stop early.
 
-Generate a comprehensive astrological interpretation for:
+Birth Data: ${chart.name}, ${chart.date} at ${chart.time}, ${chart.location}
+Ascendant: ${risingSign} ${chart.ascendant.toFixed(1)}° | MC: ${mcSign} ${chart.midheaven.toFixed(1)}°
 
-=== BIRTH DATA ===
-Name: ${chart.name}
-Date: ${chart.date} at ${chart.time}
-Location: ${chart.location}
+Planets: Sun ${sun?.sign} H${sun?.house}, Moon ${moon?.sign} H${moon?.house}, Mercury ${mercury?.sign} H${mercury?.house}, Venus ${venus?.sign} H${venus?.house}, Mars ${mars?.sign} H${mars?.house}, Jupiter ${jupiter?.sign} H${jupiter?.house}, Saturn ${saturn?.sign} H${saturn?.house}, Uranus ${uranus?.sign} H${uranus?.house}, Neptune ${neptune?.sign} H${neptune?.house}, Pluto ${pluto?.sign} H${pluto?.house}
 
-=== CHART ANGLES ===
-Ascendant: ${risingSign} at ${chart.ascendant.toFixed(2)}°
-Midheaven: ${mcSign} at ${chart.midheaven.toFixed(2)}°
+Elements: Fire ${elementCount.Fire}, Earth ${elementCount.Earth}, Air ${elementCount.Air}, Water ${elementCount.Water}
+Modalities: Cardinal ${modalityCount.Cardinal}, Fixed ${modalityCount.Fixed}, Mutable ${modalityCount.Mutable}
 
-=== PLANETARY POSITIONS ===
-Sun: ${sun?.sign} (House ${sun?.house}, ${sun?.degree.toFixed(2)}°)
-Moon: ${moon?.sign} (House ${moon?.house}, ${moon?.degree.toFixed(2)}°)
-Mercury: ${mercury?.sign} (House ${mercury?.house}, ${mercury?.degree.toFixed(2)}°)
-Venus: ${venus?.sign} (House ${venus?.house}, ${venus?.degree.toFixed(2)}°)
-Mars: ${mars?.sign} (House ${mars?.house}, ${mars?.degree.toFixed(2)}°)
-Jupiter: ${jupiter?.sign} (House ${jupiter?.house}, ${jupiter?.degree.toFixed(2)}°)
-Saturn: ${saturn?.sign} (House ${saturn?.house}, ${saturn?.degree.toFixed(2)}°)
-Uranus: ${uranus?.sign} (House ${uranus?.house}, ${uranus?.degree.toFixed(2)}°)
-Neptune: ${neptune?.sign} (House ${neptune?.house}, ${neptune?.degree.toFixed(2)}°)
-Pluto: ${pluto?.sign} (House ${pluto?.house}, ${pluto?.degree.toFixed(2)}°)
+Major Aspects: ${aspectList}
 
-=== ELEMENTAL BALANCE ===
-Fire: ${elementCount.Fire} | Earth: ${elementCount.Earth} | Air: ${elementCount.Air} | Water: ${elementCount.Water}
-Cardinal: ${modalityCount.Cardinal} | Fixed: ${modalityCount.Fixed} | Mutable: ${modalityCount.Mutable}
-
-=== MAJOR ASPECTS ===
-${aspectList}
-
-Provide detailed analysis for ALL sections below:
+Write ALL 13 sections in warm, professional tone:
 
 ## 1. CHART OVERVIEW & DOMINANT THEMES
-Analyze overall energy signature, dominant elements/modalities, stelliums, chart shape, and key strengths.
+[2-3 paragraphs: overall energy, dominant elements/modalities, chart shape, key themes]
 
 ## 2. CORE IDENTITY: SUN, MOON & RISING
-- Sun in ${sun?.sign} House ${sun?.house}: Core identity, life purpose, vitality
-- Moon in ${moon?.sign} House ${moon?.house}: Emotional nature, needs, instincts
-- Ascendant ${risingSign}: Outer personality, life approach
-Synthesize how these three work together.
+[3-4 paragraphs: Sun in ${sun?.sign} H${sun?.house} (identity, purpose), Moon in ${moon?.sign} H${moon?.house} (emotions, needs), Rising ${risingSign} (personality), how they work together]
 
 ## 3. COMMUNICATION & INTELLECT: MERCURY
-Mercury in ${mercury?.sign} House ${mercury?.house}: Communication style, mental processes, learning patterns.
+[2-3 paragraphs: Mercury in ${mercury?.sign} H${mercury?.house}, communication style, learning, mental processes]
 
 ## 4. LOVE & VALUES: VENUS
-Venus in ${venus?.sign} House ${venus?.house}: Love language, values, relationship needs, aesthetic preferences.
+[2-3 paragraphs: Venus in ${venus?.sign} H${venus?.house}, love language, values, relationships, aesthetics]
 
 ## 5. ACTION & DESIRE: MARS
-Mars in ${mars?.sign} House ${mars?.house}: Drive, assertiveness, anger expression, desire pursuit.
+[2-3 paragraphs: Mars in ${mars?.sign} H${mars?.house}, drive, assertiveness, passion, how you pursue desires]
 
 ## 6. EXPANSION & WISDOM: JUPITER
-Jupiter in ${jupiter?.sign} House ${jupiter?.house}: Growth areas, philosophy, meaning-making, optimism.
+[2-3 paragraphs: Jupiter in ${jupiter?.sign} H${jupiter?.house}, growth, philosophy, optimism, luck]
 
 ## 7. DISCIPLINE & LESSONS: SATURN
-Saturn in ${saturn?.sign} House ${saturn?.house}: Life lessons, discipline areas, karmic patterns, fears to overcome.
+[2-3 paragraphs: Saturn in ${saturn?.sign} H${saturn?.house}, lessons, discipline, karmic patterns, fears to overcome]
 
 ## 8. TRANSFORMATION & OUTER PLANETS
-- Uranus in ${uranus?.sign} House ${uranus?.house}: Innovation, uniqueness, sudden change
-- Neptune in ${neptune?.sign} House ${neptune?.house}: Spirituality, dreams, sensitivity
-- Pluto in ${pluto?.sign} House ${pluto?.house}: Deep transformation, power, regeneration
+[3-4 paragraphs: Uranus in ${uranus?.sign} H${uranus?.house} (innovation), Neptune in ${neptune?.sign} H${neptune?.house} (spirituality), Pluto in ${pluto?.sign} H${pluto?.house} (transformation)]
 
 ## 9. ASPECT PATTERNS & DYNAMICS
-Analyze the major aspects listed above, internal tensions/harmonies, aspect patterns (T-squares, Grand Trines, etc.).
+[2-3 paragraphs: major aspects, internal tensions/harmonies, aspect patterns]
 
 ## 10. LIFE PATH & CAREER
-Midheaven ${mcSign}, career indicators, vocational inclinations, 10th/2nd/6th house themes.
+[2-3 paragraphs: MC ${mcSign}, career indicators, vocational path, 10th/2nd/6th house themes]
 
 ## 11. RELATIONSHIPS & PARTNERSHIPS
-7th house themes, Venus-Mars dynamics, connection style romantically and platonically.
+[2-3 paragraphs: 7th house, Venus-Mars dynamics, romantic and platonic connection style]
 
 ## 12. SOUL PURPOSE & SPIRITUAL PATH
-Life purpose indicators, spiritual gifts/challenges, areas for conscious evolution.
+[2-3 paragraphs: life purpose, spiritual gifts/challenges, conscious evolution areas]
 
 ## 13. PRACTICAL GUIDANCE & INTEGRATION
-Concrete ways to work with this energy, shadow work, gifts to develop, life advice.
+[2-3 paragraphs: concrete ways to work with this energy, shadow work, gifts to develop, actionable advice]
 
-REMEMBER: Complete ALL 13 sections. Do not stop at section 3 or 4. Continue through to section 13 with full detail for each.`
+WRITE ALL 13 SECTIONS. START WITH SECTION 1 AND END WITH SECTION 13. DO NOT SKIP ANY SECTIONS.`
 
+      console.log('=== GENERATING FULL CHART INTERPRETATION ===')
+      console.log('Requesting all 13 sections from LLM...')
+      
       const result = await window.spark.llm(promptText, 'gpt-4o')
+      
+      console.log('=== LLM RESPONSE RECEIVED ===')
+      console.log('Response length:', result.length, 'characters')
+      console.log('Response preview (first 500 chars):', result.substring(0, 500))
+      console.log('Response end (last 500 chars):', result.substring(result.length - 500))
+      
+      const sectionMatches = result.match(/##\s*\d+\./g)
+      const sectionCount = sectionMatches ? sectionMatches.length : 0
+      console.log(`Found ${sectionCount} sections in response`)
+      
+      if (sectionCount < 13) {
+        console.warn(`⚠️ WARNING: Only ${sectionCount} sections generated instead of 13!`)
+        toast.warning(`Interpretation generated with ${sectionCount}/13 sections. You may regenerate for a more complete reading.`, { duration: 6000 })
+      } else {
+        console.log('✓ All 13 sections generated successfully')
+        toast.success('Complete interpretation generated and saved!')
+      }
+      
       setInterpretation(result)
       onUpdateChart(chart.id, result)
-      toast.success('Interpretation generated and saved!')
     } catch (error) {
       toast.error('Failed to generate interpretation')
       console.error('Interpretation error:', error)
