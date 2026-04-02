@@ -79,17 +79,17 @@ export function ChartLibrary({ charts, onSelectChart, onDeleteChart }: ChartLibr
                 </Button>
                 
                 <CardHeader>
-                  <CardTitle className="text-xl">{chart.name}</CardTitle>
+                  <CardTitle className="text-xl text-foreground">{chart.name}</CardTitle>
                   <CardDescription>{chart.location}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Birth Date:</span>
-                    <span className="font-mono">{chart.date}</span>
+                    <span className="font-mono text-foreground">{chart.date}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Birth Time:</span>
-                    <span className="font-mono">{chart.time}</span>
+                    <span className="font-mono text-foreground">{chart.time}</span>
                   </div>
                   <div className="flex flex-wrap gap-2 mt-4">
                     <Badge variant="secondary">{chart.houseSystem}</Badge>

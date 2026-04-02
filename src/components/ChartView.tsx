@@ -245,7 +245,7 @@ REMEMBER: Complete ALL 13 sections. Do not stop at section 3 or 4. Continue thro
             <ArrowLeft size={20} />
           </Button>
           <div>
-            <h1 className="text-3xl font-semibold">{chart.name}</h1>
+            <h1 className="text-3xl font-semibold text-foreground">{chart.name}</h1>
             <p className="text-muted-foreground mt-1">
               {chart.date} at {chart.time} | {chart.location}
             </p>
@@ -322,15 +322,15 @@ REMEMBER: Complete ALL 13 sections. Do not stop at section 3 or 4. Continue thro
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Date:</span>
-                  <span className="font-mono">{chart.date}</span>
+                  <span className="font-mono text-foreground">{chart.date}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Time:</span>
-                  <span className="font-mono">{chart.time}</span>
+                  <span className="font-mono text-foreground">{chart.time}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Timezone:</span>
-                  <span className="font-mono">UTC{chart.timezone}</span>
+                  <span className="font-mono text-foreground">UTC{chart.timezone}</span>
                 </div>
               </div>
             </div>
@@ -360,7 +360,7 @@ REMEMBER: Complete ALL 13 sections. Do not stop at section 3 or 4. Continue thro
                 <Separator />
                 <div>
                   <h3 className="font-semibold text-sm text-muted-foreground mb-1">Notes</h3>
-                  <p className="text-sm">{chart.notes}</p>
+                  <p className="text-sm text-foreground">{chart.notes}</p>
                 </div>
               </>
             )}
@@ -417,16 +417,16 @@ REMEMBER: Complete ALL 13 sections. Do not stop at section 3 or 4. Continue thro
                     const dignity = getPlanetaryDignity(planet.name, planet.sign as ZodiacSign)
                     return (
                       <TableRow key={planet.name}>
-                        <TableCell className="font-medium">
+                        <TableCell className="font-medium text-foreground">
                           <span className="text-xl mr-2">{PLANET_SYMBOLS[planet.name]}</span>
                           {planet.name}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="text-foreground">
                           <span className="text-lg mr-2">{ZODIAC_SYMBOLS[planet.sign as ZodiacSign]}</span>
                           {planet.sign}
                         </TableCell>
-                        <TableCell className="font-mono">{planet.degree.toFixed(2)}°</TableCell>
-                        <TableCell>{planet.house}</TableCell>
+                        <TableCell className="font-mono text-foreground">{planet.degree.toFixed(2)}°</TableCell>
+                        <TableCell className="text-foreground">{planet.house}</TableCell>
                         <TableCell>
                           {dignity ? (
                             <Badge
@@ -440,7 +440,7 @@ REMEMBER: Complete ALL 13 sections. Do not stop at section 3 or 4. Continue thro
                             <span className="text-muted-foreground text-xs">—</span>
                           )}
                         </TableCell>
-                        <TableCell className="font-mono">{planet.longitude.toFixed(2)}°</TableCell>
+                        <TableCell className="font-mono text-foreground">{planet.longitude.toFixed(2)}°</TableCell>
                       </TableRow>
                     )
                   })}
@@ -468,9 +468,9 @@ REMEMBER: Complete ALL 13 sections. Do not stop at section 3 or 4. Continue thro
                 <TableBody>
                   {chart.houses.map((house) => (
                     <TableRow key={house.number}>
-                      <TableCell className="font-medium">House {house.number}</TableCell>
-                      <TableCell>{house.sign}</TableCell>
-                      <TableCell className="font-mono">{house.cusp.toFixed(2)}°</TableCell>
+                      <TableCell className="font-medium text-foreground">House {house.number}</TableCell>
+                      <TableCell className="text-foreground">{house.sign}</TableCell>
+                      <TableCell className="font-mono text-foreground">{house.cusp.toFixed(2)}°</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -635,7 +635,7 @@ REMEMBER: Complete ALL 13 sections. Do not stop at section 3 or 4. Continue thro
                       <div key={index} className="border border-border rounded-lg p-4 space-y-3">
                         <div className="flex items-center justify-between flex-wrap gap-3">
                           <div className="flex items-center gap-3">
-                            <span className="text-lg font-medium">
+                            <span className="text-lg font-medium text-foreground">
                               <span className="text-xl mr-1.5">{PLANET_SYMBOLS[aspect.planet1]}</span>
                               {aspect.planet1}
                             </span>
@@ -646,7 +646,7 @@ REMEMBER: Complete ALL 13 sections. Do not stop at section 3 or 4. Continue thro
                             >
                               {aspectInfo?.symbol} {aspect.type}
                             </Badge>
-                            <span className="text-lg font-medium">
+                            <span className="text-lg font-medium text-foreground">
                               <span className="text-xl mr-1.5">{PLANET_SYMBOLS[aspect.planet2]}</span>
                               {aspect.planet2}
                             </span>
@@ -789,7 +789,7 @@ REMEMBER: Complete ALL 13 sections. Do not stop at section 3 or 4. Continue thro
                     <div className="flex items-center gap-3">
                       <span className="text-4xl">{ZODIAC_SYMBOLS[sign as ZodiacSign]}</span>
                       <div>
-                        <h3 className="text-lg font-semibold">{sign}</h3>
+                        <h3 className="text-lg font-semibold text-foreground">{sign}</h3>
                         <div className="flex gap-2 mt-1">
                           <Badge variant="outline" style={{ borderColor: getDignityColor('Domicile'), color: getDignityColor('Domicile') }}>
                             {info.element}
@@ -842,11 +842,11 @@ REMEMBER: Complete ALL 13 sections. Do not stop at section 3 or 4. Continue thro
                     const dignity = getPlanetaryDignity(planet.name, planet.sign as ZodiacSign)
                     return (
                       <TableRow key={planet.name}>
-                        <TableCell className="font-medium">
+                        <TableCell className="font-medium text-foreground">
                           <span className="text-xl mr-2">{PLANET_SYMBOLS[planet.name]}</span>
                           {planet.name}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="text-foreground">
                           <span className="text-lg mr-2">{ZODIAC_SYMBOLS[planet.sign as ZodiacSign]}</span>
                           {planet.sign}
                         </TableCell>
@@ -987,7 +987,7 @@ REMEMBER: Complete ALL 13 sections. Do not stop at section 3 or 4. Continue thro
                     </div>
                   </div>
                   
-                  <h3 className="text-xl font-semibold mb-3">Unlock Your Chart's Secrets</h3>
+                  <h3 className="text-xl font-semibold">Unlock Your Chart's Secrets</h3>
                   <p className="text-muted-foreground mb-6 max-w-lg mx-auto">
                     Generate a comprehensive, AI-powered astrological interpretation that reveals the deeper meanings behind your natal chart's planetary positions, aspects, and life themes.
                   </p>
@@ -995,17 +995,17 @@ REMEMBER: Complete ALL 13 sections. Do not stop at section 3 or 4. Continue thro
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto mb-8">
                     <div className="p-4 rounded-lg bg-muted/20 border border-border">
                       <div className="text-accent mb-2">📖</div>
-                      <p className="text-sm font-semibold mb-1">13 Detailed Sections</p>
+                      <p className="text-sm font-semibold mb-1 text-foreground">13 Detailed Sections</p>
                       <p className="text-xs text-muted-foreground">From core identity to soul purpose</p>
                     </div>
                     <div className="p-4 rounded-lg bg-muted/20 border border-border">
                       <div className="text-accent mb-2">🎯</div>
-                      <p className="text-sm font-semibold mb-1">Personalized Insights</p>
+                      <p className="text-sm font-semibold mb-1 text-foreground">Personalized Insights</p>
                       <p className="text-xs text-muted-foreground">Tailored to your unique chart</p>
                     </div>
                     <div className="p-4 rounded-lg bg-muted/20 border border-border">
                       <div className="text-accent mb-2">✨</div>
-                      <p className="text-sm font-semibold mb-1">Professional Analysis</p>
+                      <p className="text-sm font-semibold mb-1 text-foreground">Professional Analysis</p>
                       <p className="text-xs text-muted-foreground">Expert astrological guidance</p>
                     </div>
                   </div>
@@ -1065,14 +1065,14 @@ REMEMBER: Complete ALL 13 sections. Do not stop at section 3 or 4. Continue thro
                   <TableBody>
                     {transits.planets.map((planet) => (
                       <TableRow key={planet.name}>
-                        <TableCell className="font-medium">
+                        <TableCell className="font-medium text-foreground">
                           <span className="text-xl mr-2">{PLANET_SYMBOLS[planet.name]}</span>
                           {planet.name}
                         </TableCell>
-                        <TableCell>{planet.sign}</TableCell>
-                        <TableCell className="font-mono">{planet.degree.toFixed(2)}°</TableCell>
-                        <TableCell>{planet.house}</TableCell>
-                        <TableCell className="font-mono">{planet.longitude.toFixed(2)}°</TableCell>
+                        <TableCell className="text-foreground">{planet.sign}</TableCell>
+                        <TableCell className="font-mono text-foreground">{planet.degree.toFixed(2)}°</TableCell>
+                        <TableCell className="text-foreground">{planet.house}</TableCell>
+                        <TableCell className="font-mono text-foreground">{planet.longitude.toFixed(2)}°</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -1118,7 +1118,7 @@ REMEMBER: Complete ALL 13 sections. Do not stop at section 3 or 4. Continue thro
                         )
                         return (
                           <TableRow key={index}>
-                            <TableCell className="font-medium">
+                            <TableCell className="font-medium text-foreground">
                               <span className="text-xl mr-2">{PLANET_SYMBOLS[aspect.transitPlanet]}</span>
                               {aspect.transitPlanet}
                             </TableCell>
@@ -1130,12 +1130,12 @@ REMEMBER: Complete ALL 13 sections. Do not stop at section 3 or 4. Continue thro
                                 {aspectInfo?.symbol} {aspect.type}
                               </Badge>
                             </TableCell>
-                            <TableCell className="font-medium">
+                            <TableCell className="font-medium text-foreground">
                               <span className="text-xl mr-2">{PLANET_SYMBOLS[aspect.natalPlanet]}</span>
                               {aspect.natalPlanet}
                             </TableCell>
-                            <TableCell className="font-mono">{aspect.orb.toFixed(2)}°</TableCell>
-                            <TableCell className="font-mono">{aspect.angle}°</TableCell>
+                            <TableCell className="font-mono text-foreground">{aspect.orb.toFixed(2)}°</TableCell>
+                            <TableCell className="font-mono text-foreground">{aspect.angle}°</TableCell>
                           </TableRow>
                         )
                       })}
