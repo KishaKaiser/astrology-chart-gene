@@ -106,8 +106,8 @@ export async function exportChartToPDF(
     yPos += 12
 
     try {
-      const logoWidth = 60
-      const logoHeight = 60
+      const logoWidth = 80
+      const logoHeight = 80
       pdf.addImage(logoImage, 'JPEG', (pageWidth - logoWidth) / 2, yPos, logoWidth, logoHeight)
       yPos += logoHeight + 12
     } catch (error) {
