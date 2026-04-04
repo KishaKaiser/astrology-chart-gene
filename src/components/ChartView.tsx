@@ -266,16 +266,16 @@ Write section 12 in warm, professional tone. Section should be 3-4 detailed para
 Synthesize the chart to reveal soul purpose and spiritual path. What is this person here to learn and embody? Discuss spiritual gifts, psychic abilities, past life indicators, and areas for conscious evolution. How can they serve their highest purpose?
 
 Write the complete section. Be thorough and insightful.`,
-      13: `You are an expert professional astrologer. Generate section 13 only of a natal chart interpretation.
+      13: `You are an expert professional astrologer. Generate section 13 (THE FINAL SECTION) of a natal chart interpretation.
 
 ${chartData}
 
-Write section 13 in warm, professional tone. Section should be 3-4 detailed paragraphs.
+Write section 13 in warm, professional tone. This is the FINAL section - make it comprehensive with 3-4 detailed paragraphs.
 
 ## 13. PRACTICAL GUIDANCE & INTEGRATION
 Provide concrete, actionable advice for working with this chart energy. Discuss shadow work needed, gifts to develop, life areas requiring attention, and specific practices or approaches that support growth. How can they integrate all these energies into a fulfilling life?
 
-Write the complete section. End with empowering, practical guidance. Be thorough and insightful.`
+Write the complete section with empowering, practical guidance that ties together all the themes from the chart. Be thorough and insightful.`
     }
 
     return prompts[sectionNumber] || ''
@@ -449,11 +449,11 @@ Write all 4 sections completely. Be thorough and insightful.`
       console.log(`Part 2 generated: ${part2.length} characters`)
       
       toast.loading('Part 3/3: Life purpose and integration...', { id: 'interpretation-progress' })
-      const part3Prompt = (window.spark.llmPrompt as any)`You are an expert professional astrologer. Generate Part 3 (final part) of the natal chart interpretation (sections 10-13).
+      const part3Prompt = (window.spark.llmPrompt as any)`You are an expert professional astrologer. Generate Part 3 (FINAL PART) of the natal chart interpretation.
 
 ${chartData}
 
-Write sections 10-13 in warm, professional tone. Each section should be 3-4 detailed paragraphs.
+CRITICAL: You MUST write ALL 4 sections (10, 11, 12, AND 13). Do not skip section 13. Each section should be 3-4 detailed paragraphs.
 
 ## 10. LIFE PATH & CAREER
 MC in ${mcSign} at ${chart.midheaven.toFixed(1)}°: Discuss career path, public role, reputation, and life direction. Consider 10th house themes, 2nd house (resources/income), and 6th house (daily work). What vocational paths suit this chart?
@@ -465,9 +465,9 @@ Analyze 7th house themes, Venus-Mars dynamics, and relationship patterns. Discus
 Synthesize the chart to reveal soul purpose and spiritual path. What is this person here to learn and embody? Discuss spiritual gifts, psychic abilities, past life indicators, and areas for conscious evolution. How can they serve their highest purpose?
 
 ## 13. PRACTICAL GUIDANCE & INTEGRATION
-Provide concrete, actionable advice for working with this chart energy. Discuss shadow work needed, gifts to develop, life areas requiring attention, and specific practices or approaches that support growth. How can they integrate all these energies into a fulfilling life?
+IMPORTANT: This is the final section. Provide concrete, actionable advice for working with this chart energy. Discuss shadow work needed, gifts to develop, life areas requiring attention, and specific practices or approaches that support growth. How can they integrate all these energies into a fulfilling life?
 
-Write all 4 sections completely. End with empowering, practical guidance. Be thorough and insightful.`
+Write ALL 4 sections (10, 11, 12, 13) completely. Section 13 must be included with empowering, practical guidance. Be thorough and insightful in every section.`
 
       const part3 = await window.spark.llm(part3Prompt, 'gpt-4o')
       console.log(`Part 3 generated: ${part3.length} characters`)
@@ -484,9 +484,9 @@ Write all 4 sections completely. End with empowering, practical guidance. Be tho
       if (sectionCount >= 13) {
         toast.success('Complete 13-section interpretation generated successfully!', { id: 'interpretation-progress' })
       } else if (sectionCount >= 10) {
-        toast.success(`Comprehensive interpretation with ${sectionCount} sections generated!`, { id: 'interpretation-progress' })
+        toast.warning(`Generated ${sectionCount}/13 sections. You may regenerate for a more detailed reading.`, { id: 'interpretation-progress', duration: 8000 })
       } else {
-        toast.warning(`Generated ${sectionCount} sections. Some sections may be incomplete.`, { id: 'interpretation-progress', duration: 6000 })
+        toast.warning(`Generated ${sectionCount}/13 sections. Some sections may be incomplete. You may regenerate for a more detailed reading.`, { id: 'interpretation-progress', duration: 10000 })
       }
       
       setInterpretation(fullInterpretation)
