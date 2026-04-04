@@ -68,7 +68,10 @@ export function LifeEventsTimeline({ chart }: LifeEventsTimelineProps) {
     }
 
     try {
-      const transitData = await calculateTransitsForDate(chart, new Date(newEvent.date))
+      const [year, month, day] = newEvent.date.split('-').map(Number)
+      const eventDate = new Date(year, month - 1, day, 12, 0, 0)
+      
+      const transitData = await calculateTransitsForDate(chart, eventDate)
       
       const significantTransits: string[] = []
       
