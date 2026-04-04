@@ -63,8 +63,8 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
                   checked={options.includeChartWheel}
                   onCheckedChange={() => toggleOption('includeChartWheel')}
                 />
-                <Label htmlFor="includeChartWheel" className="cursor-pointer flex-1">
-                  <div className="font-medium">🎡 Natal Chart Wheel</div>
+                <Label htmlFor="includeChartWheel" className="cursor-pointer flex-1 text-foreground">
+                  <div className="font-medium text-foreground">🎡 Natal Chart Wheel</div>
                   <div className="text-xs text-muted-foreground">Visual diagram of planetary positions</div>
                 </Label>
               </div>
@@ -75,8 +75,8 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
                   checked={options.includeHouseMeanings}
                   onCheckedChange={() => toggleOption('includeHouseMeanings')}
                 />
-                <Label htmlFor="includeHouseMeanings" className="cursor-pointer flex-1">
-                  <div className="font-medium">🏛️ House Meanings</div>
+                <Label htmlFor="includeHouseMeanings" className="cursor-pointer flex-1 text-foreground">
+                  <div className="font-medium text-foreground">🏛️ House Meanings</div>
                   <div className="text-xs text-muted-foreground">Detailed descriptions of all 12 houses</div>
                 </Label>
               </div>
@@ -87,8 +87,8 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
                   checked={options.includeMajorAspects}
                   onCheckedChange={() => toggleOption('includeMajorAspects')}
                 />
-                <Label htmlFor="includeMajorAspects" className="cursor-pointer flex-1">
-                  <div className="font-medium">🔮 Major Aspects</div>
+                <Label htmlFor="includeMajorAspects" className="cursor-pointer flex-1 text-foreground">
+                  <div className="font-medium text-foreground">🔮 Major Aspects</div>
                   <div className="text-xs text-muted-foreground">Angular relationships between planets</div>
                 </Label>
               </div>
@@ -99,8 +99,8 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
                   checked={options.includeAspectPatterns}
                   onCheckedChange={() => toggleOption('includeAspectPatterns')}
                 />
-                <Label htmlFor="includeAspectPatterns" className="cursor-pointer flex-1">
-                  <div className="font-medium">🔗 Aspect Patterns</div>
+                <Label htmlFor="includeAspectPatterns" className="cursor-pointer flex-1 text-foreground">
+                  <div className="font-medium text-foreground">🔗 Aspect Patterns</div>
                   <div className="text-xs text-muted-foreground">Complex configurations (T-Squares, Grand Trines, etc.)</div>
                 </Label>
               </div>
@@ -111,8 +111,8 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
                   checked={options.includePlanetaryDignities}
                   onCheckedChange={() => toggleOption('includePlanetaryDignities')}
                 />
-                <Label htmlFor="includePlanetaryDignities" className="cursor-pointer flex-1">
-                  <div className="font-medium">👑 Planetary Dignities</div>
+                <Label htmlFor="includePlanetaryDignities" className="cursor-pointer flex-1 text-foreground">
+                  <div className="font-medium text-foreground">👑 Planetary Dignities</div>
                   <div className="text-xs text-muted-foreground">Essential dignities and debilities</div>
                 </Label>
               </div>
@@ -133,9 +133,9 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
                 />
                 <Label 
                   htmlFor="includeInterpretation" 
-                  className={`cursor-pointer flex-1 ${!hasInterpretation ? 'opacity-50' : ''}`}
+                  className={`cursor-pointer flex-1 text-foreground ${!hasInterpretation ? 'opacity-50' : ''}`}
                 >
-                  <div className="font-medium">✨ Full Chart Interpretation</div>
+                  <div className="font-medium text-foreground">✨ Full Chart Interpretation</div>
                   <div className="text-xs text-muted-foreground">
                     {hasInterpretation 
                       ? 'Comprehensive AI-powered astrological analysis'
@@ -157,48 +157,48 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
             <div className="space-y-3 opacity-50">
               <div className="flex items-center space-x-3">
                 <Checkbox id="includePersonalHoroscope" disabled />
-                <Label htmlFor="includePersonalHoroscope" className="flex-1">
-                  <div className="font-medium text-sm">🌙 Personal Horoscope</div>
+                <Label htmlFor="includePersonalHoroscope" className="flex-1 text-foreground">
+                  <div className="font-medium text-sm text-foreground">🌙 Personal Horoscope</div>
                   <div className="text-xs text-muted-foreground">Daily forecast and timing</div>
                 </Label>
               </div>
 
               <div className="flex items-center space-x-3">
                 <Checkbox id="includeCompatibility" disabled />
-                <Label htmlFor="includeCompatibility" className="flex-1">
-                  <div className="font-medium text-sm">💕 Romantic Compatibility</div>
+                <Label htmlFor="includeCompatibility" className="flex-1 text-foreground">
+                  <div className="font-medium text-sm text-foreground">💕 Romantic Compatibility</div>
                   <div className="text-xs text-muted-foreground">Synastry and relationship analysis</div>
                 </Label>
               </div>
 
               <div className="flex items-center space-x-3">
                 <Checkbox id="includeKarmicBond" disabled />
-                <Label htmlFor="includeKarmicBond" className="flex-1">
-                  <div className="font-medium text-sm">♾️ Karmic Bond Analysis</div>
+                <Label htmlFor="includeKarmicBond" className="flex-1 text-foreground">
+                  <div className="font-medium text-sm text-foreground">♾️ Karmic Bond Analysis</div>
                   <div className="text-xs text-muted-foreground">Soul connections and past patterns</div>
                 </Label>
               </div>
 
               <div className="flex items-center space-x-3">
                 <Checkbox id="includePastLife" disabled />
-                <Label htmlFor="includePastLife" className="flex-1">
-                  <div className="font-medium text-sm">🔄 Past Life Indicators</div>
+                <Label htmlFor="includePastLife" className="flex-1 text-foreground">
+                  <div className="font-medium text-sm text-foreground">🔄 Past Life Indicators</div>
                   <div className="text-xs text-muted-foreground">Karmic imprints and soul journey</div>
                 </Label>
               </div>
 
               <div className="flex items-center space-x-3">
                 <Checkbox id="includeKarmicDebt" disabled />
-                <Label htmlFor="includeKarmicDebt" className="flex-1">
-                  <div className="font-medium text-sm">⚖️ Karmic Debt Calculator</div>
+                <Label htmlFor="includeKarmicDebt" className="flex-1 text-foreground">
+                  <div className="font-medium text-sm text-foreground">⚖️ Karmic Debt Calculator</div>
                   <div className="text-xs text-muted-foreground">Numerological karmic numbers</div>
                 </Label>
               </div>
 
               <div className="flex items-center space-x-3">
                 <Checkbox id="includeFamily" disabled />
-                <Label htmlFor="includeFamily" className="flex-1">
-                  <div className="font-medium text-sm">👨‍👩‍👧‍👦 Family Dynamics</div>
+                <Label htmlFor="includeFamily" className="flex-1 text-foreground">
+                  <div className="font-medium text-sm text-foreground">👨‍👩‍👧‍👦 Family Dynamics</div>
                   <div className="text-xs text-muted-foreground">Family synastry and patterns</div>
                 </Label>
               </div>
