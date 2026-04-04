@@ -528,11 +528,11 @@ Write all 4 sections completely. End with empowering, practical guidance. Be tho
         </div>
         
         <div className="flex gap-2">
-          <Button variant="outline" onClick={onEdit} className="gap-2">
+          <Button variant="outline" onClick={onEdit} className="gap-2 text-foreground">
             <PencilSimple size={18} />
             Edit
           </Button>
-          <Button variant="outline" onClick={handlePrint} className="gap-2">
+          <Button variant="outline" onClick={handlePrint} className="gap-2 text-foreground">
             <Printer size={18} />
             Print
           </Button>
