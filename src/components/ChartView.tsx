@@ -644,26 +644,26 @@ Write all 4 sections completely. End with empowering, practical guidance. Be tho
       </div>
 
       <Tabs defaultValue="planets" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-13">
-          <TabsTrigger value="planets">Planetary Positions</TabsTrigger>
-          <TabsTrigger value="houses">House Cusps</TabsTrigger>
-          <TabsTrigger value="house-meanings">House Meanings</TabsTrigger>
-          <TabsTrigger value="aspects">Major Aspects</TabsTrigger>
-          <TabsTrigger value="patterns">Aspect Patterns</TabsTrigger>
-          <TabsTrigger value="zodiac">Zodiac Signs</TabsTrigger>
-          <TabsTrigger value="dignities">Planetary Dignities</TabsTrigger>
-          <TabsTrigger value="interpretation">
+        <TabsList className="flex flex-wrap w-full min-h-fit h-auto gap-1 p-1">
+          <TabsTrigger value="planets" className="whitespace-nowrap">Planetary Positions</TabsTrigger>
+          <TabsTrigger value="houses" className="whitespace-nowrap">House Cusps</TabsTrigger>
+          <TabsTrigger value="house-meanings" className="whitespace-nowrap">House Meanings</TabsTrigger>
+          <TabsTrigger value="aspects" className="whitespace-nowrap">Major Aspects</TabsTrigger>
+          <TabsTrigger value="patterns" className="whitespace-nowrap">Aspect Patterns</TabsTrigger>
+          <TabsTrigger value="zodiac" className="whitespace-nowrap">Zodiac Signs</TabsTrigger>
+          <TabsTrigger value="dignities" className="whitespace-nowrap">Planetary Dignities</TabsTrigger>
+          <TabsTrigger value="interpretation" className="whitespace-nowrap">
             <Sparkle className="mr-1.5" size={16} weight="fill" />
             Interpretation
           </TabsTrigger>
-          <TabsTrigger value="horoscope">
+          <TabsTrigger value="horoscope" className="whitespace-nowrap">
             <Sparkle className="mr-1.5" size={16} weight="fill" />
             Horoscopes
           </TabsTrigger>
-          <TabsTrigger value="timeline">Life Events</TabsTrigger>
-          <TabsTrigger value="transits" disabled={!showTransits}>Current Transits</TabsTrigger>
-          <TabsTrigger value="transit-aspects" disabled={!showTransits}>Transit Aspects</TabsTrigger>
-          <TabsTrigger value="transit-interpretation">
+          <TabsTrigger value="timeline" className="whitespace-nowrap">Life Events</TabsTrigger>
+          <TabsTrigger value="transits" disabled={!showTransits} className="whitespace-nowrap">Current Transits</TabsTrigger>
+          <TabsTrigger value="transit-aspects" disabled={!showTransits} className="whitespace-nowrap">Transit Aspects</TabsTrigger>
+          <TabsTrigger value="transit-interpretation" className="whitespace-nowrap">
             <Sparkle className="mr-1.5" size={16} weight="fill" />
             Transit Interpretation
           </TabsTrigger>
