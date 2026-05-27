@@ -14,6 +14,16 @@ import { Heart, Sparkle, Fire, MagicWand, ArrowsClockwise, Users, Briefcase, Fla
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 
+interface SavedCompatibilityReport {
+  person1Id: string
+  person2Id: string
+  relationshipType: RelationshipType
+  synastryData: SynastryData
+  soulmateAnalysis: SoulmateAnalysis | null
+  aiInterpretation: string
+  generatedAt: number
+}
+
 export function LoversChart() {
   const [charts] = useKV<ChartData[]>('astrology-charts', [])
   const [person1Id, setPerson1Id] = useState<string>('')
@@ -24,6 +34,7 @@ export function LoversChart() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [aiInterpretation, setAiInterpretation] = useState<string>('')
   const [isGeneratingAI, setIsGeneratingAI] = useState(false)
+  const [savedReports, setSavedReports] = useKV<Record<string, SavedCompatibilityReport>>('compatibility-reports', {})
 
   const handleGenerateSynastry = async () => {
     if (!person1Id || !person2Id) {
@@ -206,6 +217,21 @@ Write in a professional, insightful tone. Be honest about both strengths and cha
 
       const response = await window.spark.llm(prompt, 'gpt-4o')
       setAiInterpretation(response)
+      
+      const reportKey = `${person1Id}-${person2Id}-${relationshipType}`
+      setSavedReports(current => ({
+        ...(current || {}),
+        [reportKey]: {
+          person1Id,
+          person2Id,
+          relationshipType,
+          synastryData,
+          soulmateAnalysis,
+          aiInterpretation: response,
+          generatedAt: Date.now()
+        }
+      }))
+      
       toast.success('AI interpretation generated!')
     } catch (error) {
       console.error('AI interpretation error:', error)

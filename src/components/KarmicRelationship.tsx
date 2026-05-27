@@ -12,6 +12,14 @@ import { Sparkle, Eye, Moon, Infinity, MagicWand, ArrowsClockwise } from '@phosp
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 
+interface SavedKarmicReport {
+  person1Id: string
+  person2Id: string
+  karmicData: KarmicRelationshipData
+  aiInterpretation: string
+  generatedAt: number
+}
+
 export function KarmicRelationship() {
   const [charts] = useKV<ChartData[]>('astrology-charts', [])
   const [person1Id, setPerson1Id] = useState<string>('')
@@ -20,6 +28,7 @@ export function KarmicRelationship() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [aiInterpretation, setAiInterpretation] = useState<string>('')
   const [isGeneratingAI, setIsGeneratingAI] = useState(false)
+  const [savedReports, setSavedReports] = useKV<Record<string, SavedKarmicReport>>('karmic-reports', {})
 
   const handleGenerateKarmicAnalysis = async () => {
     if (!person1Id || !person2Id) {
@@ -126,6 +135,19 @@ Write in a mystical yet grounded tone, using "you" and "your soul companion" lan
 
       const response = await window.spark.llm(prompt, 'gpt-4o')
       setAiInterpretation(response)
+      
+      const reportKey = `${person1Id}-${person2Id}`
+      setSavedReports(current => ({
+        ...(current || {}),
+        [reportKey]: {
+          person1Id,
+          person2Id,
+          karmicData,
+          aiInterpretation: response,
+          generatedAt: Date.now()
+        }
+      }))
+      
       toast.success('Karmic interpretation revealed!')
     } catch (error) {
       console.error('AI interpretation error:', error)

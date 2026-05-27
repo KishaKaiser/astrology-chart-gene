@@ -28,14 +28,56 @@ interface HoroscopeReading {
   generatedAt: number
 }
 
+interface SavedCompatibilityReport {
+  person1Id: string
+  person2Id: string
+  relationshipType: 'romantic' | 'friendship' | 'business'
+  synastryData: any
+  soulmateAnalysis: any
+  aiInterpretation: string
+  generatedAt: number
+}
+
+interface SavedKarmicReport {
+  person1Id: string
+  person2Id: string
+  karmicData: any
+  aiInterpretation: string
+  generatedAt: number
+}
+
+interface PastLifeReading {
+  southNodeSign: string
+  southNodeHouse: number
+  saturnsSign: string
+  saturnsHouse: number
+  plutosSign: string
+  plutosHouse: number
+  primaryLifeTheme: string
+  lifeEra: string
+  occupation: string
+  challenges: string[]
+  karmaLessons: string[]
+  talents: string[]
+  interpretation: string
+}
+
 export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, variant = 'default', chartId }: ExportOptionsDialogProps) {
   const [open, setOpen] = useState(false)
   const [options, setOptions] = useState<PDFExportOptions>(defaultPDFOptions)
   const [savedFamilyData] = useKV<Record<string, FamilyRelationshipData>>('family-dynamics', {})
   const [savedHoroscopes] = useKV<Record<string, HoroscopeReading>>('personal-horoscopes', {})
+  const [savedCompatibilityReports] = useKV<Record<string, SavedCompatibilityReport>>('compatibility-reports', {})
+  const [savedKarmicReports] = useKV<Record<string, SavedKarmicReport>>('karmic-reports', {})
+  const [savedPastLifeReadings] = useKV<Record<string, PastLifeReading>>('past-life-readings', {})
+  const [savedKarmicDebts] = useKV<Record<string, any>>('karmic-debt-results', [])
   const [familyDynamicsEntries, setFamilyDynamicsEntries] = useState<FamilyDynamicsEntry[]>([])
   const [selectedFamilyReports, setSelectedFamilyReports] = useState<Set<string>>(new Set())
   const [selectedHoroscopes, setSelectedHoroscopes] = useState<Set<string>>(new Set())
+  const [selectedCompatibilityReports, setSelectedCompatibilityReports] = useState<Set<string>>(new Set())
+  const [selectedKarmicReports, setSelectedKarmicReports] = useState<Set<string>>(new Set())
+  const [selectedPastLifeReadings, setSelectedPastLifeReadings] = useState<Set<string>>(new Set())
+  const [selectedKarmicDebts, setSelectedKarmicDebts] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (chartId && savedFamilyData) {
@@ -61,6 +103,10 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
     if (!open) {
       setSelectedFamilyReports(new Set())
       setSelectedHoroscopes(new Set())
+      setSelectedCompatibilityReports(new Set())
+      setSelectedKarmicReports(new Set())
+      setSelectedPastLifeReadings(new Set())
+      setSelectedKarmicDebts(new Set())
     }
   }, [open])
 
@@ -110,6 +156,69 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
 
   const availableHoroscopes = getAvailableHoroscopes()
 
+  const getAvailableCompatibilityReports = () => {
+    if (!chartId || !savedCompatibilityReports) return []
+    
+    const reports: { key: string; label: string }[] = []
+    
+    Object.entries(savedCompatibilityReports).forEach(([key, report]) => {
+      if (report.person1Id === chartId || report.person2Id === chartId) {
+        const typeLabel = report.relationshipType === 'romantic' ? 'Romantic' : 
+                         report.relationshipType === 'friendship' ? 'Friendship' : 'Business'
+        reports.push({
+          key,
+          label: `${typeLabel} Compatibility Report`
+        })
+      }
+    })
+    
+    return reports
+  }
+
+  const getAvailableKarmicReports = () => {
+    if (!chartId || !savedKarmicReports) return []
+    
+    const reports: { key: string; label: string }[] = []
+    
+    Object.entries(savedKarmicReports).forEach(([key, report]) => {
+      if (report.person1Id === chartId || report.person2Id === chartId) {
+        reports.push({
+          key,
+          label: 'Karmic Bond Analysis'
+        })
+      }
+    })
+    
+    return reports
+  }
+
+  const getAvailablePastLifeReadings = () => {
+    if (!chartId || !savedPastLifeReadings) return []
+    
+    if (savedPastLifeReadings[chartId]) {
+      return [{ key: chartId, label: 'Past Life Reading' }]
+    }
+    
+    return []
+  }
+
+  const getAvailableKarmicDebts = () => {
+    if (!chartId || !savedKarmicDebts || !Array.isArray(savedKarmicDebts)) return []
+    
+    const debts = savedKarmicDebts.filter((debt: any) => debt.chartId === chartId)
+    
+    return debts.map((debt: any, index: number) => ({
+      key: `${chartId}-${index}`,
+      label: 'Karmic Debt Analysis',
+      data: debt
+    }))
+  }
+
+  const availableCompatibilityReports = getAvailableCompatibilityReports()
+  const availableKarmicReports = getAvailableKarmicReports()
+  const availablePastLifeReadings = getAvailablePastLifeReadings()
+  const availableKarmicDebts = getAvailableKarmicDebts()
+
   const handleExport = () => {
     let exportOptions = { ...options }
     
@@ -129,6 +238,124 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
         exportOptions = {
           ...exportOptions,
           includePersonalHoroscope: horoscopeTexts.join('\n\n---\n\n')
+        }
+      }
+    }
+
+    if (selectedCompatibilityReports.size > 0 && savedCompatibilityReports) {
+      const compatibilityTexts = Array.from(selectedCompatibilityReports).map(key => {
+        const report = savedCompatibilityReports[key]
+        if (!report || !report.aiInterpretation) return ''
+        
+        const typeLabel = report.relationshipType === 'romantic' ? 'Romantic' : 
+                         report.relationshipType === 'friendship' ? 'Friendship' : 'Business'
+        
+        let text = `${typeLabel} Compatibility Analysis\n\n`
+        text += `Overall Score: ${report.synastryData.overallScore}%\n\n`
+        text += report.aiInterpretation
+        
+        return text
+      }).filter(text => text !== '')
+      
+      if (compatibilityTexts.length > 0) {
+        exportOptions = {
+          ...exportOptions,
+          includeCompatibility: compatibilityTexts.join('\n\n---\n\n')
+        }
+      }
+    }
+
+    if (selectedKarmicReports.size > 0 && savedKarmicReports) {
+      const karmicTexts = Array.from(selectedKarmicReports).map(key => {
+        const report = savedKarmicReports[key]
+        if (!report || !report.aiInterpretation) return ''
+        
+        let text = `Karmic Relationship Analysis\n\n`
+        text += `Overall Karmic Score: ${report.karmicData.overallKarmicScore}%\n\n`
+        text += report.aiInterpretation
+        
+        return text
+      }).filter(text => text !== '')
+      
+      if (karmicTexts.length > 0) {
+        exportOptions = {
+          ...exportOptions,
+          includeKarmicBond: karmicTexts.join('\n\n---\n\n')
+        }
+      }
+    }
+
+    if (selectedPastLifeReadings.size > 0 && savedPastLifeReadings && chartId) {
+      const pastLifeTexts = Array.from(selectedPastLifeReadings).map(key => {
+        const reading = savedPastLifeReadings[key]
+        if (!reading) return ''
+        
+        let text = `Past Life Reading\n\n`
+        text += `Life Theme: ${reading.primaryLifeTheme}\n`
+        text += `Era: ${reading.lifeEra}\n`
+        text += `Occupation: ${reading.occupation}\n\n`
+        text += `Karmic Indicators:\n`
+        text += `- South Node: ${reading.southNodeSign} in House ${reading.southNodeHouse}\n`
+        text += `- Saturn: ${reading.saturnsSign} in House ${reading.saturnsHouse}\n`
+        text += `- Pluto: ${reading.plutosSign} in House ${reading.plutosHouse}\n\n`
+        text += `Challenges Faced:\n${reading.challenges.map(c => `- ${c}`).join('\n')}\n\n`
+        text += `Karmic Lessons:\n${reading.karmaLessons.map(l => `- ${l}`).join('\n')}\n\n`
+        text += `Gifts & Talents:\n${reading.talents.map(t => `- ${t}`).join('\n')}\n\n`
+        text += `Past Life Story:\n${reading.interpretation}`
+        
+        return text
+      }).filter(text => text !== '')
+      
+      if (pastLifeTexts.length > 0) {
+        exportOptions = {
+          ...exportOptions,
+          includePastLife: pastLifeTexts.join('\n\n---\n\n')
+        }
+      }
+    }
+
+    if (selectedKarmicDebts.size > 0 && availableKarmicDebts.length > 0) {
+      const debtTexts = Array.from(selectedKarmicDebts).map(key => {
+        const debtEntry = availableKarmicDebts.find(d => d.key === key)
+        if (!debtEntry) return ''
+        
+        const debt = debtEntry.data
+        let text = `Karmic Debt Analysis\n\n`
+        text += `Total Debt Score: ${debt.totalDebtScore}\n\n`
+        
+        if (debt.numerologyDebts && debt.numerologyDebts.length > 0) {
+          text += `Numerology Debts:\n`
+          debt.numerologyDebts.forEach((nd: any) => {
+            text += `\n${nd.debtNumber} - ${nd.area}\n`
+            text += `${nd.description}\n`
+            text += `Past Life Pattern: ${nd.pastLifePattern}\n`
+            text += `Resolution: ${nd.resolution}\n`
+          })
+          text += '\n'
+        }
+        
+        if (debt.astrologicalDebts && debt.astrologicalDebts.length > 0) {
+          text += `\nAstrological Indicators:\n`
+          debt.astrologicalDebts.forEach((ad: any) => {
+            text += `\n${ad.indicator} - ${ad.placement}\n`
+            text += `${ad.karmicMeaning}\n`
+            text += `Challenge: ${ad.lifeChallenge}\n`
+            text += `Path to Balance: ${ad.pathToBalance}\n`
+          })
+          text += '\n'
+        }
+        
+        if (debt.aiGuidance) {
+          text += `\nSpiritual Guidance:\n${debt.aiGuidance}`
+        }
+        
+        return text
+      }).filter(text => text !== '')
+      
+      if (debtTexts.length > 0) {
+        exportOptions = {
+          ...exportOptions,
+          includeKarmicDebt: debtTexts.join('\n\n---\n\n')
         }
       }
     }
@@ -329,8 +556,176 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
               )}
             </div>
 
+            <div className={`space-y-3 ${availableCompatibilityReports.length === 0 ? 'opacity-50' : ''}`}>
+              <Label className="flex-1">
+                <div className="font-medium text-sm text-white">💕 Romantic Compatibility</div>
+                <div className="text-xs text-muted-foreground">
+                  {availableCompatibilityReports.length > 0
+                    ? `Select compatibility reports to include (${availableCompatibilityReports.length} available)`
+                    : 'Generate compatibility reports first in the Compatibility tab'
+                  }
+                </div>
+              </Label>
+              
+              {availableCompatibilityReports.length > 0 && (
+                <div className="ml-6 space-y-2 border-l-2 border-border pl-4">
+                  {availableCompatibilityReports.map((report) => (
+                    <div key={report.key} className="flex items-center space-x-3">
+                      <Checkbox 
+                        id={`compatibility-${report.key}`}
+                        checked={selectedCompatibilityReports.has(report.key)}
+                        onCheckedChange={() => {
+                          setSelectedCompatibilityReports(prev => {
+                            const updated = new Set(prev)
+                            if (updated.has(report.key)) {
+                              updated.delete(report.key)
+                            } else {
+                              updated.add(report.key)
+                            }
+                            return updated
+                          })
+                        }}
+                      />
+                      <Label 
+                        htmlFor={`compatibility-${report.key}`}
+                        className="cursor-pointer text-sm text-white"
+                      >
+                        {report.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className={`space-y-3 ${availableKarmicReports.length === 0 ? 'opacity-50' : ''}`}>
+              <Label className="flex-1">
+                <div className="font-medium text-sm text-white">♾️ Karmic Bond</div>
+                <div className="text-xs text-muted-foreground">
+                  {availableKarmicReports.length > 0
+                    ? `Select karmic bond reports to include (${availableKarmicReports.length} available)`
+                    : 'Generate karmic bond reports first in the Karmic Bond tab'
+                  }
+                </div>
+              </Label>
+              
+              {availableKarmicReports.length > 0 && (
+                <div className="ml-6 space-y-2 border-l-2 border-border pl-4">
+                  {availableKarmicReports.map((report) => (
+                    <div key={report.key} className="flex items-center space-x-3">
+                      <Checkbox 
+                        id={`karmic-${report.key}`}
+                        checked={selectedKarmicReports.has(report.key)}
+                        onCheckedChange={() => {
+                          setSelectedKarmicReports(prev => {
+                            const updated = new Set(prev)
+                            if (updated.has(report.key)) {
+                              updated.delete(report.key)
+                            } else {
+                              updated.add(report.key)
+                            }
+                            return updated
+                          })
+                        }}
+                      />
+                      <Label 
+                        htmlFor={`karmic-${report.key}`}
+                        className="cursor-pointer text-sm text-white"
+                      >
+                        {report.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className={`space-y-3 ${availablePastLifeReadings.length === 0 ? 'opacity-50' : ''}`}>
+              <Label className="flex-1">
+                <div className="font-medium text-sm text-white">🔮 Past Life Indicators</div>
+                <div className="text-xs text-muted-foreground">
+                  {availablePastLifeReadings.length > 0
+                    ? `Select past life readings to include (${availablePastLifeReadings.length} available)`
+                    : 'Generate a past life reading first in the Past Life tab'
+                  }
+                </div>
+              </Label>
+              
+              {availablePastLifeReadings.length > 0 && (
+                <div className="ml-6 space-y-2 border-l-2 border-border pl-4">
+                  {availablePastLifeReadings.map((reading) => (
+                    <div key={reading.key} className="flex items-center space-x-3">
+                      <Checkbox 
+                        id={`pastlife-${reading.key}`}
+                        checked={selectedPastLifeReadings.has(reading.key)}
+                        onCheckedChange={() => {
+                          setSelectedPastLifeReadings(prev => {
+                            const updated = new Set(prev)
+                            if (updated.has(reading.key)) {
+                              updated.delete(reading.key)
+                            } else {
+                              updated.add(reading.key)
+                            }
+                            return updated
+                          })
+                        }}
+                      />
+                      <Label 
+                        htmlFor={`pastlife-${reading.key}`}
+                        className="cursor-pointer text-sm text-white"
+                      >
+                        {reading.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className={`space-y-3 ${availableKarmicDebts.length === 0 ? 'opacity-50' : ''}`}>
+              <Label className="flex-1">
+                <div className="font-medium text-sm text-white">⚖️ Karmic Debt</div>
+                <div className="text-xs text-muted-foreground">
+                  {availableKarmicDebts.length > 0
+                    ? `Select karmic debt analyses to include (${availableKarmicDebts.length} available)`
+                    : 'Calculate karmic debt first in the Karmic Debt tab'
+                  }
+                </div>
+              </Label>
+              
+              {availableKarmicDebts.length > 0 && (
+                <div className="ml-6 space-y-2 border-l-2 border-border pl-4">
+                  {availableKarmicDebts.map((debt) => (
+                    <div key={debt.key} className="flex items-center space-x-3">
+                      <Checkbox 
+                        id={`debt-${debt.key}`}
+                        checked={selectedKarmicDebts.has(debt.key)}
+                        onCheckedChange={() => {
+                          setSelectedKarmicDebts(prev => {
+                            const updated = new Set(prev)
+                            if (updated.has(debt.key)) {
+                              updated.delete(debt.key)
+                            } else {
+                              updated.add(debt.key)
+                            }
+                            return updated
+                          })
+                        }}
+                      />
+                      <Label 
+                        htmlFor={`debt-${debt.key}`}
+                        className="cursor-pointer text-sm text-white"
+                      >
+                        {debt.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="text-xs text-muted-foreground mb-3 pt-2">
-              Note: Romantic Compatibility, Karmic Bond, Past Life Indicators, and Karmic Debt reports are currently viewable in the app but not yet exportable to PDF. Use the app tabs to access these features.
+              Note: Generate reports using the app tabs above, then return here to export them to PDF.
             </div>
             
             <div className={`flex flex-col space-y-3 ${familyDynamicsEntries.length === 0 ? 'opacity-50' : ''}`}>

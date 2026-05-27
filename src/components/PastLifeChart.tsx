@@ -32,6 +32,7 @@ export function PastLifeChart() {
   const [selectedChartId, setSelectedChartId] = useState<string>('')
   const [pastLifeReading, setPastLifeReading] = useState<PastLifeReading | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [savedReadings, setSavedReadings] = useKV<Record<string, PastLifeReading>>('past-life-readings', {})
 
   const calculatePastLifeIndicators = (chart: ChartData) => {
     const southNode = chart.planets.find(p => p.name === 'South Node' || p.name === 'True Node')
@@ -133,6 +134,11 @@ Important: Ensure the interpretation is deeply personal, evocative, and connects
       }
 
       setPastLifeReading(reading)
+      setSavedReadings(current => ({
+        ...(current || {}),
+        [selectedChartId]: reading
+      }))
+      
       toast.success('Past life reading complete!')
     } catch (error) {
       console.error('Past life reading error:', error)
