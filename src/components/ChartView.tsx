@@ -18,7 +18,7 @@ import { Separator } from '@/components/ui/separator'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
-import { Printer, PencilSimple, ArrowLeft, Sparkle, ArrowsClockwise } from '@phosphor-icons/react'
+import { PencilSimple, ArrowLeft, Sparkle, ArrowsClockwise } from '@phosphor-icons/react'
 import { exportChartToPDF, PDFExportOptions } from '@/lib/pdf-export'
 import { toast } from 'sonner'
 import logoImage from '@/assets/images/logo.jpg'
@@ -74,9 +74,7 @@ export function ChartView({ chart, onBack, onEdit, onUpdateChart }: ChartViewPro
     }
   }
 
-  const handlePrint = () => {
-    window.print()
-  }
+
 
   const parseInterpretationSections = (text: string) => {
     const sections: Array<{ number: number; title: string; content: string }> = []
@@ -472,10 +470,6 @@ Major Aspects: ${aspectList}`
           <Button variant="outline" onClick={onEdit} className="gap-2 text-foreground">
             <PencilSimple size={18} />
             Edit
-          </Button>
-          <Button variant="outline" onClick={handlePrint} className="gap-2 text-foreground">
-            <Printer size={18} />
-            Print
           </Button>
           <ExportOptionsDialog 
             onExport={handleExport}
