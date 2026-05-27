@@ -189,18 +189,18 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 text-white">
             <DownloadSimple size={24} weight="bold" className="text-accent" />
             Customize PDF Export
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-muted-foreground">
             Select which sections to include in your exported PDF report
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground">Chart Data</h3>
+            <h3 className="text-sm font-semibold text-white">Chart Data</h3>
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
                 <Checkbox 
@@ -208,8 +208,8 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
                   checked={options.includeChartWheel}
                   onCheckedChange={() => toggleOption('includeChartWheel')}
                 />
-                <Label htmlFor="includeChartWheel" className="cursor-pointer flex-1 text-foreground">
-                  <div className="font-medium text-foreground">🎡 Natal Chart Wheel</div>
+                <Label htmlFor="includeChartWheel" className="cursor-pointer flex-1">
+                  <div className="font-medium text-white">🎡 Natal Chart Wheel</div>
                   <div className="text-xs text-muted-foreground">Visual diagram of planetary positions</div>
                 </Label>
               </div>
@@ -220,8 +220,8 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
                   checked={options.includeHouseMeanings}
                   onCheckedChange={() => toggleOption('includeHouseMeanings')}
                 />
-                <Label htmlFor="includeHouseMeanings" className="cursor-pointer flex-1 text-foreground">
-                  <div className="font-medium text-foreground">🏛️ House Meanings</div>
+                <Label htmlFor="includeHouseMeanings" className="cursor-pointer flex-1">
+                  <div className="font-medium text-white">🏛️ House Meanings</div>
                   <div className="text-xs text-muted-foreground">Detailed descriptions of all 12 houses</div>
                 </Label>
               </div>
@@ -232,8 +232,8 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
                   checked={options.includeMajorAspects}
                   onCheckedChange={() => toggleOption('includeMajorAspects')}
                 />
-                <Label htmlFor="includeMajorAspects" className="cursor-pointer flex-1 text-foreground">
-                  <div className="font-medium text-foreground">🔮 Major Aspects</div>
+                <Label htmlFor="includeMajorAspects" className="cursor-pointer flex-1">
+                  <div className="font-medium text-white">🔮 Major Aspects</div>
                   <div className="text-xs text-muted-foreground">Angular relationships between planets</div>
                 </Label>
               </div>
@@ -244,8 +244,8 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
                   checked={options.includeAspectPatterns}
                   onCheckedChange={() => toggleOption('includeAspectPatterns')}
                 />
-                <Label htmlFor="includeAspectPatterns" className="cursor-pointer flex-1 text-foreground">
-                  <div className="font-medium text-foreground">🔗 Aspect Patterns</div>
+                <Label htmlFor="includeAspectPatterns" className="cursor-pointer flex-1">
+                  <div className="font-medium text-white">🔗 Aspect Patterns</div>
                   <div className="text-xs text-muted-foreground">Complex configurations (T-Squares, Grand Trines, etc.)</div>
                 </Label>
               </div>
@@ -256,8 +256,8 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
                   checked={options.includePlanetaryDignities}
                   onCheckedChange={() => toggleOption('includePlanetaryDignities')}
                 />
-                <Label htmlFor="includePlanetaryDignities" className="cursor-pointer flex-1 text-foreground">
-                  <div className="font-medium text-foreground">👑 Planetary Dignities</div>
+                <Label htmlFor="includePlanetaryDignities" className="cursor-pointer flex-1">
+                  <div className="font-medium text-white">👑 Planetary Dignities</div>
                   <div className="text-xs text-muted-foreground">Essential dignities and debilities</div>
                 </Label>
               </div>
@@ -267,7 +267,7 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
           <Separator />
 
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground">AI-Generated Insights</h3>
+            <h3 className="text-sm font-semibold text-white">AI-Generated Insights</h3>
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
                 <Checkbox 
@@ -278,9 +278,9 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
                 />
                 <Label 
                   htmlFor="includeInterpretation" 
-                  className={`cursor-pointer flex-1 text-foreground ${!hasInterpretation ? 'opacity-50' : ''}`}
+                  className={`cursor-pointer flex-1 ${!hasInterpretation ? 'opacity-50' : ''}`}
                 >
-                  <div className="font-medium text-foreground">✨ Full Chart Interpretation</div>
+                  <div className="font-medium text-white">✨ Full Chart Interpretation</div>
                   <div className="text-xs text-muted-foreground">
                     {hasInterpretation 
                       ? 'Comprehensive AI-powered astrological analysis'
@@ -295,11 +295,11 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
           <Separator />
 
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground">Additional Reports</h3>
+            <h3 className="text-sm font-semibold text-white">Additional Reports</h3>
             
             <div className={`space-y-3 ${availableHoroscopes.length === 0 ? 'opacity-50' : ''}`}>
-              <Label className="flex-1 text-foreground">
-                <div className="font-medium text-sm text-foreground">✨ Personal Horoscope Forecasts</div>
+              <Label className="flex-1">
+                <div className="font-medium text-sm text-white">✨ Personal Horoscope Forecasts</div>
                 <div className="text-xs text-muted-foreground">
                   {availableHoroscopes.length > 0
                     ? `Select which horoscope readings to include (${availableHoroscopes.length} available)`
@@ -319,7 +319,7 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
                       />
                       <Label 
                         htmlFor={`horoscope-${horoscope.key}`}
-                        className="cursor-pointer text-sm text-foreground"
+                        className="cursor-pointer text-sm text-white"
                       >
                         {horoscope.label} Horoscope
                       </Label>
@@ -334,8 +334,8 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
             </div>
             
             <div className={`flex flex-col space-y-3 ${familyDynamicsEntries.length === 0 ? 'opacity-50' : ''}`}>
-              <Label className="flex-1 text-foreground">
-                <div className="font-medium text-sm text-foreground">👨‍👩‍👧‍👦 Family Dynamics</div>
+              <Label className="flex-1">
+                <div className="font-medium text-sm text-white">👨‍👩‍👧‍👦 Family Dynamics</div>
                 <div className="text-xs text-muted-foreground">
                   {familyDynamicsEntries.length > 0
                     ? `Select which family dynamics reports to include (${familyDynamicsEntries.length} available)`
@@ -355,7 +355,7 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
                       />
                       <Label 
                         htmlFor={`family-${entry.key}`} 
-                        className="cursor-pointer text-sm text-foreground"
+                        className="cursor-pointer text-sm text-white"
                       >
                         {entry.displayName}
                       </Label>
@@ -368,10 +368,10 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={() => setOpen(false)} className="text-white">
             Cancel
           </Button>
-          <Button onClick={handleExport} className="gap-2 bg-accent hover:bg-accent/90">
+          <Button onClick={handleExport} className="gap-2 bg-accent hover:bg-accent/90 text-white">
             <DownloadSimple size={18} weight="bold" />
             Export PDF
           </Button>
