@@ -17,49 +17,79 @@ interface ExportOptionsDialogProps {
   chartId?: string
 }
 
+interface FamilyDynamicsEntry {
+  key: string
+  data: FamilyRelationshipData
+  displayName: string
+}
+
 export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, variant = 'default', chartId }: ExportOptionsDialogProps) {
   const [open, setOpen] = useState(false)
   const [options, setOptions] = useState<PDFExportOptions>(defaultPDFOptions)
   const [savedFamilyData] = useKV<Record<string, FamilyRelationshipData>>('family-dynamics', {})
-  const [hasFamilyData, setHasFamilyData] = useState(false)
+  const [familyDynamicsEntries, setFamilyDynamicsEntries] = useState<FamilyDynamicsEntry[]>([])
+  const [selectedFamilyReports, setSelectedFamilyReports] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (chartId && savedFamilyData) {
-      const familyEntries = Object.keys(savedFamilyData).filter(key => 
-        key.startsWith(`${chartId}-`) || key.includes(`-${chartId}-`)
-      )
-      setHasFamilyData(familyEntries.length > 0)
+      const entries = Object.entries(savedFamilyData)
+        .filter(([key]) => key.startsWith(`${chartId}-`) || key.includes(`-${chartId}-`))
+        .map(([key, data]) => {
+          const parts = key.split('-')
+          const relationshipType = parts[2]
+          const relationshipLabel = relationshipType === 'parent-child' ? 'Parent-Child' : 'Sibling'
+          
+          return {
+            key,
+            data,
+            displayName: `${relationshipLabel}: ${data.person1.name} & ${data.person2.name}`
+          }
+        })
+      
+      setFamilyDynamicsEntries(entries)
+      setSelectedFamilyReports(new Set())
     }
   }, [chartId, savedFamilyData])
+
+  const toggleFamilyReport = (key: string) => {
+    setSelectedFamilyReports(prev => {
+      const updated = new Set(prev)
+      if (updated.has(key)) {
+        updated.delete(key)
+      } else {
+        updated.add(key)
+      }
+      return updated
+    })
+  }
 
   const handleExport = () => {
     let exportOptions = { ...options }
     
-    if (options.includeFamily && chartId && savedFamilyData) {
-      const familyEntries = Object.entries(savedFamilyData).filter(([key]) => 
-        key.startsWith(`${chartId}-`) || key.includes(`-${chartId}-`)
-      )
-      
-      if (familyEntries.length > 0) {
-        const familyTexts = familyEntries.map(([key, data]) => {
-          const parts = key.split('-')
-          const relationshipType = parts[2]
-          const relationshipLabel = relationshipType === 'parent-child' ? 'Parent-Child Relationship' : 'Sibling Relationship'
-          
-          let text = `${relationshipLabel}: ${data.person1.name} & ${data.person2.name}\n\n`
-          text += `Overall Compatibility Score: ${data.overallScore}%\n\n`
-          text += `Compatibility Breakdown:\n`
-          data.compatibilityScores.forEach(score => {
-            text += `- ${score.category}: ${score.score}% - ${score.description}\n`
-          })
-          
-          if (data.aiInterpretation) {
-            text += `\n\nDetailed Interpretation:\n${data.aiInterpretation}`
-          }
-          
-          return text
+    if (selectedFamilyReports.size > 0 && savedFamilyData) {
+      const familyTexts = Array.from(selectedFamilyReports).map(key => {
+        const data = savedFamilyData[key]
+        if (!data) return ''
+        
+        const parts = key.split('-')
+        const relationshipType = parts[2]
+        const relationshipLabel = relationshipType === 'parent-child' ? 'Parent-Child Relationship' : 'Sibling Relationship'
+        
+        let text = `${relationshipLabel}: ${data.person1.name} & ${data.person2.name}\n\n`
+        text += `Overall Compatibility Score: ${data.overallScore}%\n\n`
+        text += `Compatibility Breakdown:\n`
+        data.compatibilityScores.forEach(score => {
+          text += `- ${score.category}: ${score.score}% - ${score.description}\n`
         })
         
+        if (data.aiInterpretation) {
+          text += `\n\nDetailed Interpretation:\n${data.aiInterpretation}`
+        }
+        
+        return text
+      }).filter(text => text !== '')
+      
+      if (familyTexts.length > 0) {
         exportOptions = {
           ...exportOptions,
           includeFamily: familyTexts.join('\n\n---\n\n')
@@ -243,22 +273,36 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
                 </Label>
               </div>
 
-              <div className={`flex items-center space-x-3 ${!hasFamilyData ? 'opacity-50' : ''}`}>
-                <Checkbox 
-                  id="includeFamily" 
-                  checked={!!options.includeFamily}
-                  onCheckedChange={() => toggleOption('includeFamily')}
-                  disabled={!hasFamilyData}
-                />
-                <Label htmlFor="includeFamily" className={`flex-1 text-foreground ${!hasFamilyData ? '' : 'cursor-pointer'}`}>
+              <div className={`flex flex-col space-y-3 ${familyDynamicsEntries.length === 0 ? 'opacity-50' : ''}`}>
+                <Label className="flex-1 text-foreground">
                   <div className="font-medium text-sm text-foreground">👨‍👩‍👧‍👦 Family Dynamics</div>
                   <div className="text-xs text-muted-foreground">
-                    {hasFamilyData 
-                      ? 'Family synastry analysis available'
+                    {familyDynamicsEntries.length > 0
+                      ? `Select which family dynamics reports to include (${familyDynamicsEntries.length} available)`
                       : 'Generate a family dynamics report first'
                     }
                   </div>
                 </Label>
+                
+                {familyDynamicsEntries.length > 0 && (
+                  <div className="ml-6 space-y-2 border-l-2 border-border pl-4">
+                    {familyDynamicsEntries.map((entry) => (
+                      <div key={entry.key} className="flex items-center space-x-3">
+                        <Checkbox 
+                          id={`family-${entry.key}`}
+                          checked={selectedFamilyReports.has(entry.key)}
+                          onCheckedChange={() => toggleFamilyReport(entry.key)}
+                        />
+                        <Label 
+                          htmlFor={`family-${entry.key}`} 
+                          className="cursor-pointer text-sm text-foreground"
+                        >
+                          {entry.displayName}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
