@@ -455,8 +455,9 @@ Major Aspects: ${aspectList}`
 
       <div className="flex items-center justify-between no-print">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={onBack}>
-            <ArrowLeft size={20} />
+          <Button variant="outline" onClick={onBack} className="gap-2 text-foreground hover:bg-accent hover:text-accent-foreground">
+            <ArrowLeft size={20} weight="bold" />
+            Back to Library
           </Button>
           <div>
             <h1 className="text-3xl font-semibold text-foreground">{chart.name}</h1>
