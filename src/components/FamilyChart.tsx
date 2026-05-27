@@ -15,6 +15,7 @@ import { toast } from 'sonner'
 
 export function FamilyChart() {
   const [charts] = useKV<ChartData[]>('astrology-charts', [])
+  const [savedFamilyData, setSavedFamilyData] = useKV<Record<string, FamilyRelationshipData>>('family-dynamics', {})
   const [person1Id, setPerson1Id] = useState<string>('')
   const [person2Id, setPerson2Id] = useState<string>('')
   const [relationshipType, setRelationshipType] = useState<FamilyRelationType>('parent-child')
@@ -48,6 +49,13 @@ export function FamilyChart() {
       await new Promise(resolve => setTimeout(resolve, 500))
       const data = generateFamilyAnalysis(chart1, chart2, relationshipType)
       setFamilyData(data)
+      
+      const familyKey = `${chart1.id}-${chart2.id}-${relationshipType}`
+      setSavedFamilyData((current) => ({
+        ...current,
+        [familyKey]: data
+      }))
+      
       toast.success('Family compatibility analysis complete!')
     } catch (error) {
       console.error('Family analysis error:', error)
@@ -153,6 +161,16 @@ Write in a warm, understanding, and practical tone. Be honest about both harmoni
 
       const response = await window.spark.llm(prompt, 'gpt-4o')
       setAiInterpretation(response)
+      
+      const familyKey = `${chart1.id}-${chart2.id}-${relationshipType}`
+      setSavedFamilyData((current) => ({
+        ...current,
+        [familyKey]: {
+          ...familyData,
+          aiInterpretation: response
+        }
+      }))
+      
       toast.success('AI interpretation generated!')
     } catch (error) {
       console.error('AI interpretation error:', error)

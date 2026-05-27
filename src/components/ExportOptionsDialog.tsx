@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useKV } from '@github/spark/hooks'
+import { FamilyRelationshipData } from '@/lib/family-compatibility'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -12,14 +14,60 @@ interface ExportOptionsDialogProps {
   hasInterpretation: boolean
   disabled?: boolean
   variant?: 'default' | 'outline'
+  chartId?: string
 }
 
-export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, variant = 'default' }: ExportOptionsDialogProps) {
+export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, variant = 'default', chartId }: ExportOptionsDialogProps) {
   const [open, setOpen] = useState(false)
   const [options, setOptions] = useState<PDFExportOptions>(defaultPDFOptions)
+  const [savedFamilyData] = useKV<Record<string, FamilyRelationshipData>>('family-dynamics', {})
+  const [hasFamilyData, setHasFamilyData] = useState(false)
+
+  useEffect(() => {
+    if (chartId && savedFamilyData) {
+      const familyEntries = Object.keys(savedFamilyData).filter(key => 
+        key.startsWith(`${chartId}-`) || key.includes(`-${chartId}-`)
+      )
+      setHasFamilyData(familyEntries.length > 0)
+    }
+  }, [chartId, savedFamilyData])
 
   const handleExport = () => {
-    onExport(options)
+    let exportOptions = { ...options }
+    
+    if (options.includeFamily && chartId && savedFamilyData) {
+      const familyEntries = Object.entries(savedFamilyData).filter(([key]) => 
+        key.startsWith(`${chartId}-`) || key.includes(`-${chartId}-`)
+      )
+      
+      if (familyEntries.length > 0) {
+        const familyTexts = familyEntries.map(([key, data]) => {
+          const parts = key.split('-')
+          const relationshipType = parts[2]
+          const relationshipLabel = relationshipType === 'parent-child' ? 'Parent-Child Relationship' : 'Sibling Relationship'
+          
+          let text = `${relationshipLabel}: ${data.person1.name} & ${data.person2.name}\n\n`
+          text += `Overall Compatibility Score: ${data.overallScore}%\n\n`
+          text += `Compatibility Breakdown:\n`
+          data.compatibilityScores.forEach(score => {
+            text += `- ${score.category}: ${score.score}% - ${score.description}\n`
+          })
+          
+          if (data.aiInterpretation) {
+            text += `\n\nDetailed Interpretation:\n${data.aiInterpretation}`
+          }
+          
+          return text
+        })
+        
+        exportOptions = {
+          ...exportOptions,
+          includeFamily: familyTexts.join('\n\n---\n\n')
+        }
+      }
+    }
+    
+    onExport(exportOptions)
     setOpen(false)
   }
 
@@ -152,10 +200,10 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-foreground">Additional Reports</h3>
             <div className="text-xs text-muted-foreground mb-3">
-              These sections are placeholders. Generate the respective reports first, then they'll be included automatically in future exports.
+              These sections are available when you've generated the respective reports.
             </div>
-            <div className="space-y-3 opacity-50">
-              <div className="flex items-center space-x-3">
+            <div className="space-y-3">
+              <div className="flex items-center space-x-3 opacity-50">
                 <Checkbox id="includePersonalHoroscope" disabled />
                 <Label htmlFor="includePersonalHoroscope" className="flex-1 text-foreground">
                   <div className="font-medium text-sm text-foreground">🌙 Personal Horoscope</div>
@@ -163,7 +211,7 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
                 </Label>
               </div>
 
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-3 opacity-50">
                 <Checkbox id="includeCompatibility" disabled />
                 <Label htmlFor="includeCompatibility" className="flex-1 text-foreground">
                   <div className="font-medium text-sm text-foreground">💕 Romantic Compatibility</div>
@@ -171,7 +219,7 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
                 </Label>
               </div>
 
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-3 opacity-50">
                 <Checkbox id="includeKarmicBond" disabled />
                 <Label htmlFor="includeKarmicBond" className="flex-1 text-foreground">
                   <div className="font-medium text-sm text-foreground">♾️ Karmic Bond Analysis</div>
@@ -179,7 +227,7 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
                 </Label>
               </div>
 
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-3 opacity-50">
                 <Checkbox id="includePastLife" disabled />
                 <Label htmlFor="includePastLife" className="flex-1 text-foreground">
                   <div className="font-medium text-sm text-foreground">🔄 Past Life Indicators</div>
@@ -187,7 +235,7 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
                 </Label>
               </div>
 
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-3 opacity-50">
                 <Checkbox id="includeKarmicDebt" disabled />
                 <Label htmlFor="includeKarmicDebt" className="flex-1 text-foreground">
                   <div className="font-medium text-sm text-foreground">⚖️ Karmic Debt Calculator</div>
@@ -195,11 +243,21 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
                 </Label>
               </div>
 
-              <div className="flex items-center space-x-3">
-                <Checkbox id="includeFamily" disabled />
-                <Label htmlFor="includeFamily" className="flex-1 text-foreground">
+              <div className={`flex items-center space-x-3 ${!hasFamilyData ? 'opacity-50' : ''}`}>
+                <Checkbox 
+                  id="includeFamily" 
+                  checked={!!options.includeFamily}
+                  onCheckedChange={() => toggleOption('includeFamily')}
+                  disabled={!hasFamilyData}
+                />
+                <Label htmlFor="includeFamily" className={`flex-1 text-foreground ${!hasFamilyData ? '' : 'cursor-pointer'}`}>
                   <div className="font-medium text-sm text-foreground">👨‍👩‍👧‍👦 Family Dynamics</div>
-                  <div className="text-xs text-muted-foreground">Family synastry and patterns</div>
+                  <div className="text-xs text-muted-foreground">
+                    {hasFamilyData 
+                      ? 'Family synastry analysis available'
+                      : 'Generate a family dynamics report first'
+                    }
+                  </div>
                 </Label>
               </div>
             </div>

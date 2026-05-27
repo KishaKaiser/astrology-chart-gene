@@ -27,6 +27,7 @@ export interface FamilyRelationshipData {
   overallScore: number
   relationshipType: FamilyRelationType
   createdAt: number
+  aiInterpretation?: string
 }
 
 function normalizeAngle(angle: number): number {

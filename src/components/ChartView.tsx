@@ -474,6 +474,7 @@ Major Aspects: ${aspectList}`
           <ExportOptionsDialog 
             onExport={handleExport}
             hasInterpretation={!!interpretation}
+            chartId={chart.id}
           />
         </div>
       </div>
