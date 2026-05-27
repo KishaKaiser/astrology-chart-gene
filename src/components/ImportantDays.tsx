@@ -18,6 +18,12 @@ interface DayForecast {
   category: 'romance' | 'career' | 'money'
   intensity: 'low' | 'medium' | 'high'
   description: string
+  transitDetails?: {
+    transitingPlanet: string
+    natalPlanet: string
+    aspect: string
+    houses?: string
+  }
 }
 
 interface ImportantDaysReading {
@@ -90,16 +96,24 @@ For each important day, provide:
 - Category (romance, career, or money)
 - Intensity level (high, medium, or low)
 - Brief description (1-2 sentences explaining why this day is significant)
+- Transit details showing which planets are creating the opportunity
+
+IMPORTANT: You MUST include specific transit details for each forecast showing:
+- transitingPlanet: Which planet is currently moving (e.g., "Venus", "Jupiter", "Mars")
+- natalPlanet: Which natal planet it's aspecting (e.g., "Sun", "Moon", "Venus")
+- aspect: The type of aspect being formed (e.g., "conjunction", "trine", "sextile", "square", "opposition")
+- houses: Relevant houses involved (optional, e.g., "7th house", "10th and 2nd houses")
 
 Consider:
 - New Moons and Full Moons in relevant houses
-- Venus, Mars, and Jupiter transits
-- Lucky aspects to natal planets
+- Venus, Mars, and Jupiter transits to natal planets
+- Lucky aspects to natal planets (trines, sextiles, conjunctions)
 - Mercury retrograde periods (caution for career decisions)
 - Eclipses
 - Personal planetary returns
+- Saturn and Uranus transits for major opportunities
 
-Return ONLY a valid JSON object with a single property "days" containing an array of forecast objects. Each forecast object must have: date (string), category (string: "romance", "career", or "money"), intensity (string: "high", "medium", or "low"), and description (string).
+Return ONLY a valid JSON object with a single property "days" containing an array of forecast objects. Each forecast object must have: date (string), category (string: "romance", "career", or "money"), intensity (string: "high", "medium", or "low"), description (string), and transitDetails (object with: transitingPlanet, natalPlanet, aspect, and optional houses).
 
 Example format:
 {
@@ -108,7 +122,13 @@ Example format:
       "date": "2024-02-14",
       "category": "romance",
       "intensity": "high",
-      "description": "Venus aligns with your natal Sun, creating magnetic attraction and romantic opportunities."
+      "description": "Venus aligns with your natal Sun, creating magnetic attraction and romantic opportunities.",
+      "transitDetails": {
+        "transitingPlanet": "Venus",
+        "natalPlanet": "Sun",
+        "aspect": "conjunction",
+        "houses": "5th house"
+      }
     }
   ]
 }`
@@ -366,6 +386,28 @@ Example format:
                               <p className="text-sm text-foreground leading-relaxed">
                                 {day.description}
                               </p>
+                              {day.transitDetails && (
+                                <div className="mt-3 pt-3 border-t border-current/20">
+                                  <div className="flex items-start gap-2">
+                                    <Sparkle className="w-4 h-4 mt-0.5 text-accent flex-shrink-0" weight="fill" />
+                                    <div className="text-xs space-y-1">
+                                      <p className="text-muted-foreground font-medium">Transit Details:</p>
+                                      <div className="flex flex-wrap gap-x-3 gap-y-1 text-foreground/80">
+                                        <span className="inline-flex items-center gap-1">
+                                          <span className="font-medium text-accent">{day.transitDetails.transitingPlanet}</span>
+                                          <span className="text-muted-foreground text-[10px]">{day.transitDetails.aspect}</span>
+                                          <span className="font-medium text-accent">{day.transitDetails.natalPlanet}</span>
+                                        </span>
+                                        {day.transitDetails.houses && (
+                                          <span className="text-muted-foreground">
+                                            • {day.transitDetails.houses}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </motion.div>
