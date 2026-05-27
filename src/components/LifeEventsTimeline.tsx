@@ -69,7 +69,7 @@ export function LifeEventsTimeline({ chart }: LifeEventsTimelineProps) {
 
     try {
       const [year, month, day] = newEvent.date.split('-').map(Number)
-      const eventDate = new Date(year, month - 1, day, 12, 0, 0)
+      const eventDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0))
       
       const transitData = await calculateTransitsForDate(chart, eventDate)
       
@@ -350,7 +350,7 @@ Write in a warm, insightful, and professional tone. Be specific about how the tr
                             </Badge>
                           </div>
                           <CardDescription className="font-mono">
-                            {new Date(event.date).toLocaleDateString('en-US', {
+                            {new Date(event.date + 'T12:00:00').toLocaleDateString('en-US', {
                               year: 'numeric',
                               month: 'long',
                               day: 'numeric'
@@ -554,7 +554,7 @@ Write in a warm, insightful, and professional tone. Be specific about how the tr
                                         <div className="flex-1">
                                           <div className="font-semibold text-sm mb-1">{occurrence.eventTitle}</div>
                                           <div className="text-xs text-muted-foreground font-mono mb-2">
-                                            {new Date(occurrence.eventDate).toLocaleDateString('en-US', {
+                                            {new Date(occurrence.eventDate + 'T12:00:00').toLocaleDateString('en-US', {
                                               year: 'numeric',
                                               month: 'long',
                                               day: 'numeric'
