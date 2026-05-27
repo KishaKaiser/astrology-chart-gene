@@ -230,49 +230,9 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-foreground">Additional Reports</h3>
             <div className="text-xs text-muted-foreground mb-3">
-              These sections are available when you've generated the respective reports.
+              Note: Personal Horoscope, Romantic Compatibility, Karmic Bond, Past Life Indicators, and Karmic Debt reports are currently viewable in the app but not yet exportable to PDF. Use the app tabs to access these features.
             </div>
             <div className="space-y-3">
-              <div className="flex items-center space-x-3 opacity-50">
-                <Checkbox id="includePersonalHoroscope" disabled />
-                <Label htmlFor="includePersonalHoroscope" className="flex-1 text-foreground">
-                  <div className="font-medium text-sm text-foreground">🌙 Personal Horoscope</div>
-                  <div className="text-xs text-muted-foreground">Daily forecast and timing</div>
-                </Label>
-              </div>
-
-              <div className="flex items-center space-x-3 opacity-50">
-                <Checkbox id="includeCompatibility" disabled />
-                <Label htmlFor="includeCompatibility" className="flex-1 text-foreground">
-                  <div className="font-medium text-sm text-foreground">💕 Romantic Compatibility</div>
-                  <div className="text-xs text-muted-foreground">Synastry and relationship analysis</div>
-                </Label>
-              </div>
-
-              <div className="flex items-center space-x-3 opacity-50">
-                <Checkbox id="includeKarmicBond" disabled />
-                <Label htmlFor="includeKarmicBond" className="flex-1 text-foreground">
-                  <div className="font-medium text-sm text-foreground">♾️ Karmic Bond Analysis</div>
-                  <div className="text-xs text-muted-foreground">Soul connections and past patterns</div>
-                </Label>
-              </div>
-
-              <div className="flex items-center space-x-3 opacity-50">
-                <Checkbox id="includePastLife" disabled />
-                <Label htmlFor="includePastLife" className="flex-1 text-foreground">
-                  <div className="font-medium text-sm text-foreground">🔄 Past Life Indicators</div>
-                  <div className="text-xs text-muted-foreground">Karmic imprints and soul journey</div>
-                </Label>
-              </div>
-
-              <div className="flex items-center space-x-3 opacity-50">
-                <Checkbox id="includeKarmicDebt" disabled />
-                <Label htmlFor="includeKarmicDebt" className="flex-1 text-foreground">
-                  <div className="font-medium text-sm text-foreground">⚖️ Karmic Debt Calculator</div>
-                  <div className="text-xs text-muted-foreground">Numerological karmic numbers</div>
-                </Label>
-              </div>
-
               <div className={`flex flex-col space-y-3 ${familyDynamicsEntries.length === 0 ? 'opacity-50' : ''}`}>
                 <Label className="flex-1 text-foreground">
                   <div className="font-medium text-sm text-foreground">👨‍👩‍👧‍👦 Family Dynamics</div>
