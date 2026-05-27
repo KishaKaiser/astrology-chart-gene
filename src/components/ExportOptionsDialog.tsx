@@ -67,6 +67,12 @@ interface DayForecast {
   category: 'romance' | 'career' | 'money'
   intensity: 'low' | 'medium' | 'high'
   description: string
+  transitDetails?: {
+    transitingPlanet: string
+    natalPlanet: string
+    aspect: string
+    houses?: string
+  }
 }
 
 interface ImportantDaysReading {
@@ -434,7 +440,17 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
             const intensityLabel = day.intensity.toUpperCase()
             
             text += `${categoryIcon} ${dayOfWeek}, ${month} ${dayOfMonth} - ${day.category.toUpperCase()} [${intensityLabel}]\n`
-            text += `${day.description}\n\n`
+            text += `${day.description}\n`
+            
+            if (day.transitDetails) {
+              text += `Transit: ${day.transitDetails.transitingPlanet} ${day.transitDetails.aspect} ${day.transitDetails.natalPlanet}`
+              if (day.transitDetails.houses) {
+                text += ` (${day.transitDetails.houses})`
+              }
+              text += '\n'
+            }
+            
+            text += '\n'
           })
         })
         

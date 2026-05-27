@@ -1124,6 +1124,17 @@ export async function exportChartToPDF(
           pdf.setTextColor(120, 120, 120)
           pdf.text(line.trim(), margin, yPos)
           yPos += 6
+        } else if (line.trim().startsWith('Transit:')) {
+          pdf.setFont('helvetica', 'italic')
+          pdf.setFontSize(8)
+          pdf.setTextColor(139, 92, 246)
+          
+          pdf.setFillColor(250, 245, 255)
+          const textWidth = pdf.getTextWidth(line.trim())
+          pdf.roundedRect(margin, yPos - 3, Math.min(textWidth + 6, pageWidth - 2 * margin), 7, 1, 1, 'F')
+          
+          pdf.text(line.trim(), margin + 2, yPos)
+          yPos += 8
         } else if (line.trim() === '') {
           yPos += 2
         } else {
