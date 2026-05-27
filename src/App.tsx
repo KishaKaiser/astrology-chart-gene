@@ -12,12 +12,13 @@ import { PastLifeChart } from '@/components/PastLifeChart'
 import { KarmicRelationship } from '@/components/KarmicRelationship'
 import { KarmicDebtCalculator } from '@/components/KarmicDebtCalculator'
 import { FamilyChart } from '@/components/FamilyChart'
+import { ImportantDays } from '@/components/ImportantDays'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 import { CrystalBallLogo } from '@/components/CrystalBallLogo'
-import { BookOpen, Sparkle, Star, ArrowsClockwise, Heart, ClockCounterClockwise, Infinity, Scales, UsersFour } from '@phosphor-icons/react'
+import { BookOpen, Sparkle, Star, ArrowsClockwise, Heart, ClockCounterClockwise, Infinity, Scales, UsersFour, CalendarDots } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { DiagnosticTool } from '@/components/DiagnosticTool'
 import { TroubleshootingWizard } from '@/components/TroubleshootingWizard'
@@ -27,7 +28,7 @@ function App() {
   const [charts, setCharts] = useKV<ChartData[]>('astrology-charts', [])
   const [selectedChart, setSelectedChart] = useState<ChartData | null>(null)
   const [view, setView] = useState<'library' | 'chart'>('library')
-  const [activeTab, setActiveTab] = useState<'charts' | 'personal-horoscope' | 'zodiac-horoscope' | 'lovers-chart' | 'karmic-relationship' | 'past-life' | 'karmic-debt' | 'family'>('charts')
+  const [activeTab, setActiveTab] = useState<'charts' | 'personal-horoscope' | 'zodiac-horoscope' | 'lovers-chart' | 'karmic-relationship' | 'past-life' | 'karmic-debt' | 'family' | 'important-days'>('charts')
   const [ephemerisError, setEphemerisError] = useState(false)
 
   useEffect(() => {
@@ -214,8 +215,8 @@ function App() {
 
       <main className="container mx-auto px-6 py-12">
         {view === 'library' ? (
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'charts' | 'personal-horoscope' | 'zodiac-horoscope' | 'lovers-chart' | 'karmic-relationship' | 'past-life' | 'karmic-debt' | 'family')} className="space-y-6">
-            <TabsList className="grid w-full max-w-7xl mx-auto grid-cols-8">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'charts' | 'personal-horoscope' | 'zodiac-horoscope' | 'lovers-chart' | 'karmic-relationship' | 'past-life' | 'karmic-debt' | 'family' | 'important-days')} className="space-y-6">
+            <TabsList className="grid w-full max-w-7xl mx-auto grid-cols-9">
               <TabsTrigger value="charts" className="gap-2 text-white">
                 <BookOpen weight="bold" />
                 Chart Library
@@ -223,6 +224,10 @@ function App() {
               <TabsTrigger value="personal-horoscope" className="gap-2">
                 <Sparkle weight="fill" />
                 Personal
+              </TabsTrigger>
+              <TabsTrigger value="important-days" className="gap-2">
+                <CalendarDots weight="fill" />
+                Important Days
               </TabsTrigger>
               <TabsTrigger value="zodiac-horoscope" className="gap-2">
                 <Star weight="fill" />
@@ -265,6 +270,21 @@ function App() {
                 <div className="text-center py-20">
                   <p className="text-muted-foreground mb-4">
                     You need to create a natal chart first to view personalized horoscope forecasts.
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Switch to the Chart Library tab and generate your first chart.
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="important-days">
+              {charts && charts.length > 0 ? (
+                <ImportantDays chart={charts[0]} />
+              ) : (
+                <div className="text-center py-20">
+                  <p className="text-muted-foreground mb-4">
+                    You need to create a natal chart first to view important days forecast.
                   </p>
                   <p className="text-sm text-muted-foreground">
                     Switch to the Chart Library tab and generate your first chart.

@@ -62,6 +62,20 @@ interface PastLifeReading {
   interpretation: string
 }
 
+interface DayForecast {
+  date: string
+  category: 'romance' | 'career' | 'money'
+  intensity: 'low' | 'medium' | 'high'
+  description: string
+}
+
+interface ImportantDaysReading {
+  content: DayForecast[]
+  generatedAt: number
+  startDate: string
+  endDate: string
+}
+
 export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, variant = 'default', chartId }: ExportOptionsDialogProps) {
   const [open, setOpen] = useState(false)
   const [options, setOptions] = useState<PDFExportOptions>(defaultPDFOptions)
@@ -71,6 +85,7 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
   const [savedKarmicReports] = useKV<Record<string, SavedKarmicReport>>('karmic-reports', {})
   const [savedPastLifeReadings] = useKV<Record<string, PastLifeReading>>('past-life-readings', {})
   const [savedKarmicDebts] = useKV<Record<string, any>>('karmic-debt-results', [])
+  const [savedImportantDays] = useKV<Record<string, ImportantDaysReading>>('important-days-readings', {})
   const [familyDynamicsEntries, setFamilyDynamicsEntries] = useState<FamilyDynamicsEntry[]>([])
   const [selectedFamilyReports, setSelectedFamilyReports] = useState<Set<string>>(new Set())
   const [selectedHoroscopes, setSelectedHoroscopes] = useState<Set<string>>(new Set())
@@ -78,6 +93,7 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
   const [selectedKarmicReports, setSelectedKarmicReports] = useState<Set<string>>(new Set())
   const [selectedPastLifeReadings, setSelectedPastLifeReadings] = useState<Set<string>>(new Set())
   const [selectedKarmicDebts, setSelectedKarmicDebts] = useState<Set<string>>(new Set())
+  const [selectedImportantDays, setSelectedImportantDays] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (chartId && savedFamilyData) {
@@ -107,6 +123,7 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
       setSelectedKarmicReports(new Set())
       setSelectedPastLifeReadings(new Set())
       setSelectedKarmicDebts(new Set())
+      setSelectedImportantDays(new Set())
     }
   }, [open])
 
@@ -214,10 +231,22 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
     }))
   }
 
+  const getAvailableImportantDays = () => {
+    if (!chartId || !savedImportantDays) return []
+    
+    const key = `${chartId}-important-days`
+    if (savedImportantDays[key]) {
+      return [{ key, label: 'Important Days - 6 Month Forecast' }]
+    }
+    
+    return []
+  }
+
   const availableCompatibilityReports = getAvailableCompatibilityReports()
   const availableKarmicReports = getAvailableKarmicReports()
   const availablePastLifeReadings = getAvailablePastLifeReadings()
   const availableKarmicDebts = getAvailableKarmicDebts()
+  const availableImportantDays = getAvailableImportantDays()
 
   const handleExport = () => {
     let exportOptions = { ...options }
@@ -356,6 +385,66 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
         exportOptions = {
           ...exportOptions,
           includeKarmicDebt: debtTexts.join('\n\n---\n\n')
+        }
+      }
+    }
+
+    if (selectedImportantDays.size > 0 && savedImportantDays && chartId) {
+      const importantDaysTexts = Array.from(selectedImportantDays).map(key => {
+        const reading = savedImportantDays[key]
+        if (!reading) return ''
+        
+        const startDate = new Date(reading.startDate).toLocaleDateString()
+        const endDate = new Date(reading.endDate).toLocaleDateString()
+        const generatedDate = new Date(reading.generatedAt).toLocaleString()
+        
+        let text = `Important Days - 6 Month Forecast\n`
+        text += `Period: ${startDate} to ${endDate}\n`
+        text += `Generated: ${generatedDate}\n\n`
+        
+        const groupedByMonth = reading.content.reduce((acc, day) => {
+          const date = new Date(day.date)
+          const monthKey = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+          if (!acc[monthKey]) {
+            acc[monthKey] = []
+          }
+          acc[monthKey].push(day)
+          return acc
+        }, {} as Record<string, DayForecast[]>)
+        
+        const sortedMonths = Object.keys(groupedByMonth).sort((a, b) => {
+          return new Date(a).getTime() - new Date(b).getTime()
+        })
+        
+        sortedMonths.forEach(monthKey => {
+          text += `\n${monthKey}\n${'='.repeat(monthKey.length)}\n\n`
+          
+          const monthDays = groupedByMonth[monthKey].sort((a, b) => 
+            new Date(a.date).getTime() - new Date(b.date).getTime()
+          )
+          
+          monthDays.forEach(day => {
+            const date = new Date(day.date)
+            const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' })
+            const dayOfMonth = date.getDate()
+            const month = date.toLocaleDateString('en-US', { month: 'short' })
+            
+            const categoryIcon = day.category === 'romance' ? '💕' : 
+                                day.category === 'career' ? '💼' : '💰'
+            const intensityLabel = day.intensity.toUpperCase()
+            
+            text += `${categoryIcon} ${dayOfWeek}, ${month} ${dayOfMonth} - ${day.category.toUpperCase()} [${intensityLabel}]\n`
+            text += `${day.description}\n\n`
+          })
+        })
+        
+        return text
+      }).filter(text => text !== '')
+      
+      if (importantDaysTexts.length > 0) {
+        exportOptions = {
+          ...exportOptions,
+          includeImportantDays: importantDaysTexts.join('\n\n---\n\n')
         }
       }
     }
@@ -717,6 +806,48 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
                         className="cursor-pointer text-sm text-white"
                       >
                         {debt.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className={`space-y-3 ${availableImportantDays.length === 0 ? 'opacity-50' : ''}`}>
+              <Label className="flex-1">
+                <div className="font-medium text-sm text-white">📅 Important Days</div>
+                <div className="text-xs text-muted-foreground">
+                  {availableImportantDays.length > 0
+                    ? `Select Important Days forecast to include (${availableImportantDays.length} available)`
+                    : 'Generate an Important Days forecast first in the Important Days tab'
+                  }
+                </div>
+              </Label>
+              
+              {availableImportantDays.length > 0 && (
+                <div className="ml-6 space-y-2 border-l-2 border-border pl-4">
+                  {availableImportantDays.map((forecast) => (
+                    <div key={forecast.key} className="flex items-center space-x-3">
+                      <Checkbox 
+                        id={`important-days-${forecast.key}`}
+                        checked={selectedImportantDays.has(forecast.key)}
+                        onCheckedChange={() => {
+                          setSelectedImportantDays(prev => {
+                            const updated = new Set(prev)
+                            if (updated.has(forecast.key)) {
+                              updated.delete(forecast.key)
+                            } else {
+                              updated.add(forecast.key)
+                            }
+                            return updated
+                          })
+                        }}
+                      />
+                      <Label 
+                        htmlFor={`important-days-${forecast.key}`}
+                        className="cursor-pointer text-sm text-white"
+                      >
+                        {forecast.label}
                       </Label>
                     </div>
                   ))}

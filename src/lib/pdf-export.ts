@@ -18,6 +18,7 @@ export interface PDFExportOptions {
   includePastLife: string
   includeKarmicDebt: string
   includeFamily: string
+  includeImportantDays: string
 }
 
 export const defaultPDFOptions: PDFExportOptions = {
@@ -33,6 +34,7 @@ export const defaultPDFOptions: PDFExportOptions = {
   includePastLife: '',
   includeKarmicDebt: '',
   includeFamily: '',
+  includeImportantDays: '',
 }
 
 export async function exportChartToPDF(
@@ -1052,6 +1054,93 @@ export async function exportChartToPDF(
         }
         pdf.text(line, margin, yPos)
         yPos += 5
+      })
+    }
+
+    if (options.includeImportantDays) {
+      pdf.addPage()
+      yPos = margin
+
+      pdf.setFillColor(68, 21, 104)
+      pdf.rect(0, 0, pageWidth, 45, 'F')
+
+      pdf.setFont('helvetica', 'bold')
+      pdf.setFontSize(20)
+      pdf.setTextColor(255, 255, 255)
+      pdf.text('IMPORTANT DAYS - 6 MONTH FORECAST', pageWidth / 2, yPos + 6, { align: 'center' })
+      
+      yPos += 12
+      pdf.setFontSize(10)
+      pdf.setTextColor(230, 230, 230)
+      pdf.setFont('helvetica', 'normal')
+      pdf.text('Key dates for romance, career, and financial opportunities', pageWidth / 2, yPos, { align: 'center' })
+      
+      yPos = 55
+
+      pdf.setFontSize(9)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setTextColor(40, 40, 40)
+      
+      const lines = options.includeImportantDays.split('\n')
+      
+      lines.forEach((line) => {
+        if (yPos > pageHeight - 25) {
+          pdf.addPage()
+          yPos = margin + 5
+        }
+
+        if (line.match(/^[A-Z][a-z]+ \d{4}$/)) {
+          yPos += 8
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(14)
+          pdf.setTextColor(68, 21, 104)
+          
+          pdf.setFillColor(250, 248, 253)
+          const textWidth = pdf.getTextWidth(line)
+          pdf.roundedRect(margin, yPos - 5, textWidth + 10, 12, 2, 2, 'F')
+          
+          pdf.text(line, margin + 5, yPos + 2)
+          yPos += 14
+        } else if (line.match(/^=+$/)) {
+          yPos -= 2
+        } else if (line.startsWith('💕') || line.startsWith('💼') || line.startsWith('💰')) {
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(10)
+          
+          if (line.startsWith('💕')) {
+            pdf.setTextColor(219, 39, 119)
+          } else if (line.startsWith('💼')) {
+            pdf.setTextColor(59, 130, 246)
+          } else {
+            pdf.setTextColor(34, 197, 94)
+          }
+          
+          const cleanLine = line.replace(/💕|💼|💰/g, '').trim()
+          pdf.text(cleanLine, margin, yPos)
+          yPos += 7
+        } else if (line.trim().startsWith('Period:') || line.trim().startsWith('Generated:')) {
+          pdf.setFont('helvetica', 'italic')
+          pdf.setFontSize(8)
+          pdf.setTextColor(120, 120, 120)
+          pdf.text(line.trim(), margin, yPos)
+          yPos += 6
+        } else if (line.trim() === '') {
+          yPos += 2
+        } else {
+          pdf.setFont('helvetica', 'normal')
+          pdf.setFontSize(9)
+          pdf.setTextColor(50, 50, 50)
+          
+          const wrappedLines = pdf.splitTextToSize(line, pageWidth - 2 * margin)
+          wrappedLines.forEach((wrappedLine: string) => {
+            if (yPos > pageHeight - 25) {
+              pdf.addPage()
+              yPos = margin + 5
+            }
+            pdf.text(wrappedLine, margin, yPos)
+            yPos += 5
+          })
+        }
       })
     }
 
