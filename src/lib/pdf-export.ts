@@ -838,30 +838,85 @@ export async function exportChartToPDF(
       console.log(`Completed interpretation rendering. Final page count: ${pdf.getNumberOfPages()}`)
     }
 
-    if (options.includePersonalHoroscope) {
+    if (options.includePersonalHoroscope && options.includePersonalHoroscope.trim() !== '') {
       pdf.addPage()
       yPos = margin
 
       pdf.setFillColor(68, 21, 104)
-      pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 12, 2, 2, 'F')
-      
-      pdf.setFontSize(14)
-      pdf.setFont('helvetica', 'bold')
-      pdf.setTextColor(255, 255, 255)
-      pdf.text('PERSONAL HOROSCOPE', margin + 3, yPos + 8)
-      yPos += 18
+      pdf.rect(0, 0, pageWidth, 45, 'F')
 
-      pdf.setFontSize(9)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setFontSize(20)
+      pdf.setTextColor(255, 255, 255)
+      pdf.text('PERSONAL HOROSCOPE FORECASTS', pageWidth / 2, yPos + 6, { align: 'center' })
+      
+      yPos += 12
+      pdf.setFontSize(10)
+      pdf.setTextColor(230, 230, 230)
       pdf.setFont('helvetica', 'normal')
-      pdf.setTextColor(40, 40, 40)
-      const horoscopeLines = pdf.splitTextToSize(options.includePersonalHoroscope, pageWidth - 2 * margin)
-      horoscopeLines.forEach((line: string) => {
-        if (yPos > pageHeight - 25) {
-          pdf.addPage()
-          yPos = margin
+      pdf.text('Personalized predictions based on planetary transits', pageWidth / 2, yPos, { align: 'center' })
+      
+      yPos = 55
+
+      const horoscopeSections = options.includePersonalHoroscope.split('\n\n---\n\n')
+      
+      horoscopeSections.forEach((section, sectionIndex) => {
+        if (sectionIndex > 0) {
+          yPos += 10
+          if (yPos > pageHeight - 50) {
+            pdf.addPage()
+            yPos = margin
+          }
+          
+          pdf.setDrawColor(180, 180, 200)
+          pdf.setLineWidth(0.5)
+          pdf.line(margin + 20, yPos, pageWidth - margin - 20, yPos)
+          yPos += 10
         }
-        pdf.text(line, margin, yPos)
-        yPos += 5
+
+        const lines = section.split('\n')
+        
+        lines.forEach((line, lineIndex) => {
+          if (yPos > pageHeight - 25) {
+            pdf.addPage()
+            yPos = margin + 5
+          }
+
+          if (lineIndex === 0 && line.includes('Horoscope')) {
+            pdf.setFont('helvetica', 'bold')
+            pdf.setFontSize(12)
+            pdf.setTextColor(68, 21, 104)
+            
+            pdf.setFillColor(250, 248, 253)
+            const textWidth = pdf.getTextWidth(line)
+            pdf.roundedRect(margin, yPos - 5, textWidth + 10, 10, 2, 2, 'F')
+            
+            pdf.text(line, margin + 5, yPos)
+            yPos += 12
+          } else if (line.trim().startsWith('(Generated:')) {
+            pdf.setFont('helvetica', 'italic')
+            pdf.setFontSize(8)
+            pdf.setTextColor(120, 120, 120)
+            pdf.text(line.trim(), margin, yPos)
+            yPos += 8
+          } else if (line.trim() === '') {
+            yPos += 3
+          } else {
+            pdf.setFont('helvetica', 'normal')
+            pdf.setFontSize(9)
+            pdf.setTextColor(50, 50, 50)
+            
+            const wrappedLines = pdf.splitTextToSize(line, pageWidth - 2 * margin)
+            wrappedLines.forEach((wrappedLine: string) => {
+              if (yPos > pageHeight - 25) {
+                pdf.addPage()
+                yPos = margin + 5
+              }
+              pdf.text(wrappedLine, margin, yPos)
+              yPos += 5
+            })
+          }
+        })
       })
     }
 

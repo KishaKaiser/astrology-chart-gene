@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useKV } from '@github/spark/hooks'
 import { ChartData, TransitData } from '@/lib/astrology-types'
 import { calculateCurrentTransits } from '@/lib/astrology-calc'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -15,16 +16,33 @@ interface DailyHoroscopeProps {
 
 type TimeframePeriod = 'daily' | 'weekly' | 'monthly'
 
+interface HoroscopeReading {
+  content: string
+  generatedAt: number
+  transitData?: TransitData
+}
+
 export function DailyHoroscope({ chart }: DailyHoroscopeProps) {
   const [transits, setTransits] = useState<TransitData | null>(null)
-  const [dailyHoroscope, setDailyHoroscope] = useState<string>('')
-  const [weeklyHoroscope, setWeeklyHoroscope] = useState<string>('')
-  const [monthlyHoroscope, setMonthlyHoroscope] = useState<string>('')
+  const [savedHoroscopes, setSavedHoroscopes] = useKV<Record<string, HoroscopeReading>>('personal-horoscopes', {})
   const [isGenerating, setIsGenerating] = useState(false)
-  const [lastGeneratedDaily, setLastGeneratedDaily] = useState<Date | null>(null)
-  const [lastGeneratedWeekly, setLastGeneratedWeekly] = useState<Date | null>(null)
-  const [lastGeneratedMonthly, setLastGeneratedMonthly] = useState<Date | null>(null)
   const [activeTab, setActiveTab] = useState<TimeframePeriod>('daily')
+
+  const getHoroscopeKey = (timeframe: TimeframePeriod) => `${chart.id}-${timeframe}`
+
+  const dailyHoroscope = savedHoroscopes?.[getHoroscopeKey('daily')]?.content || ''
+  const weeklyHoroscope = savedHoroscopes?.[getHoroscopeKey('weekly')]?.content || ''
+  const monthlyHoroscope = savedHoroscopes?.[getHoroscopeKey('monthly')]?.content || ''
+  
+  const lastGeneratedDaily = savedHoroscopes?.[getHoroscopeKey('daily')]?.generatedAt 
+    ? new Date(savedHoroscopes[getHoroscopeKey('daily')].generatedAt) 
+    : null
+  const lastGeneratedWeekly = savedHoroscopes?.[getHoroscopeKey('weekly')]?.generatedAt 
+    ? new Date(savedHoroscopes[getHoroscopeKey('weekly')].generatedAt) 
+    : null
+  const lastGeneratedMonthly = savedHoroscopes?.[getHoroscopeKey('monthly')]?.generatedAt 
+    ? new Date(savedHoroscopes[getHoroscopeKey('monthly')].generatedAt) 
+    : null
 
   useEffect(() => {
     loadTransits()
@@ -169,16 +187,15 @@ Write in a wise, insightful tone that weaves together cosmic timing with persona
 
       const response = await (window.spark as any).llm(promptText, 'gpt-4o')
       
-      if (timeframe === 'daily') {
-        setDailyHoroscope(response)
-        setLastGeneratedDaily(new Date())
-      } else if (timeframe === 'weekly') {
-        setWeeklyHoroscope(response)
-        setLastGeneratedWeekly(new Date())
-      } else {
-        setMonthlyHoroscope(response)
-        setLastGeneratedMonthly(new Date())
-      }
+      const horoscopeKey = getHoroscopeKey(timeframe)
+      setSavedHoroscopes((current) => ({
+        ...current,
+        [horoscopeKey]: {
+          content: response,
+          generatedAt: Date.now(),
+          transitData: transits
+        }
+      }))
       
       toast.success(`${timeframe.charAt(0).toUpperCase() + timeframe.slice(1)} horoscope generated!`)
     } catch (error) {

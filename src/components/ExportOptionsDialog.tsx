@@ -23,12 +23,19 @@ interface FamilyDynamicsEntry {
   displayName: string
 }
 
+interface HoroscopeReading {
+  content: string
+  generatedAt: number
+}
+
 export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, variant = 'default', chartId }: ExportOptionsDialogProps) {
   const [open, setOpen] = useState(false)
   const [options, setOptions] = useState<PDFExportOptions>(defaultPDFOptions)
   const [savedFamilyData] = useKV<Record<string, FamilyRelationshipData>>('family-dynamics', {})
+  const [savedHoroscopes] = useKV<Record<string, HoroscopeReading>>('personal-horoscopes', {})
   const [familyDynamicsEntries, setFamilyDynamicsEntries] = useState<FamilyDynamicsEntry[]>([])
   const [selectedFamilyReports, setSelectedFamilyReports] = useState<Set<string>>(new Set())
+  const [selectedHoroscopes, setSelectedHoroscopes] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (chartId && savedFamilyData) {
@@ -47,9 +54,15 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
         })
       
       setFamilyDynamicsEntries(entries)
-      setSelectedFamilyReports(new Set())
     }
   }, [chartId, savedFamilyData])
+
+  useEffect(() => {
+    if (!open) {
+      setSelectedFamilyReports(new Set())
+      setSelectedHoroscopes(new Set())
+    }
+  }, [open])
 
   const toggleFamilyReport = (key: string) => {
     setSelectedFamilyReports(prev => {
@@ -63,8 +76,62 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
     })
   }
 
+  const toggleHoroscopeReport = (timeframe: string) => {
+    setSelectedHoroscopes(prev => {
+      const updated = new Set(prev)
+      if (updated.has(timeframe)) {
+        updated.delete(timeframe)
+      } else {
+        updated.add(timeframe)
+      }
+      return updated
+    })
+  }
+
+  const getAvailableHoroscopes = () => {
+    if (!chartId || !savedHoroscopes) return []
+    
+    const horoscopes: { key: string; label: string; content: string }[] = []
+    const timeframes = ['daily', 'weekly', 'monthly']
+    
+    timeframes.forEach(timeframe => {
+      const key = `${chartId}-${timeframe}`
+      if (savedHoroscopes[key]?.content) {
+        horoscopes.push({
+          key: timeframe,
+          label: timeframe.charAt(0).toUpperCase() + timeframe.slice(1),
+          content: savedHoroscopes[key].content
+        })
+      }
+    })
+    
+    return horoscopes
+  }
+
+  const availableHoroscopes = getAvailableHoroscopes()
+
   const handleExport = () => {
     let exportOptions = { ...options }
+    
+    if (selectedHoroscopes.size > 0 && savedHoroscopes && chartId) {
+      const horoscopeTexts = Array.from(selectedHoroscopes).map(timeframe => {
+        const key = `${chartId}-${timeframe}`
+        const horoscope = savedHoroscopes[key]
+        if (!horoscope) return ''
+        
+        const label = timeframe.charAt(0).toUpperCase() + timeframe.slice(1)
+        const generatedDate = new Date(horoscope.generatedAt).toLocaleString()
+        
+        return `${label} Horoscope (Generated: ${generatedDate})\n\n${horoscope.content}`
+      }).filter(text => text !== '')
+      
+      if (horoscopeTexts.length > 0) {
+        exportOptions = {
+          ...exportOptions,
+          includePersonalHoroscope: horoscopeTexts.join('\n\n---\n\n')
+        }
+      }
+    }
     
     if (selectedFamilyReports.size > 0 && savedFamilyData) {
       const familyTexts = Array.from(selectedFamilyReports).map(key => {
@@ -229,41 +296,73 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
 
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-foreground">Additional Reports</h3>
-            <div className="text-xs text-muted-foreground mb-3">
-              Note: Personal Horoscope, Romantic Compatibility, Karmic Bond, Past Life Indicators, and Karmic Debt reports are currently viewable in the app but not yet exportable to PDF. Use the app tabs to access these features.
+            
+            <div className={`space-y-3 ${availableHoroscopes.length === 0 ? 'opacity-50' : ''}`}>
+              <Label className="flex-1 text-foreground">
+                <div className="font-medium text-sm text-foreground">✨ Personal Horoscope Forecasts</div>
+                <div className="text-xs text-muted-foreground">
+                  {availableHoroscopes.length > 0
+                    ? `Select which horoscope readings to include (${availableHoroscopes.length} available)`
+                    : 'Generate horoscope readings first in the Personal tab'
+                  }
+                </div>
+              </Label>
+              
+              {availableHoroscopes.length > 0 && (
+                <div className="ml-6 space-y-2 border-l-2 border-border pl-4">
+                  {availableHoroscopes.map((horoscope) => (
+                    <div key={horoscope.key} className="flex items-center space-x-3">
+                      <Checkbox 
+                        id={`horoscope-${horoscope.key}`}
+                        checked={selectedHoroscopes.has(horoscope.key)}
+                        onCheckedChange={() => toggleHoroscopeReport(horoscope.key)}
+                      />
+                      <Label 
+                        htmlFor={`horoscope-${horoscope.key}`}
+                        className="cursor-pointer text-sm text-foreground"
+                      >
+                        {horoscope.label} Horoscope
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-            <div className="space-y-3">
-              <div className={`flex flex-col space-y-3 ${familyDynamicsEntries.length === 0 ? 'opacity-50' : ''}`}>
-                <Label className="flex-1 text-foreground">
-                  <div className="font-medium text-sm text-foreground">👨‍👩‍👧‍👦 Family Dynamics</div>
-                  <div className="text-xs text-muted-foreground">
-                    {familyDynamicsEntries.length > 0
-                      ? `Select which family dynamics reports to include (${familyDynamicsEntries.length} available)`
-                      : 'Generate a family dynamics report first'
-                    }
-                  </div>
-                </Label>
-                
-                {familyDynamicsEntries.length > 0 && (
-                  <div className="ml-6 space-y-2 border-l-2 border-border pl-4">
-                    {familyDynamicsEntries.map((entry) => (
-                      <div key={entry.key} className="flex items-center space-x-3">
-                        <Checkbox 
-                          id={`family-${entry.key}`}
-                          checked={selectedFamilyReports.has(entry.key)}
-                          onCheckedChange={() => toggleFamilyReport(entry.key)}
-                        />
-                        <Label 
-                          htmlFor={`family-${entry.key}`} 
-                          className="cursor-pointer text-sm text-foreground"
-                        >
-                          {entry.displayName}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+
+            <div className="text-xs text-muted-foreground mb-3 pt-2">
+              Note: Romantic Compatibility, Karmic Bond, Past Life Indicators, and Karmic Debt reports are currently viewable in the app but not yet exportable to PDF. Use the app tabs to access these features.
+            </div>
+            
+            <div className={`flex flex-col space-y-3 ${familyDynamicsEntries.length === 0 ? 'opacity-50' : ''}`}>
+              <Label className="flex-1 text-foreground">
+                <div className="font-medium text-sm text-foreground">👨‍👩‍👧‍👦 Family Dynamics</div>
+                <div className="text-xs text-muted-foreground">
+                  {familyDynamicsEntries.length > 0
+                    ? `Select which family dynamics reports to include (${familyDynamicsEntries.length} available)`
+                    : 'Generate a family dynamics report first'
+                  }
+                </div>
+              </Label>
+              
+              {familyDynamicsEntries.length > 0 && (
+                <div className="ml-6 space-y-2 border-l-2 border-border pl-4">
+                  {familyDynamicsEntries.map((entry) => (
+                    <div key={entry.key} className="flex items-center space-x-3">
+                      <Checkbox 
+                        id={`family-${entry.key}`}
+                        checked={selectedFamilyReports.has(entry.key)}
+                        onCheckedChange={() => toggleFamilyReport(entry.key)}
+                      />
+                      <Label 
+                        htmlFor={`family-${entry.key}`} 
+                        className="cursor-pointer text-sm text-foreground"
+                      >
+                        {entry.displayName}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
