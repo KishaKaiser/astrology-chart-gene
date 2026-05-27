@@ -280,7 +280,7 @@ function App() {
 
             <TabsContent value="important-days">
               {charts && charts.length > 0 ? (
-                <ImportantDays chart={charts[0]} />
+                <ImportantDays charts={charts} />
               ) : (
                 <div className="text-center py-20">
                   <p className="text-muted-foreground mb-4">

@@ -1,15 +1,16 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { ChartData } from '@/lib/astrology-types'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Calendar, ArrowsClockwise, Heart, Briefcase, CurrencyDollar, Sparkle } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 
 interface ImportantDaysProps {
-  chart: ChartData
+  charts: ChartData[]
 }
 
 interface DayForecast {
@@ -26,11 +27,22 @@ interface ImportantDaysReading {
   endDate: string
 }
 
-export function ImportantDays({ chart }: ImportantDaysProps) {
+export function ImportantDays({ charts }: ImportantDaysProps) {
   const [savedReadings, setSavedReadings] = useKV<Record<string, ImportantDaysReading>>('important-days-readings', {})
   const [isGenerating, setIsGenerating] = useState(false)
+  const [selectedChartId, setSelectedChartId] = useState<string>(charts[0]?.id || '')
 
-  const readingKey = `${chart.id}-important-days`
+  useEffect(() => {
+    if (!selectedChartId && charts.length > 0) {
+      setSelectedChartId(charts[0].id)
+    }
+    if (selectedChartId && !charts.find(c => c.id === selectedChartId)) {
+      setSelectedChartId(charts[0]?.id || '')
+    }
+  }, [charts, selectedChartId])
+
+  const selectedChart = charts.find(c => c.id === selectedChartId) || charts[0]
+  const readingKey = `${selectedChart?.id}-important-days`
   const currentReading = savedReadings?.[readingKey]
   
   const lastGenerated = currentReading?.generatedAt 
@@ -38,14 +50,16 @@ export function ImportantDays({ chart }: ImportantDaysProps) {
     : null
 
   const generateReading = async () => {
+    if (!selectedChart) return
+    
     setIsGenerating(true)
     try {
-      const sun = chart.planets.find(p => p.name === 'Sun')
-      const moon = chart.planets.find(p => p.name === 'Moon')
-      const venus = chart.planets.find(p => p.name === 'Venus')
-      const mars = chart.planets.find(p => p.name === 'Mars')
-      const jupiter = chart.planets.find(p => p.name === 'Jupiter')
-      const rising = chart.houses.find(h => h.number === 1)
+      const sun = selectedChart.planets.find((p: any) => p.name === 'Sun')
+      const moon = selectedChart.planets.find((p: any) => p.name === 'Moon')
+      const venus = selectedChart.planets.find((p: any) => p.name === 'Venus')
+      const mars = selectedChart.planets.find((p: any) => p.name === 'Mars')
+      const jupiter = selectedChart.planets.find((p: any) => p.name === 'Jupiter')
+      const rising = selectedChart.houses.find((h: any) => h.number === 1)
 
       const today = new Date()
       const sixMonthsLater = new Date(today)
@@ -54,7 +68,7 @@ export function ImportantDays({ chart }: ImportantDaysProps) {
       const promptText = (window.spark.llmPrompt as any)`You are an expert astrologer creating a 6-month forecast of important days for romance, career, and money opportunities.
 
 NATAL CHART INFORMATION:
-- Name: ${chart.name}
+- Name: ${selectedChart.name}
 - Sun Sign: ${sun?.sign || 'Unknown'} at ${sun?.degree.toFixed(1)}°
 - Moon Sign: ${moon?.sign || 'Unknown'} at ${moon?.degree.toFixed(1)}°
 - Rising Sign: ${rising?.sign || 'Unknown'}
@@ -184,38 +198,54 @@ Example format:
     <div className="space-y-6">
       <Card className="border-accent/20">
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Calendar className="w-8 h-8 text-accent" weight="fill" />
-              <div>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-3 flex-1">
+              <Calendar className="w-8 h-8 text-accent flex-shrink-0" weight="fill" />
+              <div className="flex-1">
                 <CardTitle className="text-white">Important Days - 6 Month Forecast</CardTitle>
                 <CardDescription className="text-muted-foreground">
                   Key dates for romance, career, and financial opportunities
                 </CardDescription>
               </div>
             </div>
-            <Button
-              onClick={generateReading}
-              disabled={isGenerating}
-              variant="default"
-              className="bg-accent text-accent-foreground hover:bg-accent/90"
-            >
-              {isGenerating ? (
-                <>
-                  <ArrowsClockwise className="mr-2 animate-spin" weight="bold" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Sparkle className="mr-2" weight="fill" />
-                  {currentReading ? 'Regenerate Forecast' : 'Generate Forecast'}
-                </>
+            <div className="flex items-center gap-3">
+              {charts.length > 1 && (
+                <Select value={selectedChartId} onValueChange={setSelectedChartId}>
+                  <SelectTrigger className="w-[240px] bg-card border-border text-white">
+                    <SelectValue placeholder="Select a chart" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {charts.map((chart) => (
+                      <SelectItem key={chart.id} value={chart.id}>
+                        {chart.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               )}
-            </Button>
+              <Button
+                onClick={generateReading}
+                disabled={isGenerating || !selectedChart}
+                variant="default"
+                className="bg-accent text-accent-foreground hover:bg-accent/90"
+              >
+                {isGenerating ? (
+                  <>
+                    <ArrowsClockwise className="mr-2 animate-spin" weight="bold" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkle className="mr-2" weight="fill" />
+                    {currentReading ? 'Regenerate Forecast' : 'Generate Forecast'}
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
-          {lastGenerated && (
+          {lastGenerated && selectedChart && (
             <p className="text-xs text-muted-foreground mt-2">
-              Last generated: {lastGenerated.toLocaleDateString()} at {lastGenerated.toLocaleTimeString()}
+              Forecast for <span className="text-white font-medium">{selectedChart.name}</span> • Last generated: {lastGenerated.toLocaleDateString()} at {lastGenerated.toLocaleTimeString()}
             </p>
           )}
         </CardHeader>
