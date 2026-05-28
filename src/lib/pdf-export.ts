@@ -68,54 +68,218 @@ export async function exportChartToPDF(
       if (['Gemini', 'Virgo', 'Sagittarius', 'Pisces'].includes(p.sign)) modalityCount.Mutable++
     })
 
-    pdf.setFillColor(68, 21, 104)
-    pdf.rect(0, 0, pageWidth, 50, 'F')
+    pdf.setDrawColor(40, 40, 40)
+    pdf.setLineWidth(0.8)
+    pdf.rect(10, 10, pageWidth - 20, pageHeight - 20)
+    
+    pdf.setLineWidth(0.3)
+    pdf.rect(12, 12, pageWidth - 24, pageHeight - 24)
 
+    const drawCornerOrnament = (x: number, y: number, flip: boolean, mirror: boolean) => {
+      pdf.setDrawColor(40, 40, 40)
+      pdf.setLineWidth(0.3)
+      const size = 8
+      const flipX = mirror ? -1 : 1
+      const flipY = flip ? -1 : 1
+      
+      pdf.line(x, y, x + flipX * size, y)
+      pdf.line(x, y, x, y + flipY * size)
+      pdf.circle(x + flipX * size * 0.6, y + flipY * size * 0.6, 1.5, 'S')
+    }
+
+    drawCornerOrnament(15, 15, false, false)
+    drawCornerOrnament(pageWidth - 15, 15, false, true)
+    drawCornerOrnament(15, pageHeight - 15, true, false)
+    drawCornerOrnament(pageWidth - 15, pageHeight - 15, true, true)
+
+    const centerX = pageWidth / 2
+    yPos = 35
+
+    pdf.setDrawColor(40, 40, 40)
+    pdf.setLineWidth(0.5)
+    const moonX = centerX
+    const moonY = yPos
+    pdf.circle(moonX, moonY, 4, 'S')
+    pdf.circle(moonX - 1.5, moonY, 4, 'S')
+    
+    pdf.setFontSize(6)
+    pdf.text('✦', moonX + 6, moonY - 2)
+    pdf.text('✦', moonX - 6, moonY + 3)
+    pdf.text('·', moonX + 8, moonY + 1)
+    pdf.text('·', moonX - 8, moonY - 1)
+
+    yPos += 15
+    
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(10)
+    pdf.setTextColor(40, 40, 40)
+    const letterSpacing = 1.8
+    const brandText = 'PSYCHIC LINK'
+    const brandWidth = pdf.getTextWidth(brandText)
+    let xOffset = centerX - (brandWidth + (brandText.length - 1) * letterSpacing) / 2
+    for (let i = 0; i < brandText.length; i++) {
+      pdf.text(brandText[i], xOffset, yPos)
+      xOffset += pdf.getTextWidth(brandText[i]) + letterSpacing
+    }
+    
     yPos += 5
-    pdf.setFont('times', 'italic')
-    pdf.setFontSize(36)
-    pdf.setTextColor(255, 255, 255)
-    pdf.text('Psychic Link Charts', pageWidth / 2, yPos + 10, { align: 'center' })
-    
-    yPos += 20
-    pdf.setFont('helvetica', 'normal')
-    pdf.setFontSize(11)
-    pdf.setTextColor(230, 230, 230)
-    pdf.text('What Do The Stars Say About You?', pageWidth / 2, yPos, { align: 'center' })
-    
-    yPos = 60
-
-    pdf.setFont('times', 'italic')
-    pdf.setFontSize(28)
-    pdf.setTextColor(68, 21, 104)
-    pdf.text(chart.name, pageWidth / 2, yPos, { align: 'center' })
-    
-    yPos += 10
-    pdf.setFontSize(11)
-    pdf.setTextColor(80, 80, 80)
-    pdf.setFont('helvetica', 'normal')
-    pdf.text(`${chart.date} at ${chart.time}`, pageWidth / 2, yPos, { align: 'center' })
-    yPos += 6
-    pdf.text(chart.location, pageWidth / 2, yPos, { align: 'center' })
-
-    yPos += 8
     pdf.setFontSize(9)
-    pdf.setTextColor(120, 120, 120)
-    const latDir = chart.latitude >= 0 ? 'N' : 'S'
-    const lonDir = chart.longitude >= 0 ? 'E' : 'W'
-    pdf.text(`${Math.abs(chart.latitude).toFixed(4)}°${latDir} / ${Math.abs(chart.longitude).toFixed(4)}°${lonDir} • Timezone: UTC${chart.timezone}`, pageWidth / 2, yPos, { align: 'center' })
+    pdf.setLineWidth(0.3)
+    pdf.line(centerX - 35, yPos, centerX + 35, yPos)
+    
+    yPos += 0.5
+    pdf.setFontSize(8)
+    const chartsText = 'CHARTS'
+    const chartsWidth = pdf.getTextWidth(chartsText)
+    xOffset = centerX - (chartsWidth + (chartsText.length - 1) * letterSpacing) / 2
+    for (let i = 0; i < chartsText.length; i++) {
+      pdf.text(chartsText[i], xOffset, yPos + 4)
+      xOffset += pdf.getTextWidth(chartsText[i]) + letterSpacing
+    }
+
+    yPos += 18
+
+    pdf.setFont('times', 'bold')
+    pdf.setFontSize(42)
+    pdf.setTextColor(30, 30, 30)
+    pdf.text('NATAL', centerX, yPos, { align: 'center' })
+    
+    yPos += 15
+    pdf.setFontSize(44)
+    pdf.text('ASTROLOGY', centerX, yPos, { align: 'center' })
     
     yPos += 12
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(8)
+    pdf.line(centerX - 45, yPos, centerX + 45, yPos)
+    
+    yPos += 1
+    pdf.text('REPORT', centerX, yPos + 3, { align: 'center' })
+    
+    yPos += 1
+    pdf.line(centerX - 45, yPos + 4, centerX + 45, yPos + 4)
 
-    try {
-      const logoWidth = 80
-      const logoHeight = 80
-      pdf.addImage(logoImage, 'JPEG', (pageWidth - logoWidth) / 2, yPos, logoWidth, logoHeight)
-      yPos += logoHeight + 12
-    } catch (error) {
-      console.error('Error adding logo:', error)
-      yPos += 12
+    yPos += 10
+    pdf.setFontSize(5)
+    pdf.text('✦', centerX, yPos + 3)
+
+    yPos += 10
+    pdf.setFontSize(7)
+    pdf.text('·  PREPARED FOR  ·', centerX, yPos, { align: 'center' })
+
+    yPos += 10
+    pdf.setFont('times', 'italic')
+    pdf.setFontSize(32)
+    pdf.setTextColor(30, 30, 30)
+    pdf.text(chart.name, centerX, yPos, { align: 'center' })
+
+    yPos += 10
+    pdf.setDrawColor(40, 40, 40)
+    pdf.setLineWidth(0.3)
+    pdf.line(centerX - 70, yPos, centerX - 3, yPos)
+    pdf.line(centerX + 3, yPos, centerX + 70, yPos)
+    pdf.setFontSize(6)
+    pdf.text('✦', centerX, yPos + 1.2)
+
+    yPos += 12
+    
+    const iconY = yPos
+    const iconSpacing = 63
+    
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(9)
+    pdf.setTextColor(40, 40, 40)
+
+    const leftIconX = centerX - iconSpacing
+    pdf.circle(leftIconX, iconY, 4, 'S')
+    pdf.rect(leftIconX - 2.5, iconY - 2, 5, 4, 'S')
+    pdf.setFontSize(6)
+    pdf.text('DATE OF BIRTH', leftIconX, iconY + 10, { align: 'center' })
+    pdf.setFont('times', 'italic')
+    pdf.setFontSize(10)
+    const formattedDate = new Date(chart.date + 'T12:00:00').toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    pdf.text(formattedDate, leftIconX, iconY + 16, { align: 'center' })
+
+    pdf.setFont('helvetica', 'normal')
+    pdf.circle(centerX, iconY, 4, 'S')
+    pdf.circle(centerX, iconY, 3, 'S')
+    pdf.line(centerX, iconY - 3, centerX, iconY)
+    pdf.line(centerX, iconY, centerX + 1.5, iconY + 1.5)
+    pdf.setFontSize(6)
+    pdf.text('TIME OF BIRTH', centerX, iconY + 10, { align: 'center' })
+    pdf.setFont('times', 'italic')
+    pdf.setFontSize(10)
+    pdf.text(chart.time, centerX, iconY + 16, { align: 'center' })
+
+    const rightIconX = centerX + iconSpacing
+    pdf.setFont('helvetica', 'normal')
+    pdf.circle(rightIconX, iconY, 4, 'S')
+    pdf.circle(rightIconX, iconY - 1, 2, 'F')
+    pdf.setFontSize(6)
+    pdf.text('PLACE OF BIRTH', rightIconX, iconY + 10, { align: 'center' })
+    pdf.setFont('times', 'italic')
+    pdf.setFontSize(10)
+    pdf.text(chart.location, rightIconX, iconY + 16, { align: 'center', maxWidth: 50 })
+
+    pdf.setLineWidth(0.3)
+    pdf.line(leftIconX + 20, iconY, centerX - 20, iconY)
+    pdf.line(centerX + 20, iconY, rightIconX - 20, iconY)
+
+    yPos = pageHeight - 60
+
+    pdf.setFontSize(5)
+    pdf.setTextColor(40, 40, 40)
+    const moonPhases = ['🌑', '🌒', '🌓', '🌔', '🌕', '🌖', '🌗', '🌘']
+    const phaseSpacing = 14
+    const startX = centerX - (moonPhases.length / 2) * phaseSpacing
+    for (let i = 0; i < moonPhases.length; i++) {
+      pdf.text('○', startX + i * phaseSpacing, yPos)
     }
+
+    yPos += 8
+    
+    pdf.circle(centerX, yPos + 8, 10, 'S')
+    pdf.setLineWidth(0.2)
+    for (let i = 0; i < 24; i++) {
+      const angle = (i * 15) * Math.PI / 180
+      const x1 = centerX + Math.cos(angle) * 10
+      const y1 = yPos + 8 + Math.sin(angle) * 10
+      const length = i % 3 === 0 ? 14 : 12
+      const x2 = centerX + Math.cos(angle) * length
+      const y2 = yPos + 8 + Math.sin(angle) * length
+      pdf.line(x1, y1, x2, y2)
+    }
+    
+    pdf.setFontSize(5)
+    for (let i = 0; i < 8; i++) {
+      const angle = (i * 45 - 90) * Math.PI / 180
+      const x = centerX + Math.cos(angle) * 6
+      const y = yPos + 8.5 + Math.sin(angle) * 6
+      pdf.text('✦', x, y)
+    }
+
+    yPos += 28
+    pdf.setFontSize(5)
+    pdf.text('✦', centerX, yPos)
+
+    yPos += 6
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(7)
+    pdf.text('GENERATED BY', centerX, yPos, { align: 'center' })
+    
+    yPos += 5
+    pdf.setFontSize(8)
+    const footerText = 'PSYCHIC LINK CHARTS'
+    const footerWidth = pdf.getTextWidth(footerText)
+    xOffset = centerX - (footerWidth + (footerText.length - 1) * 1.2) / 2
+    for (let i = 0; i < footerText.length; i++) {
+      pdf.text(footerText[i], xOffset, yPos)
+      xOffset += pdf.getTextWidth(footerText[i]) + 1.2
+    }
+    
+    yPos += 5
+    pdf.setFontSize(5)
+    pdf.text('✦', centerX, yPos)
     
     pdf.addPage()
     yPos = margin
