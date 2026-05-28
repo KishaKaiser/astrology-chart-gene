@@ -103,32 +103,111 @@ export async function exportChartToPDF(
 
     yPos += 10
     
-    const wheelSize = 40
-    const wheelCenterY = yPos + wheelSize / 2
-    
-    pdf.setDrawColor(30, 30, 30)
-    pdf.setLineWidth(0.5)
-    pdf.circle(centerX, wheelCenterY, wheelSize / 2, 'S')
-    
-    for (let i = 0; i < 12; i++) {
-      const angle = (i * 30 - 90) * Math.PI / 180
-      const x1 = centerX + Math.cos(angle) * (wheelSize / 2)
-      const y1 = wheelCenterY + Math.sin(angle) * (wheelSize / 2)
-      const x2 = centerX + Math.cos(angle) * (wheelSize / 2 - 5)
-      const y2 = wheelCenterY + Math.sin(angle) * (wheelSize / 2 - 5)
-      pdf.line(x1, y1, x2, y2)
-    }
-    
-    pdf.setLineWidth(0.3)
-    pdf.circle(centerX, wheelCenterY, wheelSize / 2 - 5, 'S')
-    
-    for (let i = 0; i < 12; i++) {
-      const angle = (i * 30 - 90) * Math.PI / 180
-      const x1 = centerX + Math.cos(angle) * (wheelSize / 2 - 5)
-      const y1 = wheelCenterY + Math.sin(angle) * (wheelSize / 2 - 5)
-      const x2 = centerX
-      const y2 = wheelCenterY
-      pdf.line(x1, y1, x2, y2)
+    if (chartSvgElement) {
+      try {
+        console.log('Adding chart wheel to cover page...')
+        const svgClone = chartSvgElement.cloneNode(true) as SVGSVGElement
+        svgClone.setAttribute('width', '800')
+        svgClone.setAttribute('height', '800')
+        
+        const svgString = new XMLSerializer().serializeToString(svgClone)
+        
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d')
+        const img = new Image()
+        
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => {
+            canvas.width = 800
+            canvas.height = 800
+            if (ctx) {
+              ctx.drawImage(img, 0, 0, 800, 800)
+            }
+            resolve()
+          }
+          img.onerror = (e) => {
+            console.error('Cover page chart wheel image load error:', e)
+            reject(new Error('Failed to load SVG into image'))
+          }
+          
+          try {
+            const encodedSvg = btoa(unescape(encodeURIComponent(svgString)))
+            img.src = 'data:image/svg+xml;base64,' + encodedSvg
+          } catch (encodeError) {
+            console.error('Cover page SVG encoding error:', encodeError)
+            reject(encodeError)
+          }
+        })
+        
+        const imgData = canvas.toDataURL('image/png')
+        
+        const wheelSize = 70
+        const wheelX = centerX - wheelSize / 2
+        const wheelY = yPos
+        
+        pdf.addImage(imgData, 'PNG', wheelX, wheelY, wheelSize, wheelSize)
+        console.log('Cover page chart wheel added successfully')
+        yPos += wheelSize
+      } catch (error) {
+        console.error('Failed to add chart wheel to cover page:', error)
+        const wheelSize = 40
+        const wheelCenterY = yPos + wheelSize / 2
+        
+        pdf.setDrawColor(30, 30, 30)
+        pdf.setLineWidth(0.5)
+        pdf.circle(centerX, wheelCenterY, wheelSize / 2, 'S')
+        
+        for (let i = 0; i < 12; i++) {
+          const angle = (i * 30 - 90) * Math.PI / 180
+          const x1 = centerX + Math.cos(angle) * (wheelSize / 2)
+          const y1 = wheelCenterY + Math.sin(angle) * (wheelSize / 2)
+          const x2 = centerX + Math.cos(angle) * (wheelSize / 2 - 5)
+          const y2 = wheelCenterY + Math.sin(angle) * (wheelSize / 2 - 5)
+          pdf.line(x1, y1, x2, y2)
+        }
+        
+        pdf.setLineWidth(0.3)
+        pdf.circle(centerX, wheelCenterY, wheelSize / 2 - 5, 'S')
+        
+        for (let i = 0; i < 12; i++) {
+          const angle = (i * 30 - 90) * Math.PI / 180
+          const x1 = centerX + Math.cos(angle) * (wheelSize / 2 - 5)
+          const y1 = wheelCenterY + Math.sin(angle) * (wheelSize / 2 - 5)
+          const x2 = centerX
+          const y2 = wheelCenterY
+          pdf.line(x1, y1, x2, y2)
+        }
+        yPos += wheelSize
+      }
+    } else {
+      const wheelSize = 40
+      const wheelCenterY = yPos + wheelSize / 2
+      
+      pdf.setDrawColor(30, 30, 30)
+      pdf.setLineWidth(0.5)
+      pdf.circle(centerX, wheelCenterY, wheelSize / 2, 'S')
+      
+      for (let i = 0; i < 12; i++) {
+        const angle = (i * 30 - 90) * Math.PI / 180
+        const x1 = centerX + Math.cos(angle) * (wheelSize / 2)
+        const y1 = wheelCenterY + Math.sin(angle) * (wheelSize / 2)
+        const x2 = centerX + Math.cos(angle) * (wheelSize / 2 - 5)
+        const y2 = wheelCenterY + Math.sin(angle) * (wheelSize / 2 - 5)
+        pdf.line(x1, y1, x2, y2)
+      }
+      
+      pdf.setLineWidth(0.3)
+      pdf.circle(centerX, wheelCenterY, wheelSize / 2 - 5, 'S')
+      
+      for (let i = 0; i < 12; i++) {
+        const angle = (i * 30 - 90) * Math.PI / 180
+        const x1 = centerX + Math.cos(angle) * (wheelSize / 2 - 5)
+        const y1 = wheelCenterY + Math.sin(angle) * (wheelSize / 2 - 5)
+        const x2 = centerX
+        const y2 = wheelCenterY
+        pdf.line(x1, y1, x2, y2)
+      }
+      yPos += wheelSize
     }
 
     yPos = pageHeight - 80
