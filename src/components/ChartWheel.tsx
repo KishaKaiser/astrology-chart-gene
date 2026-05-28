@@ -9,11 +9,14 @@ interface ChartWheelProps {
 
 export const ChartWheel = forwardRef<SVGSVGElement, ChartWheelProps>(({ chart, transits, size = 500 }, ref) => {
   const center = size / 2
-  const outerRadius = size / 2 - 10
+  const padding = 40
+  const outerRadius = size / 2 - padding
   const innerRadius = outerRadius * 0.35
   const houseRadius = outerRadius * 0.75
   const natalPlanetRadius = outerRadius * 0.85
   const transitPlanetRadius = outerRadius * 0.65
+  const decorativeBorderRadius = outerRadius + 20
+  const decorativeInnerRadius = outerRadius + 10
 
   const polarToCartesian = (angle: number, radius: number) => {
     const angleInRadians = ((angle - 90) * Math.PI) / 180
@@ -45,10 +48,101 @@ export const ChartWheel = forwardRef<SVGSVGElement, ChartWheelProps>(({ chart, t
     >
       <defs>
         <radialGradient id="chartBg" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="oklch(0.22 0.08 270)" stopOpacity="0.3" />
-          <stop offset="100%" stopColor="oklch(0.18 0.05 260)" stopOpacity="0.8" />
+          <stop offset="0%" stopColor="oklch(0.22 0.08 270)" stopOpacity="0.4" />
+          <stop offset="50%" stopColor="oklch(0.18 0.05 260)" stopOpacity="0.6" />
+          <stop offset="100%" stopColor="oklch(0.15 0.08 270)" stopOpacity="0.9" />
         </radialGradient>
+        <radialGradient id="decorativeBg" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="oklch(0.25 0.08 270)" stopOpacity="0.2" />
+          <stop offset="100%" stopColor="oklch(0.18 0.05 260)" stopOpacity="0.5" />
+        </radialGradient>
+        <linearGradient id="borderGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="oklch(0.78 0.15 85)" />
+          <stop offset="25%" stopColor="oklch(0.65 0.18 295)" />
+          <stop offset="50%" stopColor="oklch(0.78 0.15 85)" />
+          <stop offset="75%" stopColor="oklch(0.60 0.15 310)" />
+          <stop offset="100%" stopColor="oklch(0.78 0.15 85)" />
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+          <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+        <pattern id="starPattern" x="0" y="0" width="50" height="50" patternUnits="userSpaceOnUse">
+          <circle cx="5" cy="5" r="1" fill="oklch(0.78 0.15 85)" opacity="0.3"/>
+          <circle cx="25" cy="15" r="0.5" fill="oklch(0.65 0.18 295)" opacity="0.4"/>
+          <circle cx="40" cy="30" r="1" fill="oklch(0.78 0.15 85)" opacity="0.2"/>
+          <circle cx="15" cy="40" r="0.8" fill="oklch(0.60 0.15 310)" opacity="0.3"/>
+        </pattern>
       </defs>
+
+      <circle
+        cx={center}
+        cy={center}
+        r={decorativeBorderRadius}
+        fill="url(#decorativeBg)"
+        opacity="0.6"
+      />
+
+      <circle
+        cx={center}
+        cy={center}
+        r={decorativeBorderRadius}
+        fill="url(#starPattern)"
+        opacity="0.5"
+      />
+
+      <circle
+        cx={center}
+        cy={center}
+        r={decorativeBorderRadius}
+        fill="none"
+        stroke="url(#borderGradient)"
+        strokeWidth="3"
+        filter="url(#glow)"
+      />
+
+      {[...Array(12)].map((_, i) => {
+        const angle = i * 30
+        const innerPos = polarToCartesian(angle, decorativeInnerRadius)
+        const outerPos = polarToCartesian(angle, decorativeBorderRadius - 5)
+        return (
+          <line
+            key={`decorative-spoke-${i}`}
+            x1={innerPos.x}
+            y1={innerPos.y}
+            x2={outerPos.x}
+            y2={outerPos.y}
+            stroke="oklch(0.78 0.15 85)"
+            strokeWidth="1"
+            opacity="0.3"
+          />
+        )
+      })}
+
+      {[...Array(12)].map((_, i) => {
+        const angle = i * 30 + 15
+        const pos = polarToCartesian(angle, decorativeInnerRadius + 5)
+        return (
+          <circle
+            key={`decorative-dot-${i}`}
+            cx={pos.x}
+            cy={pos.y}
+            r="2"
+            fill="oklch(0.65 0.18 295)"
+            opacity="0.5"
+          />
+        )
+      })}
+
+      <circle
+        cx={center}
+        cy={center}
+        r={outerRadius}
+        fill="url(#chartBg)"
+      />
 
       <circle
         cx={center}
