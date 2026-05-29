@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { Copy, Download, PencilSimple, GearSix, Upload, Check, Clock, Calendar, Trash, Repeat, CalendarPlus, Play, Pause, Plus } from '@phosphor-icons/react'
+import { Copy, Download, PencilSimple, GearSix, Upload, Check, Clock, Calendar, Trash, Repeat, CalendarPlus, Play, Pause, Plus, ChartBar } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { useKV } from '@github/spark/hooks'
 import {
@@ -19,6 +19,8 @@ import {
 } from '@/components/ui/dialog'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { BlogAnalyticsDashboard } from '@/components/BlogAnalyticsDashboard'
 
 interface BlogPost {
   id: string
@@ -94,6 +96,7 @@ export function BlogPostGenerator() {
   const [recurringTime, setRecurringTime] = useState('09:00')
   const [recurringTransit, setRecurringTransit] = useState('')
   const [recurringContext, setRecurringContext] = useState('')
+  const [activeView, setActiveView] = useState<'generator' | 'analytics'>('generator')
   
   const [tempSiteUrl, setTempSiteUrl] = useState(wpSettings?.siteUrl || '')
   const [tempUsername, setTempUsername] = useState(wpSettings?.username || '')
@@ -694,6 +697,18 @@ Return the result as a valid JSON object with this exact structure:
           </div>
           
           <div className="flex items-center gap-2">
+            <Tabs value={activeView} onValueChange={(v) => setActiveView(v as 'generator' | 'analytics')} className="mr-4">
+              <TabsList>
+                <TabsTrigger value="generator" className="gap-2">
+                  <PencilSimple weight="bold" />
+                  Generator
+                </TabsTrigger>
+                <TabsTrigger value="analytics" className="gap-2">
+                  <ChartBar weight="bold" />
+                  Analytics
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
             <Dialog open={recurringDialogOpen} onOpenChange={setRecurringDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm">
@@ -884,6 +899,10 @@ Return the result as a valid JSON object with this exact structure:
           </div>
         </div>
 
+        {activeView === 'analytics' ? (
+          <BlogAnalyticsDashboard posts={savedPosts || []} schedules={recurringSchedules || []} />
+        ) : (
+          <>
         {savedPosts && savedPosts.some(p => p.publishStatus === 'scheduled') && (
           <Card className="border-accent/30 bg-accent/5">
             <CardHeader>
@@ -1322,6 +1341,8 @@ Return the result as a valid JSON object with this exact structure:
               </div>
             </CardContent>
           </Card>
+        )}
+          </>
         )}
       </motion.div>
     </div>
