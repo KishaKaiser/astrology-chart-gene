@@ -20,6 +20,13 @@ This is a sophisticated tool requiring astronomical calculations, data visualiza
 - Success criteria: Chart displays accurate planetary positions using Swiss Ephemeris calculations, correct house cusps for Placidus system, and major aspects with orbs
 - Technical Note: Integrated @swisseph/browser WebAssembly library for precise ephemeris calculations, providing accuracy comparable to professional astrology software
 
+**Birth Time Rectification**
+- Functionality: Refine unknown or uncertain birth times by analyzing significant life events through astrological transits and progressions using AI-powered analysis
+- Purpose: Helps clients and astrologers narrow down approximate birth times when exact birth time is unknown, a common challenge in professional astrology practice
+- Trigger: User clicks "Unknown Time? Rectify" button in chart generation form (appears after date and location are entered)
+- Progression: Chart form → Click rectification button → Add life events dialog → Select event type (marriage, child, career, relocation, accident, loss, education, financial, health, spiritual) → Enter event date and optional description → Add multiple events → Click analyze → AI analyzes astrological correlations → Display 3 suggested birth times with confidence scores and reasoning → Select preferred time → Auto-populate time field
+- Success criteria: User can add unlimited life events with 10 predefined categories; AI generates 3 birth time suggestions (70-95% confidence scores); Each suggestion includes detailed astrological reasoning (2-3 sentences) explaining house placements, planetary rulers, and transit correlations; Selected time auto-fills the birth time field; UI shows event count and allows removal of individual events; Works with any date and location combination; Provides fallback suggestions if AI analysis fails; Clear guidance that 3-5 significant events provide better accuracy
+
 **Transit Tracking**
 - Functionality: Calculate and display current planetary positions overlaid on natal charts with visual distinction between natal and transit positions
 - Purpose: Allows astrologers to analyze current planetary influences on natal chart positions for predictive readings
