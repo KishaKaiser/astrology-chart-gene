@@ -102,47 +102,36 @@ export function ImportantDays({ charts }: ImportantDaysProps) {
       const endDateStr = sixMonthsLater.toLocaleDateString()
 
       console.log('Prompt constructed, calling LLM...')
-      const prompt = (window.spark.llmPrompt as any)`You are an expert astrologer creating a 6-month forecast of important days for romance, career, and money opportunities.
+      const prompt = (window.spark.llmPrompt as any)`You are an expert astrologer. Create a 6-month forecast of important days.
 
-NATAL CHART INFORMATION:
-- Name: ${selectedChart.name}
-- Sun Sign: ${sunSign} at ${sunDegree}°
-- Moon Sign: ${moonSign} at ${moonDegree}°
-- Rising Sign: ${risingSign}
-- Venus (Romance): ${venusSign} at ${venusDegree}° in House ${venusHouse}
-- Mars (Action/Career): ${marsSign} at ${marsDegree}° in House ${marsHouse}
-- Jupiter (Money/Luck): ${jupiterSign} at ${jupiterDegree}° in House ${jupiterHouse}
+NATAL CHART:
+Name: ${selectedChart.name}
+Sun: ${sunSign} ${sunDegree}°
+Moon: ${moonSign} ${moonDegree}°
+Rising: ${risingSign}
+Venus: ${venusSign} ${venusDegree}° House ${venusHouse}
+Mars: ${marsSign} ${marsDegree}° House ${marsHouse}
+Jupiter: ${jupiterSign} ${jupiterDegree}° House ${jupiterHouse}
 
-FORECAST PERIOD:
-- Start Date: ${startDateStr}
-- End Date: ${endDateStr}
+PERIOD: ${startDateStr} to ${endDateStr}
 
-Generate a forecast of important days over the next 6 months. Include exactly 15 significant dates (5 romance, 5 career, 5 money) distributed evenly across the time period.
+Generate exactly 12 important dates: 4 romance, 4 career, 4 money. Spread evenly across 6 months.
 
-For each important day, provide:
-- Specific date (use format: YYYY-MM-DD)
-- Category (romance, career, or money)
-- Intensity level (high, medium, or low)
-- Brief description (maximum 60 characters)
-- Transit details showing which planets are creating the opportunity
+RULES:
+- Dates: YYYY-MM-DD format
+- Category: romance OR career OR money
+- Intensity: high OR medium OR low
+- Description: Max 50 characters, no quotes or apostrophes
+- Transit planet names: Sun Moon Venus Mars Jupiter Saturn only
 
-CRITICAL FORMATTING RULES:
-1. Descriptions MUST be under 60 characters total
-2. Do NOT use apostrophes quotes or special punctuation
-3. Use simple words only
-4. Keep transit planet names short
-5. Ensure valid JSON format
-
-Return ONLY a valid JSON object with a single property "days" containing exactly 15 forecast objects. Each forecast object must have: date (string), category (string: "romance", "career", or "money"), intensity (string: "high", "medium", or "low"), description (string under 60 chars), and transitDetails (object with: transitingPlanet, natalPlanet, aspect, and optional houses).
-
-Example format:
+Return valid JSON with "days" array:
 {
   "days": [
     {
       "date": "2024-02-14",
       "category": "romance",
       "intensity": "high",
-      "description": "Venus aligns with Sun for magnetic attraction",
+      "description": "Venus conjunct natal Sun brings attraction",
       "transitDetails": {
         "transitingPlanet": "Venus",
         "natalPlanet": "Sun",
@@ -151,7 +140,9 @@ Example format:
       }
     }
   ]
-}`
+}
+
+Return ONLY the JSON object. No extra text.`
       const response = await (window.spark as any).llm(prompt, 'gpt-4o-mini', true)
       console.log('LLM response received, length:', response.length)
       console.log('Raw LLM response (first 500 chars):', response.substring(0, 500))
@@ -171,6 +162,30 @@ Example format:
         console.log('Cleaned response (first 500 chars):', cleanedResponse.substring(0, 500))
         console.log('Cleaned response (last 100 chars):', cleanedResponse.substring(cleanedResponse.length - 100))
         
+        if (!cleanedResponse.endsWith('}') && !cleanedResponse.endsWith(']')) {
+          console.warn('Response appears truncated - attempting to repair JSON')
+          
+          let lastCompleteObject = cleanedResponse.lastIndexOf('}')
+          if (lastCompleteObject > 0) {
+            let testJson = cleanedResponse.substring(0, lastCompleteObject + 1)
+            
+            const openBrackets = (testJson.match(/\[/g) || []).length
+            const closeBrackets = (testJson.match(/\]/g) || []).length
+            const openBraces = (testJson.match(/\{/g) || []).length
+            const closeBraces = (testJson.match(/\}/g) || []).length
+            
+            if (openBrackets > closeBrackets) {
+              testJson += ']'.repeat(openBrackets - closeBrackets)
+            }
+            if (openBraces > closeBraces) {
+              testJson += '}'.repeat(openBraces - closeBraces)
+            }
+            
+            console.log('Attempting to parse repaired JSON')
+            cleanedResponse = testJson
+          }
+        }
+        
         parsed = JSON.parse(cleanedResponse)
       } catch (jsonError) {
         console.error('JSON Parse Error:', jsonError)
@@ -178,7 +193,7 @@ Example format:
         console.error('First 1000 characters:', response.substring(0, 1000))
         console.error('Last 500 characters:', response.substring(response.length - 500))
         
-        if (jsonError instanceof Error && jsonError.message.includes('Unterminated string')) {
+        if (jsonError instanceof Error && (jsonError.message.includes('Unterminated string') || jsonError.message.includes('Unexpected end'))) {
           throw new Error('The forecast response was incomplete. Please try regenerating - this usually happens due to response length limits.')
         }
         
@@ -196,6 +211,13 @@ Example format:
       
       if (parsed.days.length === 0) {
         throw new Error('No important days were generated')
+      }
+      
+      if (parsed.days.length < 10) {
+        console.warn(`Only ${parsed.days.length} days generated, expected 12`)
+        toast.warning(`Generated ${parsed.days.length} days instead of 12. You may regenerate for more dates.`, {
+          duration: 5000
+        })
       }
       
       console.log('Validating day objects...')
