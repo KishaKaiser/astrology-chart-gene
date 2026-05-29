@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { Copy, Download, PencilSimple, GearSix, Upload, Check, Clock, Calendar, Trash } from '@phosphor-icons/react'
+import { Copy, Download, PencilSimple, GearSix, Upload, Check, Clock, Calendar, Trash, Repeat, CalendarPlus, Play, Pause, Plus } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { useKV } from '@github/spark/hooks'
 import {
@@ -31,6 +31,21 @@ interface BlogPost {
   scheduledFor?: number
   publishStatus?: 'draft' | 'published' | 'scheduled' | 'failed'
   publishError?: string
+  fromRecurring?: string
+}
+
+interface RecurringSchedule {
+  id: string
+  transitType: string
+  frequency: 'weekly' | 'monthly'
+  dayOfWeek?: number
+  dayOfMonth?: number
+  time: string
+  isActive: boolean
+  additionalContext?: string
+  createdAt: number
+  lastGeneratedAt?: number
+  nextScheduledAt?: number
 }
 
 interface WordPressSettings {
@@ -57,6 +72,7 @@ const TRANSIT_TYPES = [
 export function BlogPostGenerator() {
   const [savedPosts, setSavedPosts] = useKV<BlogPost[]>('blog-posts', [])
   const [wpSettings, setWpSettings] = useKV<WordPressSettings | null>('wordpress-settings', null)
+  const [recurringSchedules, setRecurringSchedules] = useKV<RecurringSchedule[]>('recurring-schedules', [])
   const [selectedTransit, setSelectedTransit] = useState<string>('')
   const [additionalContext, setAdditionalContext] = useState<string>('')
   const [generatedPost, setGeneratedPost] = useState<{ title: string; content: string } | null>(null)
@@ -71,6 +87,13 @@ export function BlogPostGenerator() {
   const [scheduleDate, setScheduleDate] = useState('')
   const [scheduleTime, setScheduleTime] = useState('')
   const [currentTime, setCurrentTime] = useState(Date.now())
+  const [recurringDialogOpen, setRecurringDialogOpen] = useState(false)
+  const [recurringFrequency, setRecurringFrequency] = useState<'weekly' | 'monthly'>('weekly')
+  const [recurringDayOfWeek, setRecurringDayOfWeek] = useState<number>(1)
+  const [recurringDayOfMonth, setRecurringDayOfMonth] = useState<number>(1)
+  const [recurringTime, setRecurringTime] = useState('09:00')
+  const [recurringTransit, setRecurringTransit] = useState('')
+  const [recurringContext, setRecurringContext] = useState('')
   
   const [tempSiteUrl, setTempSiteUrl] = useState(wpSettings?.siteUrl || '')
   const [tempUsername, setTempUsername] = useState(wpSettings?.username || '')
@@ -192,6 +215,204 @@ Return the result as a valid JSON object with this exact structure:
 
     checkScheduledPosts()
   }, [currentTime, savedPosts, wpSettings])
+
+  useEffect(() => {
+    if (!recurringSchedules || !wpSettings) return
+
+    const checkRecurringSchedules = async () => {
+      const now = currentTime
+      
+      for (const schedule of recurringSchedules) {
+        if (!schedule.isActive) continue
+        
+        if (!schedule.nextScheduledAt || schedule.nextScheduledAt <= now) {
+          await generateRecurringPost(schedule)
+          updateNextScheduledTime(schedule)
+        }
+      }
+    }
+
+    checkRecurringSchedules()
+  }, [currentTime, recurringSchedules, wpSettings])
+
+  const calculateNextScheduledTime = (schedule: RecurringSchedule): number => {
+    const now = new Date()
+    const [hours, minutes] = schedule.time.split(':').map(Number)
+    
+    if (schedule.frequency === 'weekly') {
+      const nextDate = new Date(now)
+      const currentDay = nextDate.getDay()
+      const targetDay = schedule.dayOfWeek || 1
+      
+      let daysUntil = targetDay - currentDay
+      if (daysUntil <= 0 || (daysUntil === 0 && (now.getHours() > hours || (now.getHours() === hours && now.getMinutes() >= minutes)))) {
+        daysUntil += 7
+      }
+      
+      nextDate.setDate(nextDate.getDate() + daysUntil)
+      nextDate.setHours(hours, minutes, 0, 0)
+      
+      return nextDate.getTime()
+    } else {
+      const nextDate = new Date(now)
+      const targetDay = schedule.dayOfMonth || 1
+      
+      if (now.getDate() > targetDay || (now.getDate() === targetDay && (now.getHours() > hours || (now.getHours() === hours && now.getMinutes() >= minutes)))) {
+        nextDate.setMonth(nextDate.getMonth() + 1)
+      }
+      
+      nextDate.setDate(Math.min(targetDay, new Date(nextDate.getFullYear(), nextDate.getMonth() + 1, 0).getDate()))
+      nextDate.setHours(hours, minutes, 0, 0)
+      
+      return nextDate.getTime()
+    }
+  }
+
+  const updateNextScheduledTime = (schedule: RecurringSchedule) => {
+    const nextTime = calculateNextScheduledTime(schedule)
+    
+    setRecurringSchedules((current) =>
+      (current || []).map(s =>
+        s.id === schedule.id
+          ? { ...s, lastGeneratedAt: Date.now(), nextScheduledAt: nextTime }
+          : s
+      )
+    )
+  }
+
+  const generateRecurringPost = async (schedule: RecurringSchedule) => {
+    try {
+      const transitInfo = TRANSIT_TYPES.find(t => t.value === schedule.transitType)
+      
+      const prompt = (window.spark.llmPrompt as any)`You are an expert astrologer writing an engaging blog post for a general audience interested in astrology.
+
+Write a comprehensive, informative blog post about ${transitInfo?.label}.
+
+Context: ${transitInfo?.description}
+${schedule.additionalContext ? `Additional focus areas: ${schedule.additionalContext}` : ''}
+
+The blog post should include:
+1. An engaging introduction explaining what ${transitInfo?.label} is
+2. Key effects and themes people might experience
+3. What to expect during this transit
+4. Practical advice and tips for navigating this period
+5. Do's and don'ts during this transit
+6. A positive, empowering conclusion
+
+Write in an accessible, warm tone that balances astrological knowledge with practical wisdom. Use specific examples where helpful.
+
+Return the result as a valid JSON object with this exact structure:
+{
+  "title": "An engaging, SEO-friendly blog post title",
+  "content": "The full blog post content with paragraphs separated by double line breaks (\\n\\n). Use markdown formatting for emphasis."
+}`
+
+      const response = await window.spark.llm(prompt, 'gpt-4o', true)
+      const parsed = JSON.parse(response)
+
+      if (!parsed.title || !parsed.content) {
+        throw new Error('Invalid response structure')
+      }
+
+      const publishTime = calculateNextScheduledTime(schedule)
+
+      const newPost: BlogPost = {
+        id: Date.now().toString(),
+        title: parsed.title,
+        content: parsed.content,
+        transitType: schedule.transitType,
+        createdAt: Date.now(),
+        scheduledFor: publishTime,
+        publishStatus: 'scheduled',
+        fromRecurring: schedule.id,
+      }
+
+      setSavedPosts((current) => [newPost, ...(current || [])])
+      
+      console.log(`Generated recurring post for schedule ${schedule.id}: ${parsed.title}`)
+    } catch (error) {
+      console.error('Failed to generate recurring post:', error)
+      toast.error('Failed to generate recurring post', {
+        description: 'Check console for details',
+      })
+    }
+  }
+
+  const handleCreateRecurringSchedule = () => {
+    if (!recurringTransit) {
+      toast.error('Please select a transit type')
+      return
+    }
+
+    if (!wpSettings) {
+      toast.error('Please configure WordPress settings first')
+      setSettingsOpen(true)
+      return
+    }
+
+    const newSchedule: RecurringSchedule = {
+      id: Date.now().toString(),
+      transitType: recurringTransit,
+      frequency: recurringFrequency,
+      dayOfWeek: recurringFrequency === 'weekly' ? recurringDayOfWeek : undefined,
+      dayOfMonth: recurringFrequency === 'monthly' ? recurringDayOfMonth : undefined,
+      time: recurringTime,
+      isActive: true,
+      additionalContext: recurringContext,
+      createdAt: Date.now(),
+    }
+
+    newSchedule.nextScheduledAt = calculateNextScheduledTime(newSchedule)
+
+    setRecurringSchedules((current) => [...(current || []), newSchedule])
+    
+    toast.success('Recurring schedule created!', {
+      description: `Will generate ${recurringFrequency} posts starting ${new Date(newSchedule.nextScheduledAt).toLocaleDateString()}`,
+    })
+    
+    setRecurringDialogOpen(false)
+    setRecurringTransit('')
+    setRecurringContext('')
+    setRecurringFrequency('weekly')
+    setRecurringDayOfWeek(1)
+    setRecurringDayOfMonth(1)
+    setRecurringTime('09:00')
+  }
+
+  const handleToggleSchedule = (scheduleId: string) => {
+    setRecurringSchedules((current) =>
+      (current || []).map(s =>
+        s.id === scheduleId
+          ? { ...s, isActive: !s.isActive }
+          : s
+      )
+    )
+    
+    const schedule = recurringSchedules?.find(s => s.id === scheduleId)
+    if (schedule) {
+      toast.success(schedule.isActive ? 'Schedule paused' : 'Schedule activated')
+    }
+  }
+
+  const handleDeleteSchedule = (scheduleId: string) => {
+    setRecurringSchedules((current) => (current || []).filter(s => s.id !== scheduleId))
+    toast.success('Recurring schedule deleted')
+  }
+
+  const getDayName = (dayNum: number) => {
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    return days[dayNum]
+  }
+
+  const getOrdinalSuffix = (day: number) => {
+    if (day > 3 && day < 21) return 'th'
+    switch (day % 10) {
+      case 1: return 'st'
+      case 2: return 'nd'
+      case 3: return 'rd'
+      default: return 'th'
+    }
+  }
 
   const publishScheduledPost = async (post: BlogPost) => {
     if (!wpSettings) return
@@ -472,73 +693,195 @@ Return the result as a valid JSON object with this exact structure:
             </p>
           </div>
           
-          <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
-                <GearSix className="mr-2" weight="bold" />
-                WordPress Settings
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="bg-card border-border text-white">
-              <DialogHeader>
-                <DialogTitle className="text-white">WordPress Connection Settings</DialogTitle>
-                <DialogDescription className="text-white/70">
-                  Configure your WordPress site details to publish blog posts directly
-                </DialogDescription>
-              </DialogHeader>
-              
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="wp-site-url" className="text-white">WordPress Site URL</Label>
-                  <Input
-                    id="wp-site-url"
-                    type="url"
-                    placeholder="https://yoursite.com"
-                    value={tempSiteUrl}
-                    onChange={(e) => setTempSiteUrl(e.target.value)}
-                    className="bg-background text-white border-border"
-                  />
-                  <p className="text-xs text-white/60">
-                    Your WordPress site URL (without trailing slash)
-                  </p>
-                </div>
+          <div className="flex items-center gap-2">
+            <Dialog open={recurringDialogOpen} onOpenChange={setRecurringDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Repeat className="mr-2" weight="bold" />
+                  New Recurring Schedule
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-card border-border text-white max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle className="text-white">Create Recurring Schedule</DialogTitle>
+                  <DialogDescription className="text-white/70">
+                    Set up automatic weekly or monthly blog post generation and publishing
+                  </DialogDescription>
+                </DialogHeader>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="wp-username" className="text-white">Username</Label>
-                  <Input
-                    id="wp-username"
-                    type="text"
-                    placeholder="admin"
-                    value={tempUsername}
-                    onChange={(e) => setTempUsername(e.target.value)}
-                    className="bg-background text-white border-border"
-                  />
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="recurring-transit" className="text-white">Transit Type</Label>
+                    <Select value={recurringTransit} onValueChange={setRecurringTransit}>
+                      <SelectTrigger id="recurring-transit" className="bg-background text-white border-border">
+                        <SelectValue placeholder="Select a transit..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border-border max-h-[300px]">
+                        {TRANSIT_TYPES.map((transit) => (
+                          <SelectItem key={transit.value} value={transit.value} className="text-white">
+                            <div className="flex flex-col items-start">
+                              <span className="font-medium">{transit.label}</span>
+                              <span className="text-xs text-muted-foreground">{transit.description}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="recurring-frequency" className="text-white">Frequency</Label>
+                    <Select value={recurringFrequency} onValueChange={(v) => setRecurringFrequency(v as 'weekly' | 'monthly')}>
+                      <SelectTrigger id="recurring-frequency" className="bg-background text-white border-border">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border-border">
+                        <SelectItem value="weekly" className="text-white">Weekly</SelectItem>
+                        <SelectItem value="monthly" className="text-white">Monthly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {recurringFrequency === 'weekly' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="recurring-day-week" className="text-white">Day of Week</Label>
+                      <Select value={recurringDayOfWeek.toString()} onValueChange={(v) => setRecurringDayOfWeek(Number(v))}>
+                        <SelectTrigger id="recurring-day-week" className="bg-background text-white border-border">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover border-border">
+                          <SelectItem value="0" className="text-white">Sunday</SelectItem>
+                          <SelectItem value="1" className="text-white">Monday</SelectItem>
+                          <SelectItem value="2" className="text-white">Tuesday</SelectItem>
+                          <SelectItem value="3" className="text-white">Wednesday</SelectItem>
+                          <SelectItem value="4" className="text-white">Thursday</SelectItem>
+                          <SelectItem value="5" className="text-white">Friday</SelectItem>
+                          <SelectItem value="6" className="text-white">Saturday</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {recurringFrequency === 'monthly' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="recurring-day-month" className="text-white">Day of Month</Label>
+                      <Select value={recurringDayOfMonth.toString()} onValueChange={(v) => setRecurringDayOfMonth(Number(v))}>
+                        <SelectTrigger id="recurring-day-month" className="bg-background text-white border-border">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover border-border max-h-[300px]">
+                          {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                            <SelectItem key={day} value={day.toString()} className="text-white">
+                              {day}{getOrdinalSuffix(day)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <Label htmlFor="recurring-time" className="text-white">Time</Label>
+                    <Input
+                      id="recurring-time"
+                      type="time"
+                      value={recurringTime}
+                      onChange={(e) => setRecurringTime(e.target.value)}
+                      className="bg-background text-white border-border"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="recurring-context" className="text-white">
+                      Additional Context (Optional)
+                    </Label>
+                    <Textarea
+                      id="recurring-context"
+                      value={recurringContext}
+                      onChange={(e) => setRecurringContext(e.target.value)}
+                      placeholder="Add any specific themes or focus areas to include in all generated posts..."
+                      className="min-h-[80px] bg-background text-white border-border"
+                    />
+                  </div>
+                  
+                  <div className="pt-2">
+                    <Button onClick={handleCreateRecurringSchedule} className="w-full">
+                      <CalendarPlus className="mr-2" weight="bold" />
+                      Create Recurring Schedule
+                    </Button>
+                  </div>
                 </div>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <GearSix className="mr-2" weight="bold" />
+                  WordPress Settings
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-card border-border text-white">
+                <DialogHeader>
+                  <DialogTitle className="text-white">WordPress Connection Settings</DialogTitle>
+                  <DialogDescription className="text-white/70">
+                    Configure your WordPress site details to publish blog posts directly
+                  </DialogDescription>
+                </DialogHeader>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="wp-password" className="text-white">Application Password</Label>
-                  <Input
-                    id="wp-password"
-                    type="password"
-                    placeholder="xxxx xxxx xxxx xxxx xxxx xxxx"
-                    value={tempPassword}
-                    onChange={(e) => setTempPassword(e.target.value)}
-                    className="bg-background text-white border-border font-mono"
-                  />
-                  <p className="text-xs text-white/60">
-                    Generate an application password in WordPress: Users → Profile → Application Passwords
-                  </p>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="wp-site-url" className="text-white">WordPress Site URL</Label>
+                    <Input
+                      id="wp-site-url"
+                      type="url"
+                      placeholder="https://yoursite.com"
+                      value={tempSiteUrl}
+                      onChange={(e) => setTempSiteUrl(e.target.value)}
+                      className="bg-background text-white border-border"
+                    />
+                    <p className="text-xs text-white/60">
+                      Your WordPress site URL (without trailing slash)
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="wp-username" className="text-white">Username</Label>
+                    <Input
+                      id="wp-username"
+                      type="text"
+                      placeholder="admin"
+                      value={tempUsername}
+                      onChange={(e) => setTempUsername(e.target.value)}
+                      className="bg-background text-white border-border"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="wp-password" className="text-white">Application Password</Label>
+                    <Input
+                      id="wp-password"
+                      type="password"
+                      placeholder="xxxx xxxx xxxx xxxx xxxx xxxx"
+                      value={tempPassword}
+                      onChange={(e) => setTempPassword(e.target.value)}
+                      className="bg-background text-white border-border font-mono"
+                    />
+                    <p className="text-xs text-white/60">
+                      Generate an application password in WordPress: Users → Profile → Application Passwords
+                    </p>
+                  </div>
+                  
+                  <div className="pt-2">
+                    <Button onClick={handleSaveSettings} className="w-full">
+                      <Check className="mr-2" />
+                      Save Settings
+                    </Button>
+                  </div>
                 </div>
-                
-                <div className="pt-2">
-                  <Button onClick={handleSaveSettings} className="w-full">
-                    <Check className="mr-2" />
-                    Save Settings
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         {savedPosts && savedPosts.some(p => p.publishStatus === 'scheduled') && (
@@ -588,6 +931,99 @@ Return the result as a valid JSON object with this exact structure:
                       </div>
                     )
                   })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {recurringSchedules && recurringSchedules.length > 0 && (
+          <Card className="border-accent/30 bg-accent/5">
+            <CardHeader>
+              <CardTitle className="text-xl text-white flex items-center gap-2">
+                <Repeat weight="bold" className="text-accent" />
+                Recurring Schedules
+              </CardTitle>
+              <CardDescription className="text-white/70">
+                Automated content generation and publishing
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {recurringSchedules.map((schedule) => {
+                  const transitInfo = TRANSIT_TYPES.find(t => t.value === schedule.transitType)
+                  const nextDate = schedule.nextScheduledAt ? new Date(schedule.nextScheduledAt) : null
+                  const timeUntil = schedule.nextScheduledAt ? schedule.nextScheduledAt - currentTime : 0
+                  const daysUntil = Math.floor(timeUntil / (1000 * 60 * 60 * 24))
+                  const hoursUntil = Math.floor((timeUntil % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+                  
+                  return (
+                    <div
+                      key={schedule.id}
+                      className={`flex items-start justify-between p-4 rounded-lg bg-card/50 border transition-all ${
+                        schedule.isActive 
+                          ? 'border-accent/30 hover:border-accent/50' 
+                          : 'border-border/30 opacity-60'
+                      }`}
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="font-semibold text-white">{transitInfo?.label}</h4>
+                          <Badge variant="outline" className={schedule.isActive ? 'bg-accent/20 text-accent border-accent/30' : 'bg-muted/20 text-muted-foreground border-muted/30'}>
+                            {schedule.frequency === 'weekly' 
+                              ? `Every ${getDayName(schedule.dayOfWeek || 1)}` 
+                              : `${schedule.dayOfMonth}${getOrdinalSuffix(schedule.dayOfMonth || 1)} of each month`
+                            }
+                          </Badge>
+                          <Badge variant="outline" className="bg-card/50 text-white/70 border-border/30">
+                            {schedule.time}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {transitInfo?.description}
+                        </p>
+                        {schedule.isActive && nextDate && (
+                          <p className="text-xs text-accent mt-2">
+                            Next post: {nextDate.toLocaleString()} 
+                            {timeUntil > 0 && ` (in ${daysUntil}d ${hoursUntil}h)`}
+                          </p>
+                        )}
+                        {!schedule.isActive && (
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Schedule paused
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 ml-4">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleToggleSchedule(schedule.id)}
+                          className={schedule.isActive ? 'text-white/70 hover:text-white' : 'text-accent hover:text-accent hover:bg-accent/10'}
+                        >
+                          {schedule.isActive ? (
+                            <>
+                              <Pause weight="bold" className="mr-1" />
+                              Pause
+                            </>
+                          ) : (
+                            <>
+                              <Play weight="bold" className="mr-1" />
+                              Resume
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteSchedule(schedule.id)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash weight="bold" />
+                        </Button>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </CardContent>
           </Card>
