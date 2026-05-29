@@ -117,34 +117,22 @@ FORECAST PERIOD:
 - Start Date: ${startDateStr}
 - End Date: ${endDateStr}
 
-Generate a forecast of important days over the next 6 months. Include approximately 30-40 significant dates distributed across three categories:
-1. ROMANCE opportunities (Venus transits, 5th/7th house activations)
-2. CAREER/JOB opportunities (10th house, Mars, Saturn transits)
-3. MONEY opportunities (2nd/8th house, Jupiter transits)
+Generate a forecast of important days over the next 6 months. Include exactly 24 significant dates (8 romance, 8 career, 8 money) distributed evenly across the time period.
 
 For each important day, provide:
 - Specific date (use format: YYYY-MM-DD)
 - Category (romance, career, or money)
 - Intensity level (high, medium, or low)
-- Brief description (1-2 sentences explaining why this day is significant)
+- Brief description (maximum 100 characters - keep it concise)
 - Transit details showing which planets are creating the opportunity
 
-IMPORTANT: You MUST include specific transit details for each forecast showing:
-- transitingPlanet: Which planet is currently moving (e.g., "Venus", "Jupiter", "Mars")
-- natalPlanet: Which natal planet it's aspecting (e.g., "Sun", "Moon", "Venus")
-- aspect: The type of aspect being formed (e.g., "conjunction", "trine", "sextile", "square", "opposition")
-- houses: Relevant houses involved (optional, e.g., "7th house", "10th and 2nd houses")
+CRITICAL FORMATTING RULES:
+1. Descriptions MUST be under 100 characters
+2. Do NOT use apostrophes or quotes in descriptions - use simple language
+3. Keep all text simple and avoid special characters
+4. Ensure proper JSON formatting throughout
 
-Consider:
-- New Moons and Full Moons in relevant houses
-- Venus, Mars, and Jupiter transits to natal planets
-- Lucky aspects to natal planets (trines, sextiles, conjunctions)
-- Mercury retrograde periods (caution for career decisions)
-- Eclipses
-- Personal planetary returns
-- Saturn and Uranus transits for major opportunities
-
-Return ONLY a valid JSON object with a single property "days" containing an array of forecast objects. Each forecast object must have: date (string), category (string: "romance", "career", or "money"), intensity (string: "high", "medium", or "low"), description (string), and transitDetails (object with: transitingPlanet, natalPlanet, aspect, and optional houses).
+Return ONLY a valid JSON object with a single property "days" containing exactly 24 forecast objects. Each forecast object must have: date (string), category (string: "romance", "career", or "money"), intensity (string: "high", "medium", or "low"), description (string under 100 chars), and transitDetails (object with: transitingPlanet, natalPlanet, aspect, and optional houses).
 
 Example format:
 {
@@ -153,7 +141,7 @@ Example format:
       "date": "2024-02-14",
       "category": "romance",
       "intensity": "high",
-      "description": "Venus aligns with your natal Sun, creating magnetic attraction and romantic opportunities.",
+      "description": "Venus aligns with natal Sun bringing magnetic attraction and romantic energy",
       "transitDetails": {
         "transitingPlanet": "Venus",
         "natalPlanet": "Sun",
@@ -165,14 +153,34 @@ Example format:
 }`
       const response = await (window.spark as any).llm(prompt, 'gpt-4o', true)
       console.log('LLM response received, length:', response.length)
-      console.log('Raw LLM response:', response.substring(0, 500))
+      console.log('Raw LLM response (first 500 chars):', response.substring(0, 500))
       
       let parsed
       try {
-        parsed = JSON.parse(response)
+        let cleanedResponse = response.trim()
+        
+        if (cleanedResponse.startsWith('```json')) {
+          cleanedResponse = cleanedResponse.replace(/```json\n?/g, '').replace(/```\n?$/g, '')
+        } else if (cleanedResponse.startsWith('```')) {
+          cleanedResponse = cleanedResponse.replace(/```\n?/g, '')
+        }
+        
+        cleanedResponse = cleanedResponse.trim()
+        
+        console.log('Cleaned response (first 500 chars):', cleanedResponse.substring(0, 500))
+        console.log('Cleaned response (last 100 chars):', cleanedResponse.substring(cleanedResponse.length - 100))
+        
+        parsed = JSON.parse(cleanedResponse)
       } catch (jsonError) {
         console.error('JSON Parse Error:', jsonError)
-        console.error('Failed to parse response:', response)
+        console.error('Response length:', response.length)
+        console.error('First 1000 characters:', response.substring(0, 1000))
+        console.error('Last 500 characters:', response.substring(response.length - 500))
+        
+        if (jsonError instanceof Error && jsonError.message.includes('Unterminated string')) {
+          throw new Error('The forecast response was incomplete. Please try regenerating - this usually happens due to response length limits.')
+        }
+        
         throw new Error(`Failed to parse LLM response as JSON: ${jsonError instanceof Error ? jsonError.message : 'Unknown error'}`)
       }
       
