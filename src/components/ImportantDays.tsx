@@ -5,9 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Calendar, ArrowsClockwise, Heart, Briefcase, CurrencyDollar, Sparkle } from '@phosphor-icons/react'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Calendar as CalendarComponent } from '@/components/ui/calendar'
+import { Calendar, ArrowsClockwise, Heart, Briefcase, CurrencyDollar, Sparkle, CalendarBlank } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
+import { format } from 'date-fns'
 
 interface ImportantDaysProps {
   charts: ChartData[]
@@ -37,6 +40,13 @@ export function ImportantDays({ charts }: ImportantDaysProps) {
   const [savedReadings, setSavedReadings] = useKV<Record<string, ImportantDaysReading>>('important-days-readings', {})
   const [isGenerating, setIsGenerating] = useState(false)
   const [selectedChartId, setSelectedChartId] = useState<string>(charts[0]?.id || '')
+  const [startDate, setStartDate] = useState<Date>(new Date())
+  const [endDate, setEndDate] = useState<Date>(() => {
+    const date = new Date()
+    date.setMonth(date.getMonth() + 6)
+    return date
+  })
+  const [isCustomRange, setIsCustomRange] = useState(false)
 
   useEffect(() => {
     if (!selectedChartId && charts.length > 0) {
@@ -61,9 +71,25 @@ export function ImportantDays({ charts }: ImportantDaysProps) {
       return
     }
     
+    if (endDate <= startDate) {
+      toast.error('End date must be after start date')
+      return
+    }
+    
+    const daysDiff = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+    if (daysDiff < 7) {
+      toast.error('Date range must be at least 7 days')
+      return
+    }
+    if (daysDiff > 730) {
+      toast.error('Date range cannot exceed 2 years (730 days)')
+      return
+    }
+    
     setIsGenerating(true)
     try {
       console.log('Generating Important Days for chart:', selectedChart.name)
+      console.log('Date range:', { startDate: startDate.toISOString(), endDate: endDate.toISOString(), days: daysDiff })
       
       const sun = selectedChart.planets.find((p: any) => p.name === 'Sun')
       const moon = selectedChart.planets.find((p: any) => p.name === 'Moon')
@@ -73,15 +99,9 @@ export function ImportantDays({ charts }: ImportantDaysProps) {
       const rising = selectedChart.houses.find((h: any) => h.number === 1)
       
       console.log('Planets found:', { sun: !!sun, moon: !!moon, venus: !!venus, mars: !!mars, jupiter: !!jupiter, rising: !!rising })
-
-      const today = new Date()
-      const sixMonthsLater = new Date(today)
-      sixMonthsLater.setMonth(today.getMonth() + 6)
       
-      console.log('Date range:', {
-        today: today.toLocaleDateString(),
-        sixMonthsLater: sixMonthsLater.toLocaleDateString()
-      })
+      const startDateStr = startDate.toLocaleDateString()
+      const endDateStr = endDate.toLocaleDateString()
 
       const sunSign = sun?.sign || 'Unknown'
       const sunDegree = sun?.degree?.toFixed(1) || 'N/A'
@@ -98,11 +118,12 @@ export function ImportantDays({ charts }: ImportantDaysProps) {
       const jupiterDegree = jupiter?.degree?.toFixed(1) || 'N/A'
       const jupiterHouse = jupiter?.house || 'N/A'
       
-      const startDateStr = today.toLocaleDateString()
-      const endDateStr = sixMonthsLater.toLocaleDateString()
+      const monthsDiff = Math.round(daysDiff / 30)
+      const daysPerCategory = Math.max(3, Math.floor(monthsDiff * 1.5))
+      const totalDays = daysPerCategory * 3
 
       console.log('Prompt constructed, calling LLM...')
-      const prompt = (window.spark.llmPrompt as any)`You are an expert astrologer. Create a 6-month forecast of important days.
+      const prompt = (window.spark.llmPrompt as any)`You are an expert astrologer. Create a forecast of important days.
 
 NATAL CHART:
 Name: ${selectedChart.name}
@@ -113,9 +134,9 @@ Venus: ${venusSign} ${venusDegree}° House ${venusHouse}
 Mars: ${marsSign} ${marsDegree}° House ${marsHouse}
 Jupiter: ${jupiterSign} ${jupiterDegree}° House ${jupiterHouse}
 
-PERIOD: ${startDateStr} to ${endDateStr}
+PERIOD: ${startDateStr} to ${endDateStr} (${daysDiff} days, approximately ${monthsDiff} months)
 
-Generate exactly 18 important dates: 6 romance, 6 career, 6 money. Distribute evenly across the 6 month period.
+Generate exactly ${totalDays} important dates: ${daysPerCategory} romance, ${daysPerCategory} career, ${daysPerCategory} money. Distribute evenly across the entire period.
 
 RULES:
 - Dates: YYYY-MM-DD format only
@@ -123,7 +144,7 @@ RULES:
 - Intensity: high OR medium OR low
 - Description: Max 45 characters, no quotes or apostrophes
 - Transit planet names: Sun Moon Venus Mars Jupiter Saturn only
-- Spread dates naturally across all 6 months
+- Spread dates naturally across all ${monthsDiff} months
 
 Return valid JSON with "days" array:
 {
@@ -214,9 +235,9 @@ Return ONLY the JSON object. No extra text.`
         throw new Error('No important days were generated')
       }
       
-      if (parsed.days.length < 15) {
-        console.warn(`Only ${parsed.days.length} days generated, expected 18`)
-        toast.warning(`Generated ${parsed.days.length} days instead of 18. You may regenerate for more dates.`, {
+      if (parsed.days.length < totalDays - 3) {
+        console.warn(`Only ${parsed.days.length} days generated, expected ${totalDays}`)
+        toast.warning(`Generated ${parsed.days.length} days instead of ${totalDays}. You may regenerate for more dates.`, {
           duration: 5000
         })
       }
@@ -237,8 +258,8 @@ Return ONLY the JSON object. No extra text.`
       const reading: ImportantDaysReading = {
         content: parsed.days,
         generatedAt: Date.now(),
-        startDate: today.toISOString(),
-        endDate: sixMonthsLater.toISOString()
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString()
       }
 
       setSavedReadings((current) => ({
@@ -327,7 +348,7 @@ Return ONLY the JSON object. No extra text.`
             <div className="flex items-center gap-3 flex-1">
               <Calendar className="w-8 h-8 text-accent flex-shrink-0" weight="fill" />
               <div className="flex-1">
-                <CardTitle className="text-white">Important Days - 6 Month Forecast</CardTitle>
+                <CardTitle className="text-white">Important Days - Custom Forecast</CardTitle>
                 <CardDescription className="text-muted-foreground">
                   Key dates for romance, career, and financial opportunities
                 </CardDescription>
@@ -368,9 +389,87 @@ Return ONLY the JSON object. No extra text.`
               </Button>
             </div>
           </div>
-          {lastGenerated && selectedChart && (
+
+          <div className="flex items-center gap-4 mt-4 pt-4 border-t border-border/50">
+            <div className="flex items-center gap-3 flex-1">
+              <CalendarBlank className="w-5 h-5 text-muted-foreground" weight="bold" />
+              <span className="text-sm text-muted-foreground font-medium">Date Range:</span>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-[180px] justify-start text-left font-normal bg-card border-border text-white"
+                  >
+                    <Calendar className="mr-2 h-4 w-4" weight="bold" />
+                    {format(startDate, 'MMM dd, yyyy')}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={startDate}
+                    onSelect={(date) => {
+                      if (date) {
+                        setStartDate(date)
+                        setIsCustomRange(true)
+                      }
+                    }}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+
+              <span className="text-muted-foreground">to</span>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-[180px] justify-start text-left font-normal bg-card border-border text-white"
+                  >
+                    <Calendar className="mr-2 h-4 w-4" weight="bold" />
+                    {format(endDate, 'MMM dd, yyyy')}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={endDate}
+                    onSelect={(date) => {
+                      if (date) {
+                        setEndDate(date)
+                        setIsCustomRange(true)
+                      }
+                    }}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  const today = new Date()
+                  const sixMonths = new Date()
+                  sixMonths.setMonth(today.getMonth() + 6)
+                  setStartDate(today)
+                  setEndDate(sixMonths)
+                  setIsCustomRange(false)
+                }}
+                className="text-muted-foreground hover:text-white"
+              >
+                Reset to 6 months
+              </Button>
+            </div>
+          </div>
+
+          {lastGenerated && selectedChart && currentReading && (
             <p className="text-xs text-muted-foreground mt-2">
-              Forecast for <span className="text-white font-medium">{selectedChart.name}</span> • Last generated: {lastGenerated.toLocaleDateString()} at {lastGenerated.toLocaleTimeString()}
+              Forecast for <span className="text-white font-medium">{selectedChart.name}</span> • {format(new Date(currentReading.startDate), 'MMM dd, yyyy')} to {format(new Date(currentReading.endDate), 'MMM dd, yyyy')} • Generated: {lastGenerated.toLocaleDateString()} at {lastGenerated.toLocaleTimeString()}
             </p>
           )}
         </CardHeader>
@@ -382,7 +481,7 @@ Return ONLY the JSON object. No extra text.`
             <Calendar className="w-16 h-16 mx-auto mb-4 text-muted-foreground" weight="duotone" />
             <p className="text-muted-foreground mb-2">No forecast generated yet</p>
             <p className="text-sm text-muted-foreground">
-              Click "Generate Forecast" to discover your important days over the next 6 months
+              Select your date range above and click "Generate Forecast" to discover your important days
             </p>
           </CardContent>
         </Card>
