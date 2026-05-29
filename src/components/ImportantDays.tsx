@@ -56,20 +56,32 @@ export function ImportantDays({ charts }: ImportantDaysProps) {
     : null
 
   const generateReading = async () => {
-    if (!selectedChart) return
+    if (!selectedChart) {
+      toast.error('No chart selected')
+      return
+    }
     
     setIsGenerating(true)
     try {
+      console.log('Generating Important Days for chart:', selectedChart.name)
+      
       const sun = selectedChart.planets.find((p: any) => p.name === 'Sun')
       const moon = selectedChart.planets.find((p: any) => p.name === 'Moon')
       const venus = selectedChart.planets.find((p: any) => p.name === 'Venus')
       const mars = selectedChart.planets.find((p: any) => p.name === 'Mars')
       const jupiter = selectedChart.planets.find((p: any) => p.name === 'Jupiter')
       const rising = selectedChart.houses.find((h: any) => h.number === 1)
+      
+      console.log('Planets found:', { sun: !!sun, moon: !!moon, venus: !!venus, mars: !!mars, jupiter: !!jupiter, rising: !!rising })
 
       const today = new Date()
       const sixMonthsLater = new Date(today)
       sixMonthsLater.setMonth(today.getMonth() + 6)
+      
+      console.log('Date range:', {
+        today: today.toLocaleDateString(),
+        sixMonthsLater: sixMonthsLater.toLocaleDateString()
+      })
 
       const promptText = (window.spark.llmPrompt as any)`You are an expert astrologer creating a 6-month forecast of important days for romance, career, and money opportunities.
 
@@ -133,8 +145,12 @@ Example format:
   ]
 }`
 
+      console.log('Prompt constructed, calling LLM...')
       const response = await window.spark.llm(promptText, 'gpt-4o', true)
+      console.log('LLM response received, length:', response.length)
+      
       const parsed = JSON.parse(response)
+      console.log('Response parsed, days count:', parsed.days?.length)
       
       if (!parsed.days || !Array.isArray(parsed.days)) {
         throw new Error('Invalid response format')
@@ -152,10 +168,13 @@ Example format:
         [readingKey]: reading
       }))
 
+      console.log('Important Days forecast generated successfully!')
       toast.success('Important Days forecast generated successfully!')
     } catch (error) {
       console.error('Error generating Important Days:', error)
-      toast.error('Failed to generate forecast. Please try again.')
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      console.error('Error details:', errorMessage)
+      toast.error(`Failed to generate forecast: ${errorMessage}`)
     } finally {
       setIsGenerating(false)
     }
