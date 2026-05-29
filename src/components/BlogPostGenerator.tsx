@@ -148,7 +148,7 @@ Return the result as a valid JSON object with this exact structure:
   "content": "The full blog post content with paragraphs separated by double line breaks (\\n\\n). Use markdown formatting for emphasis."
 }`
 
-      const response = await window.spark.llm(prompt, 'gpt-4o', true)
+      const response = await (window.spark as any).llm(prompt, 'gpt-4o', true)
       const parsed = JSON.parse(response)
 
       if (!parsed.title || !parsed.content) {
