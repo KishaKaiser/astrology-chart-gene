@@ -83,7 +83,7 @@ export function ImportantDays({ charts }: ImportantDaysProps) {
         sixMonthsLater: sixMonthsLater.toLocaleDateString()
       })
 
-      const promptText = (window.spark.llmPrompt as any)`You are an expert astrologer creating a 6-month forecast of important days for romance, career, and money opportunities.
+      const promptText = `You are an expert astrologer creating a 6-month forecast of important days for romance, career, and money opportunities.
 
 NATAL CHART INFORMATION:
 - Name: ${selectedChart.name}
