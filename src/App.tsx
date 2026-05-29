@@ -13,12 +13,13 @@ import { KarmicRelationship } from '@/components/KarmicRelationship'
 import { KarmicDebtCalculator } from '@/components/KarmicDebtCalculator'
 import { FamilyChart } from '@/components/FamilyChart'
 import { ImportantDays } from '@/components/ImportantDays'
+import { ElectionalAstrology } from '@/components/ElectionalAstrology'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 import { CrystalBallLogo } from '@/components/CrystalBallLogo'
-import { BookOpen, Sparkle, Star, ArrowsClockwise, Heart, ClockCounterClockwise, Infinity, Scales, UsersFour, CalendarDots } from '@phosphor-icons/react'
+import { BookOpen, Sparkle, Star, ArrowsClockwise, Heart, ClockCounterClockwise, Infinity, Scales, UsersFour, CalendarDots, Lightning } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { DiagnosticTool } from '@/components/DiagnosticTool'
 import { TroubleshootingWizard } from '@/components/TroubleshootingWizard'
@@ -28,7 +29,7 @@ function App() {
   const [charts, setCharts] = useKV<ChartData[]>('astrology-charts', [])
   const [selectedChart, setSelectedChart] = useState<ChartData | null>(null)
   const [view, setView] = useState<'library' | 'chart'>('library')
-  const [activeTab, setActiveTab] = useState<'charts' | 'personal-horoscope' | 'zodiac-horoscope' | 'lovers-chart' | 'karmic-relationship' | 'past-life' | 'karmic-debt' | 'family' | 'important-days'>('charts')
+  const [activeTab, setActiveTab] = useState<'charts' | 'personal-horoscope' | 'zodiac-horoscope' | 'lovers-chart' | 'karmic-relationship' | 'past-life' | 'karmic-debt' | 'family' | 'important-days' | 'electional'>('charts')
   const [ephemerisError, setEphemerisError] = useState(false)
 
   useEffect(() => {
@@ -215,8 +216,8 @@ function App() {
 
       <main className="container mx-auto px-6 py-12">
         {view === 'library' ? (
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'charts' | 'personal-horoscope' | 'zodiac-horoscope' | 'lovers-chart' | 'karmic-relationship' | 'past-life' | 'karmic-debt' | 'family' | 'important-days')} className="space-y-6">
-            <TabsList className="grid w-full max-w-7xl mx-auto grid-cols-9">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'charts' | 'personal-horoscope' | 'zodiac-horoscope' | 'lovers-chart' | 'karmic-relationship' | 'past-life' | 'karmic-debt' | 'family' | 'important-days' | 'electional')} className="space-y-6">
+            <TabsList className="grid w-full max-w-7xl mx-auto grid-cols-10">
               <TabsTrigger value="charts" className="gap-2 text-white">
                 <BookOpen weight="bold" />
                 Chart Library
@@ -252,6 +253,10 @@ function App() {
               <TabsTrigger value="family" className="gap-2">
                 <UsersFour weight="fill" />
                 Family
+              </TabsTrigger>
+              <TabsTrigger value="electional" className="gap-2">
+                <Lightning weight="fill" />
+                Optimal Timing
               </TabsTrigger>
             </TabsList>
 
@@ -326,6 +331,10 @@ function App() {
 
             <TabsContent value="family">
               <FamilyChart />
+            </TabsContent>
+
+            <TabsContent value="electional">
+              <ElectionalAstrology />
             </TabsContent>
           </Tabs>
         ) : selectedChart ? (

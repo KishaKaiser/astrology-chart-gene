@@ -55,6 +55,13 @@ This is a sophisticated tool requiring astronomical calculations, data visualiza
 - Progression: Family tab → Select relationship type (parent-child/sibling) → Select first person (parent/sibling 1) → Select second person (child/sibling 2) → Generate analysis → Calculate family-specific aspects → Display overall compatibility score → Show breakdown by category with progress bars → List planetary aspects → Optional: Generate AI interpretation for detailed family guidance
 - Success criteria: For parent-child: Scores for emotional bond, communication, affection & warmth, identity support, learning & growth, discipline & structure, energy & activity; For siblings: Scores for core connection, emotional understanding, communication, competition vs cooperation, shared interests, mutual support, affection & harmony; Overall compatibility percentage with family-appropriate messaging; Color-coded scores (green/yellow/orange); Lists top 12 most significant aspects with orbs; AI interpretation provides compassionate, practical guidance specific to parent-child dynamics (nurturing style, supporting development, navigating challenges) or sibling relationships (personality differences, conflict resolution, building lifelong bonds); Requires at least 2 saved charts in library to function
 
+**Electional Astrology (Optimal Timing)**
+- Functionality: Find the most auspicious dates and times for important future events by analyzing planetary positions across a specified date range (up to 90 days), scoring each potential date based on event type and astrological factors
+- Purpose: Helps users plan significant life events (weddings, business launches, surgeries, contracts, investments, interviews, first dates, proposals, purchases, creative projects, moving, travel) at times when planetary energies are most supportive
+- Trigger: User navigates to "Optimal Timing" tab, selects event type, defines date range, and enters event location
+- Progression: Optimal Timing tab → Select event type from 12 categories → Set start/end dates (max 90-day span) → Enter event location with autocomplete → Toggle preferences (avoid retrograde, prefer daylight hours) → Click "Find Optimal Dates" → Progress bar shows analysis of multiple time slots → Display ranked results with scores, moon phases, favorable/challenging factors → View top 10 results or explore best date in detail with chart wheel
+- Success criteria: Analyzes 3-4 times per day across date range; Scores each potential time based on event-specific criteria (benefic planets, important houses, favorable aspects for that event type); Shows moon phase for each date; Lists planetary strengths and weaknesses; Warns about retrograde periods if applicable; Displays overall score (0-100) with color coding; Best date view includes chart wheel, detailed reasoning, and all favorable/challenging factors; Each event type has unique scoring algorithm (e.g., weddings favor Venus/Jupiter in houses 1/7/5/11, surgeries avoid Mars afflictions in houses 1/6/8/12); Results persist in storage for reference; Progress indicator shows X of Y time slots analyzed; Location search integrated with timezone detection
+
 **AI-Powered Natal Chart Interpretation**
 - Functionality: Generate comprehensive, professional astrological interpretation of natal charts using advanced AI that analyzes all planetary positions, aspects, house placements, and chart patterns to create personalized readings
 - Purpose: Provides deep, contextual analysis that goes beyond raw data, offering psychological insights and practical guidance based on the complete chart synthesis
@@ -93,6 +100,9 @@ This is a sophisticated tool requiring astronomical calculations, data visualiza
 - **PDF Generation Errors**: Gracefully handle browser limitations, show progress indicators, offer retry options
 - **Large Chart Libraries**: Implement pagination or virtual scrolling for users with 100+ saved charts
 - **Concurrent Edits**: Prevent data loss by saving chart state before navigation or showing unsaved changes warning
+- **Electional Date Range Limits**: Prevent searches exceeding 90 days with clear error message explaining performance constraints
+- **Electional Calculation Failures**: Gracefully handle ephemeris errors during multi-date analysis, skip failed dates, continue analysis
+- **No Optimal Dates Found**: When all scores are low, still display best available options with clear warning about challenging timing
 
 ## Design Direction
 
