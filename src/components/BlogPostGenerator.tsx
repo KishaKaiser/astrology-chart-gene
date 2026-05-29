@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { Copy, Download, PencilSimple, GearSix, Upload, Check } from '@phosphor-icons/react'
+import { Copy, Download, PencilSimple, GearSix, Upload, Check, Clock, Calendar, Trash } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { useKV } from '@github/spark/hooks'
 import {
@@ -18,6 +18,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Switch } from '@/components/ui/switch'
+import { Badge } from '@/components/ui/badge'
 
 interface BlogPost {
   id: string
@@ -27,6 +28,9 @@ interface BlogPost {
   createdAt: number
   wordpressId?: number
   publishedUrl?: string
+  scheduledFor?: number
+  publishStatus?: 'draft' | 'published' | 'scheduled' | 'failed'
+  publishError?: string
 }
 
 interface WordPressSettings {
@@ -63,6 +67,10 @@ export function BlogPostGenerator() {
   const [isPublishing, setIsPublishing] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [publishAsDraft, setPublishAsDraft] = useState(true)
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false)
+  const [scheduleDate, setScheduleDate] = useState('')
+  const [scheduleTime, setScheduleTime] = useState('')
+  const [currentTime, setCurrentTime] = useState(Date.now())
   
   const [tempSiteUrl, setTempSiteUrl] = useState(wpSettings?.siteUrl || '')
   const [tempUsername, setTempUsername] = useState(wpSettings?.username || '')
@@ -157,6 +165,166 @@ Return the result as a valid JSON object with this exact structure:
     
     toast.success('WordPress settings saved!')
     setSettingsOpen(false)
+  }
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(Date.now())
+    }, 30000)
+
+    return () => clearInterval(timer)
+  }, [])
+
+  useEffect(() => {
+    if (!wpSettings || !savedPosts) return
+
+    const checkScheduledPosts = async () => {
+      const postsToPublish = savedPosts.filter(
+        post => post.publishStatus === 'scheduled' && 
+        post.scheduledFor && 
+        post.scheduledFor <= currentTime
+      )
+
+      for (const post of postsToPublish) {
+        await publishScheduledPost(post)
+      }
+    }
+
+    checkScheduledPosts()
+  }, [currentTime, savedPosts, wpSettings])
+
+  const publishScheduledPost = async (post: BlogPost) => {
+    if (!wpSettings) return
+
+    try {
+      const credentials = btoa(`${wpSettings.username}:${wpSettings.applicationPassword}`)
+      const htmlContent = convertMarkdownToHTML(post.content)
+
+      const response = await fetch(`${wpSettings.siteUrl}/wp-json/wp/v2/posts`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${credentials}`,
+        },
+        body: JSON.stringify({
+          title: post.title,
+          content: htmlContent,
+          status: 'publish',
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || `HTTP ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      setSavedPosts((current) =>
+        (current || []).map(p =>
+          p.id === post.id
+            ? {
+                ...p,
+                publishStatus: 'published' as const,
+                wordpressId: data.id,
+                publishedUrl: data.link,
+              }
+            : p
+        )
+      )
+
+      toast.success(`"${post.title}" published successfully!`, {
+        description: 'Scheduled post went live',
+        action: data.link ? {
+          label: 'View Post',
+          onClick: () => window.open(data.link, '_blank'),
+        } : undefined,
+      })
+    } catch (error) {
+      console.error('Scheduled publish error:', error)
+      
+      setSavedPosts((current) =>
+        (current || []).map(p =>
+          p.id === post.id
+            ? {
+                ...p,
+                publishStatus: 'failed' as const,
+                publishError: error instanceof Error ? error.message : 'Unknown error',
+              }
+            : p
+        )
+      )
+
+      toast.error(`Failed to publish scheduled post: "${post.title}"`, {
+        description: 'Check WordPress settings and try again',
+      })
+    }
+  }
+
+  const handleSchedulePost = () => {
+    if (!scheduleDate || !scheduleTime) {
+      toast.error('Please select both date and time')
+      return
+    }
+
+    if (!generatedPost) return
+
+    const finalTitle = editMode ? editedTitle : generatedPost.title
+    const finalContent = editMode ? editedContent : generatedPost.content
+
+    const scheduledDateTime = new Date(`${scheduleDate}T${scheduleTime}`)
+    const scheduledTimestamp = scheduledDateTime.getTime()
+
+    if (scheduledTimestamp <= Date.now()) {
+      toast.error('Scheduled time must be in the future')
+      return
+    }
+
+    const newPost: BlogPost = {
+      id: Date.now().toString(),
+      title: finalTitle,
+      content: finalContent,
+      transitType: selectedTransit,
+      createdAt: Date.now(),
+      scheduledFor: scheduledTimestamp,
+      publishStatus: 'scheduled',
+    }
+
+    setSavedPosts((current) => [newPost, ...(current || [])])
+    
+    toast.success('Post scheduled successfully!', {
+      description: `Will publish on ${scheduledDateTime.toLocaleString()}`,
+    })
+    
+    setScheduleDialogOpen(false)
+    setScheduleDate('')
+    setScheduleTime('')
+    setEditMode(false)
+  }
+
+  const handleCancelSchedule = (postId: string) => {
+    setSavedPosts((current) =>
+      (current || []).map(p =>
+        p.id === postId
+          ? { ...p, publishStatus: 'draft' as const, scheduledFor: undefined }
+          : p
+      )
+    )
+    toast.success('Scheduled post cancelled')
+  }
+
+  const handleRetryFailed = async (post: BlogPost) => {
+    if (!wpSettings) return
+
+    setSavedPosts((current) =>
+      (current || []).map(p =>
+        p.id === post.id
+          ? { ...p, publishStatus: 'scheduled' as const, scheduledFor: Date.now() + 5000, publishError: undefined }
+          : p
+      )
+    )
+    
+    toast.info('Retrying post publication...')
   }
 
   const convertMarkdownToHTML = (markdown: string): string => {
@@ -373,6 +541,58 @@ Return the result as a valid JSON object with this exact structure:
           </Dialog>
         </div>
 
+        {savedPosts && savedPosts.some(p => p.publishStatus === 'scheduled') && (
+          <Card className="border-accent/30 bg-accent/5">
+            <CardHeader>
+              <CardTitle className="text-xl text-white flex items-center gap-2">
+                <Clock weight="bold" className="text-accent" />
+                Scheduled Posts
+              </CardTitle>
+              <CardDescription className="text-white/70">
+                Posts queued for automatic publishing
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {savedPosts
+                  .filter(p => p.publishStatus === 'scheduled')
+                  .sort((a, b) => (a.scheduledFor || 0) - (b.scheduledFor || 0))
+                  .map((post) => {
+                    const transitInfo = TRANSIT_TYPES.find(t => t.value === post.transitType)
+                    const timeUntil = post.scheduledFor ? post.scheduledFor - currentTime : 0
+                    const hoursUntil = Math.floor(timeUntil / (1000 * 60 * 60))
+                    const minutesUntil = Math.floor((timeUntil % (1000 * 60 * 60)) / (1000 * 60))
+                    
+                    return (
+                      <div
+                        key={post.id}
+                        className="flex items-center justify-between p-4 rounded-lg bg-card/50 border border-accent/30"
+                      >
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-white">{post.title}</h4>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {transitInfo?.label} • Publishes {new Date(post.scheduledFor!).toLocaleString()}
+                          </p>
+                          <p className="text-xs text-accent mt-1">
+                            {timeUntil > 0 ? `Publishing in ${hoursUntil}h ${minutesUntil}m` : 'Publishing soon...'}
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCancelSchedule(post.id)}
+                          className="text-white/70 hover:text-white"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    )
+                  })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <Card className="border-accent/20">
           <CardHeader>
             <CardTitle className="text-2xl text-white">Generate New Post</CardTitle>
@@ -455,15 +675,65 @@ Return the result as a valid JSON object with this exact structure:
                     Save Post
                   </Button>
                   {wpSettings && (
-                    <Button 
-                      size="sm" 
-                      onClick={handlePublishToWordPress}
-                      disabled={isPublishing}
-                      className="bg-accent hover:bg-accent/90"
-                    >
-                      <Upload className="mr-2" />
-                      {isPublishing ? 'Publishing...' : 'Publish to WordPress'}
-                    </Button>
+                    <>
+                      <Button 
+                        size="sm" 
+                        onClick={handlePublishToWordPress}
+                        disabled={isPublishing}
+                        className="bg-accent hover:bg-accent/90"
+                      >
+                        <Upload className="mr-2" />
+                        {isPublishing ? 'Publishing...' : 'Publish Now'}
+                      </Button>
+                      <Dialog open={scheduleDialogOpen} onOpenChange={setScheduleDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button size="sm" variant="outline">
+                            <Clock className="mr-2" weight="bold" />
+                            Schedule
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="bg-card border-border text-white">
+                          <DialogHeader>
+                            <DialogTitle className="text-white">Schedule Post</DialogTitle>
+                            <DialogDescription className="text-white/70">
+                              Choose when to automatically publish this post to WordPress
+                            </DialogDescription>
+                          </DialogHeader>
+                          
+                          <div className="space-y-4 py-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="schedule-date" className="text-white">Date</Label>
+                              <Input
+                                id="schedule-date"
+                                type="date"
+                                value={scheduleDate}
+                                onChange={(e) => setScheduleDate(e.target.value)}
+                                className="bg-background text-white border-border"
+                                min={new Date().toISOString().split('T')[0]}
+                              />
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <Label htmlFor="schedule-time" className="text-white">Time</Label>
+                              <Input
+                                id="schedule-time"
+                                type="time"
+                                value={scheduleTime}
+                                onChange={(e) => setScheduleTime(e.target.value)}
+                                className="bg-background text-white border-border"
+                              />
+                            </div>
+                            
+                            <div className="pt-2">
+                              <Button onClick={handleSchedulePost} className="w-full">
+                                <Calendar className="mr-2" />
+                                Schedule Post
+                              </Button>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </>
                   )}
                 </div>
               </div>
@@ -475,7 +745,7 @@ Return the result as a valid JSON object with this exact structure:
                     onCheckedChange={setPublishAsDraft}
                   />
                   <Label htmlFor="publish-draft" className="text-white cursor-pointer">
-                    Publish as draft (recommended for review before publishing)
+                    Publish as draft for immediate publishing (not used for scheduled posts)
                   </Label>
                 </div>
               )}
@@ -530,18 +800,34 @@ Return the result as a valid JSON object with this exact structure:
               <div className="space-y-3">
                 {savedPosts.map((post) => {
                   const transitInfo = TRANSIT_TYPES.find(t => t.value === post.transitType)
+                  const isScheduled = post.publishStatus === 'scheduled'
+                  const isPublished = post.publishStatus === 'published'
+                  const isFailed = post.publishStatus === 'failed'
+                  
                   return (
                     <div
                       key={post.id}
                       className="flex items-start justify-between p-4 rounded-lg bg-card/50 border border-border hover:border-accent/50 transition-colors"
                     >
                       <div className="flex-1 min-w-0 cursor-pointer" onClick={() => handleLoadPost(post)}>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <h4 className="font-semibold text-white truncate">{post.title}</h4>
-                          {post.wordpressId && (
-                            <span className="text-xs bg-accent/20 text-accent px-2 py-0.5 rounded">
+                          {isScheduled && post.scheduledFor && (
+                            <Badge variant="outline" className="bg-accent/20 text-accent border-accent/30">
+                              <Clock className="mr-1" size={12} weight="bold" />
+                              Scheduled: {new Date(post.scheduledFor).toLocaleString()}
+                            </Badge>
+                          )}
+                          {isPublished && post.wordpressId && (
+                            <Badge variant="outline" className="bg-green-500/20 text-green-400 border-green-500/30">
+                              <Check className="mr-1" size={12} weight="bold" />
                               Published
-                            </span>
+                            </Badge>
+                          )}
+                          {isFailed && (
+                            <Badge variant="outline" className="bg-destructive/20 text-destructive border-destructive/30">
+                              Failed
+                            </Badge>
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground mt-1">
@@ -558,15 +844,42 @@ Return the result as a valid JSON object with this exact structure:
                             View on WordPress →
                           </a>
                         )}
+                        {isFailed && post.publishError && (
+                          <p className="text-xs text-destructive mt-1">
+                            Error: {post.publishError}
+                          </p>
+                        )}
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeletePost(post.id)}
-                        className="ml-4 text-destructive hover:text-destructive hover:bg-destructive/10"
-                      >
-                        Delete
-                      </Button>
+                      <div className="flex items-center gap-2 ml-4">
+                        {isScheduled && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCancelSchedule(post.id)}
+                            className="text-white/70 hover:text-white"
+                          >
+                            Cancel Schedule
+                          </Button>
+                        )}
+                        {isFailed && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleRetryFailed(post)}
+                            className="text-accent hover:bg-accent/10"
+                          >
+                            Retry
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeletePost(post.id)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash weight="bold" />
+                        </Button>
+                      </div>
                     </div>
                   )
                 })}
