@@ -83,20 +83,39 @@ export function ImportantDays({ charts }: ImportantDaysProps) {
         sixMonthsLater: sixMonthsLater.toLocaleDateString()
       })
 
+      const sunSign = sun?.sign || 'Unknown'
+      const sunDegree = sun?.degree?.toFixed(1) || 'N/A'
+      const moonSign = moon?.sign || 'Unknown'
+      const moonDegree = moon?.degree?.toFixed(1) || 'N/A'
+      const risingSign = rising?.sign || 'Unknown'
+      const venusSign = venus?.sign || 'Unknown'
+      const venusDegree = venus?.degree?.toFixed(1) || 'N/A'
+      const venusHouse = venus?.house || 'N/A'
+      const marsSign = mars?.sign || 'Unknown'
+      const marsDegree = mars?.degree?.toFixed(1) || 'N/A'
+      const marsHouse = mars?.house || 'N/A'
+      const jupiterSign = jupiter?.sign || 'Unknown'
+      const jupiterDegree = jupiter?.degree?.toFixed(1) || 'N/A'
+      const jupiterHouse = jupiter?.house || 'N/A'
+      
+      const startDateStr = today.toLocaleDateString()
+      const endDateStr = sixMonthsLater.toLocaleDateString()
+
+      console.log('Prompt constructed, calling LLM...')
       const prompt = (window.spark.llmPrompt as any)`You are an expert astrologer creating a 6-month forecast of important days for romance, career, and money opportunities.
 
 NATAL CHART INFORMATION:
 - Name: ${selectedChart.name}
-- Sun Sign: ${sun?.sign || 'Unknown'} at ${sun?.degree.toFixed(1)}°
-- Moon Sign: ${moon?.sign || 'Unknown'} at ${moon?.degree.toFixed(1)}°
-- Rising Sign: ${rising?.sign || 'Unknown'}
-- Venus (Romance): ${venus?.sign || 'Unknown'} at ${venus?.degree.toFixed(1)}° in House ${venus?.house}
-- Mars (Action/Career): ${mars?.sign || 'Unknown'} at ${mars?.degree.toFixed(1)}° in House ${mars?.house}
-- Jupiter (Money/Luck): ${jupiter?.sign || 'Unknown'} at ${jupiter?.degree.toFixed(1)}° in House ${jupiter?.house}
+- Sun Sign: ${sunSign} at ${sunDegree}°
+- Moon Sign: ${moonSign} at ${moonDegree}°
+- Rising Sign: ${risingSign}
+- Venus (Romance): ${venusSign} at ${venusDegree}° in House ${venusHouse}
+- Mars (Action/Career): ${marsSign} at ${marsDegree}° in House ${marsHouse}
+- Jupiter (Money/Luck): ${jupiterSign} at ${jupiterDegree}° in House ${jupiterHouse}
 
 FORECAST PERIOD:
-- Start Date: ${today.toLocaleDateString()}
-- End Date: ${sixMonthsLater.toLocaleDateString()}
+- Start Date: ${startDateStr}
+- End Date: ${endDateStr}
 
 Generate a forecast of important days over the next 6 months. Include approximately 30-40 significant dates distributed across three categories:
 1. ROMANCE opportunities (Venus transits, 5th/7th house activations)
@@ -144,8 +163,6 @@ Example format:
     }
   ]
 }`
-
-      console.log('Prompt constructed, calling LLM...')
       const response = await (window.spark as any).llm(prompt, 'gpt-4o', true)
       console.log('LLM response received, length:', response.length)
       console.log('Raw LLM response:', response.substring(0, 500))
