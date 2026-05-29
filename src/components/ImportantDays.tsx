@@ -146,7 +146,7 @@ Example format:
 }`
 
       console.log('Prompt constructed, calling LLM...')
-      const response = await window.spark.llm(prompt, 'gpt-4o', true)
+      const response = await (window.spark as any).llm(prompt, 'gpt-4o', true)
       console.log('LLM response received, length:', response.length)
       console.log('Raw LLM response:', response.substring(0, 500))
       
