@@ -148,12 +148,41 @@ Example format:
       console.log('Prompt constructed, calling LLM...')
       const response = await window.spark.llm(promptText, 'gpt-4o', true)
       console.log('LLM response received, length:', response.length)
+      console.log('Raw LLM response:', response.substring(0, 500))
       
-      const parsed = JSON.parse(response)
-      console.log('Response parsed, days count:', parsed.days?.length)
+      let parsed
+      try {
+        parsed = JSON.parse(response)
+      } catch (jsonError) {
+        console.error('JSON Parse Error:', jsonError)
+        console.error('Failed to parse response:', response)
+        throw new Error(`Failed to parse LLM response as JSON: ${jsonError instanceof Error ? jsonError.message : 'Unknown error'}`)
+      }
+      
+      console.log('Response parsed successfully')
+      console.log('Parsed object keys:', Object.keys(parsed))
+      console.log('Days count:', parsed.days?.length)
       
       if (!parsed.days || !Array.isArray(parsed.days)) {
-        throw new Error('Invalid response format')
+        console.error('Invalid response structure:', parsed)
+        throw new Error('Invalid response format: missing or invalid "days" array')
+      }
+      
+      if (parsed.days.length === 0) {
+        throw new Error('No important days were generated')
+      }
+      
+      console.log('Validating day objects...')
+      const invalidDays = parsed.days.filter((day: any, idx: number) => {
+        const isValid = day.date && day.category && day.intensity && day.description
+        if (!isValid) {
+          console.error(`Invalid day at index ${idx}:`, day)
+        }
+        return !isValid
+      })
+      
+      if (invalidDays.length > 0) {
+        throw new Error(`${invalidDays.length} day(s) have invalid format`)
       }
 
       const reading: ImportantDaysReading = {
@@ -174,7 +203,15 @@ Example format:
       console.error('Error generating Important Days:', error)
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       console.error('Error details:', errorMessage)
-      toast.error(`Failed to generate forecast: ${errorMessage}`)
+      
+      if (error instanceof Error && error.stack) {
+        console.error('Stack trace:', error.stack)
+      }
+      
+      toast.error(`Failed to generate forecast: ${errorMessage}`, {
+        description: 'Check the browser console (F12) for detailed error information.',
+        duration: 8000
+      })
     } finally {
       setIsGenerating(false)
     }
