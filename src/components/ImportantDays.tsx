@@ -115,14 +115,15 @@ Jupiter: ${jupiterSign} ${jupiterDegree}° House ${jupiterHouse}
 
 PERIOD: ${startDateStr} to ${endDateStr}
 
-Generate exactly 12 important dates: 4 romance, 4 career, 4 money. Spread evenly across 6 months.
+Generate exactly 18 important dates: 6 romance, 6 career, 6 money. Distribute evenly across the 6 month period.
 
 RULES:
-- Dates: YYYY-MM-DD format
+- Dates: YYYY-MM-DD format only
 - Category: romance OR career OR money
 - Intensity: high OR medium OR low
-- Description: Max 50 characters, no quotes or apostrophes
+- Description: Max 45 characters, no quotes or apostrophes
 - Transit planet names: Sun Moon Venus Mars Jupiter Saturn only
+- Spread dates naturally across all 6 months
 
 Return valid JSON with "days" array:
 {
@@ -143,7 +144,7 @@ Return valid JSON with "days" array:
 }
 
 Return ONLY the JSON object. No extra text.`
-      const response = await (window.spark as any).llm(prompt, 'gpt-4o-mini', true)
+      const response = await (window.spark as any).llm(prompt, 'gpt-4o', true)
       console.log('LLM response received, length:', response.length)
       console.log('Raw LLM response (first 500 chars):', response.substring(0, 500))
       
@@ -213,9 +214,9 @@ Return ONLY the JSON object. No extra text.`
         throw new Error('No important days were generated')
       }
       
-      if (parsed.days.length < 10) {
-        console.warn(`Only ${parsed.days.length} days generated, expected 12`)
-        toast.warning(`Generated ${parsed.days.length} days instead of 12. You may regenerate for more dates.`, {
+      if (parsed.days.length < 15) {
+        console.warn(`Only ${parsed.days.length} days generated, expected 18`)
+        toast.warning(`Generated ${parsed.days.length} days instead of 18. You may regenerate for more dates.`, {
           duration: 5000
         })
       }
