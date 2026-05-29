@@ -83,7 +83,7 @@ export function ImportantDays({ charts }: ImportantDaysProps) {
         sixMonthsLater: sixMonthsLater.toLocaleDateString()
       })
 
-      const promptText = `You are an expert astrologer creating a 6-month forecast of important days for romance, career, and money opportunities.
+      const prompt = (window.spark.llmPrompt as any)`You are an expert astrologer creating a 6-month forecast of important days for romance, career, and money opportunities.
 
 NATAL CHART INFORMATION:
 - Name: ${selectedChart.name}
@@ -146,7 +146,7 @@ Example format:
 }`
 
       console.log('Prompt constructed, calling LLM...')
-      const response = await window.spark.llm(promptText, 'gpt-4o', true)
+      const response = await window.spark.llm(prompt, 'gpt-4o', true)
       console.log('LLM response received, length:', response.length)
       console.log('Raw LLM response:', response.substring(0, 500))
       
