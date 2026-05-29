@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { Copy, Download, PencilSimple, GearSix, Upload, Check, Clock, Calendar, Trash, Repeat, CalendarPlus, Play, Pause, Plus, ChartBar } from '@phosphor-icons/react'
+import { Copy, Download, PencilSimple, GearSix, Upload, Check, Clock, Calendar, Trash, Repeat, CalendarPlus, Play, Pause, Plus, ChartBar, Bell } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { useKV } from '@github/spark/hooks'
 import {
@@ -21,6 +21,9 @@ import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { BlogAnalyticsDashboard } from '@/components/BlogAnalyticsDashboard'
+import { EmailNotificationSettings, type EmailNotificationSettings as EmailNotificationSettingsType } from '@/components/EmailNotificationSettings'
+import { NotificationHistory } from '@/components/NotificationHistory'
+import { sendPublicationNotification, createNotificationHistory, type NotificationHistoryEntry } from '@/lib/email-notifications'
 
 interface BlogPost {
   id: string
@@ -75,6 +78,14 @@ export function BlogPostGenerator() {
   const [savedPosts, setSavedPosts] = useKV<BlogPost[]>('blog-posts', [])
   const [wpSettings, setWpSettings] = useKV<WordPressSettings | null>('wordpress-settings', null)
   const [recurringSchedules, setRecurringSchedules] = useKV<RecurringSchedule[]>('recurring-schedules', [])
+  const [emailSettings, setEmailSettings] = useKV<EmailNotificationSettingsType>('email-notification-settings', {
+    enabled: false,
+    recipientEmails: [],
+    notifyOnSuccess: true,
+    notifyOnFailure: true,
+    includePostPreview: true,
+  })
+  const [notificationHistory, setNotificationHistory] = useKV<NotificationHistoryEntry[]>('notification-history', [])
   const [selectedTransit, setSelectedTransit] = useState<string>('')
   const [additionalContext, setAdditionalContext] = useState<string>('')
   const [generatedPost, setGeneratedPost] = useState<{ title: string; content: string } | null>(null)
@@ -96,7 +107,7 @@ export function BlogPostGenerator() {
   const [recurringTime, setRecurringTime] = useState('09:00')
   const [recurringTransit, setRecurringTransit] = useState('')
   const [recurringContext, setRecurringContext] = useState('')
-  const [activeView, setActiveView] = useState<'generator' | 'analytics'>('generator')
+  const [activeView, setActiveView] = useState<'generator' | 'analytics' | 'notifications'>('generator')
   
   const [tempSiteUrl, setTempSiteUrl] = useState(wpSettings?.siteUrl || '')
   const [tempUsername, setTempUsername] = useState(wpSettings?.username || '')
@@ -444,18 +455,24 @@ Return the result as a valid JSON object with this exact structure:
 
       const data = await response.json()
 
+      const updatedPost = {
+        ...post,
+        publishStatus: 'published' as const,
+        wordpressId: data.id,
+        publishedUrl: data.link,
+      }
+
       setSavedPosts((current) =>
         (current || []).map(p =>
-          p.id === post.id
-            ? {
-                ...p,
-                publishStatus: 'published' as const,
-                wordpressId: data.id,
-                publishedUrl: data.link,
-              }
-            : p
+          p.id === post.id ? updatedPost : p
         )
       )
+
+      if (emailSettings) {
+        await sendPublicationNotification(updatedPost, emailSettings, true)
+        const historyEntry = createNotificationHistory(updatedPost, true, emailSettings.recipientEmails)
+        setNotificationHistory((current) => [historyEntry, ...(current || [])])
+      }
 
       toast.success(`"${post.title}" published successfully!`, {
         description: 'Scheduled post went live',
@@ -467,17 +484,23 @@ Return the result as a valid JSON object with this exact structure:
     } catch (error) {
       console.error('Scheduled publish error:', error)
       
+      const failedPost = {
+        ...post,
+        publishStatus: 'failed' as const,
+        publishError: error instanceof Error ? error.message : 'Unknown error',
+      }
+
       setSavedPosts((current) =>
         (current || []).map(p =>
-          p.id === post.id
-            ? {
-                ...p,
-                publishStatus: 'failed' as const,
-                publishError: error instanceof Error ? error.message : 'Unknown error',
-              }
-            : p
+          p.id === post.id ? failedPost : p
         )
       )
+
+      if (emailSettings) {
+        await sendPublicationNotification(failedPost, emailSettings, false)
+        const historyEntry = createNotificationHistory(failedPost, false, emailSettings.recipientEmails)
+        setNotificationHistory((current) => [historyEntry, ...(current || [])])
+      }
 
       toast.error(`Failed to publish scheduled post: "${post.title}"`, {
         description: 'Check WordPress settings and try again',
@@ -697,7 +720,7 @@ Return the result as a valid JSON object with this exact structure:
           </div>
           
           <div className="flex items-center gap-2">
-            <Tabs value={activeView} onValueChange={(v) => setActiveView(v as 'generator' | 'analytics')} className="mr-4">
+            <Tabs value={activeView} onValueChange={(v) => setActiveView(v as 'generator' | 'analytics' | 'notifications')} className="mr-4">
               <TabsList>
                 <TabsTrigger value="generator" className="gap-2">
                   <PencilSimple weight="bold" />
@@ -706,6 +729,13 @@ Return the result as a valid JSON object with this exact structure:
                 <TabsTrigger value="analytics" className="gap-2">
                   <ChartBar weight="bold" />
                   Analytics
+                </TabsTrigger>
+                <TabsTrigger value="notifications" className="gap-2 relative">
+                  <Bell weight="bold" />
+                  Notifications
+                  {emailSettings?.enabled && emailSettings?.recipientEmails?.length > 0 && (
+                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-accent rounded-full" />
+                  )}
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -901,6 +931,11 @@ Return the result as a valid JSON object with this exact structure:
 
         {activeView === 'analytics' ? (
           <BlogAnalyticsDashboard posts={savedPosts || []} schedules={recurringSchedules || []} />
+        ) : activeView === 'notifications' ? (
+          <div className="space-y-6">
+            <EmailNotificationSettings onSave={(settings) => setEmailSettings(settings)} />
+            <NotificationHistory history={notificationHistory || []} />
+          </div>
         ) : (
           <>
         {savedPosts && savedPosts.some(p => p.publishStatus === 'scheduled') && (
