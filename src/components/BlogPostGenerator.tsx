@@ -6,9 +6,18 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { Copy, Download, PencilSimple } from '@phosphor-icons/react'
+import { Copy, Download, PencilSimple, GearSix, Upload, Check } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { useKV } from '@github/spark/hooks'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { Switch } from '@/components/ui/switch'
 
 interface BlogPost {
   id: string
@@ -16,6 +25,14 @@ interface BlogPost {
   content: string
   transitType: string
   createdAt: number
+  wordpressId?: number
+  publishedUrl?: string
+}
+
+interface WordPressSettings {
+  siteUrl: string
+  username: string
+  applicationPassword: string
 }
 
 const TRANSIT_TYPES = [
@@ -35,6 +52,7 @@ const TRANSIT_TYPES = [
 
 export function BlogPostGenerator() {
   const [savedPosts, setSavedPosts] = useKV<BlogPost[]>('blog-posts', [])
+  const [wpSettings, setWpSettings] = useKV<WordPressSettings | null>('wordpress-settings', null)
   const [selectedTransit, setSelectedTransit] = useState<string>('')
   const [additionalContext, setAdditionalContext] = useState<string>('')
   const [generatedPost, setGeneratedPost] = useState<{ title: string; content: string } | null>(null)
@@ -42,6 +60,13 @@ export function BlogPostGenerator() {
   const [editMode, setEditMode] = useState(false)
   const [editedTitle, setEditedTitle] = useState('')
   const [editedContent, setEditedContent] = useState('')
+  const [isPublishing, setIsPublishing] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [publishAsDraft, setPublishAsDraft] = useState(true)
+  
+  const [tempSiteUrl, setTempSiteUrl] = useState(wpSettings?.siteUrl || '')
+  const [tempUsername, setTempUsername] = useState(wpSettings?.username || '')
+  const [tempPassword, setTempPassword] = useState(wpSettings?.applicationPassword || '')
 
   const handleGenerate = async () => {
     if (!selectedTransit) {
@@ -116,6 +141,111 @@ Return the result as a valid JSON object with this exact structure:
     setEditMode(false)
   }
 
+  const handleSaveSettings = () => {
+    const cleanUrl = tempSiteUrl.trim().replace(/\/$/, '')
+    
+    if (!cleanUrl || !tempUsername || !tempPassword) {
+      toast.error('Please fill in all WordPress settings')
+      return
+    }
+
+    setWpSettings({
+      siteUrl: cleanUrl,
+      username: tempUsername,
+      applicationPassword: tempPassword,
+    })
+    
+    toast.success('WordPress settings saved!')
+    setSettingsOpen(false)
+  }
+
+  const convertMarkdownToHTML = (markdown: string): string => {
+    let html = markdown
+    
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>')
+    html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    html = html.replace(/\n\n/g, '</p><p>')
+    html = `<p>${html}</p>`
+    
+    return html
+  }
+
+  const handlePublishToWordPress = async () => {
+    if (!wpSettings) {
+      toast.error('Please configure WordPress settings first')
+      setSettingsOpen(true)
+      return
+    }
+
+    if (!generatedPost) return
+
+    const finalTitle = editMode ? editedTitle : generatedPost.title
+    const finalContent = editMode ? editedContent : generatedPost.content
+
+    setIsPublishing(true)
+
+    try {
+      const credentials = btoa(`${wpSettings.username}:${wpSettings.applicationPassword}`)
+      const htmlContent = convertMarkdownToHTML(finalContent)
+
+      const response = await fetch(`${wpSettings.siteUrl}/wp-json/wp/v2/posts`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${credentials}`,
+        },
+        body: JSON.stringify({
+          title: finalTitle,
+          content: htmlContent,
+          status: publishAsDraft ? 'draft' : 'publish',
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      const data = await response.json()
+
+      const updatedPost: BlogPost = {
+        id: Date.now().toString(),
+        title: finalTitle,
+        content: finalContent,
+        transitType: selectedTransit,
+        createdAt: Date.now(),
+        wordpressId: data.id,
+        publishedUrl: data.link,
+      }
+
+      setSavedPosts((current) => [updatedPost, ...(current || [])])
+      
+      toast.success(
+        publishAsDraft 
+          ? 'Blog post saved as draft in WordPress!' 
+          : 'Blog post published to WordPress!',
+        {
+          description: data.link ? 'Click to view' : undefined,
+          action: data.link ? {
+            label: 'View Post',
+            onClick: () => window.open(data.link, '_blank'),
+          } : undefined,
+        }
+      )
+    } catch (error) {
+      console.error('WordPress publish error:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      toast.error(`Failed to publish to WordPress: ${errorMessage}`, {
+        description: 'Check your WordPress settings and permissions',
+      })
+    } finally {
+      setIsPublishing(false)
+    }
+  }
+
   const handleCopy = () => {
     if (!generatedPost) return
 
@@ -166,11 +296,88 @@ Return the result as a valid JSON object with this exact structure:
         animate={{ opacity: 1, y: 0 }}
         className="space-y-6"
       >
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold text-white">Blog Post Generator</h2>
+            <p className="text-white/70 mt-1">
+              Generate engaging blog posts about astrological transits
+            </p>
+          </div>
+          
+          <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <GearSix className="mr-2" weight="bold" />
+                WordPress Settings
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-card border-border text-white">
+              <DialogHeader>
+                <DialogTitle className="text-white">WordPress Connection Settings</DialogTitle>
+                <DialogDescription className="text-white/70">
+                  Configure your WordPress site details to publish blog posts directly
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="wp-site-url" className="text-white">WordPress Site URL</Label>
+                  <Input
+                    id="wp-site-url"
+                    type="url"
+                    placeholder="https://yoursite.com"
+                    value={tempSiteUrl}
+                    onChange={(e) => setTempSiteUrl(e.target.value)}
+                    className="bg-background text-white border-border"
+                  />
+                  <p className="text-xs text-white/60">
+                    Your WordPress site URL (without trailing slash)
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="wp-username" className="text-white">Username</Label>
+                  <Input
+                    id="wp-username"
+                    type="text"
+                    placeholder="admin"
+                    value={tempUsername}
+                    onChange={(e) => setTempUsername(e.target.value)}
+                    className="bg-background text-white border-border"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="wp-password" className="text-white">Application Password</Label>
+                  <Input
+                    id="wp-password"
+                    type="password"
+                    placeholder="xxxx xxxx xxxx xxxx xxxx xxxx"
+                    value={tempPassword}
+                    onChange={(e) => setTempPassword(e.target.value)}
+                    className="bg-background text-white border-border font-mono"
+                  />
+                  <p className="text-xs text-white/60">
+                    Generate an application password in WordPress: Users → Profile → Application Passwords
+                  </p>
+                </div>
+                
+                <div className="pt-2">
+                  <Button onClick={handleSaveSettings} className="w-full">
+                    <Check className="mr-2" />
+                    Save Settings
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+
         <Card className="border-accent/20">
           <CardHeader>
-            <CardTitle className="text-2xl text-white">Blog Post Generator</CardTitle>
+            <CardTitle className="text-2xl text-white">Generate New Post</CardTitle>
             <CardDescription className="text-white/70">
-              Generate engaging blog posts about astrological transits and their effects
+              Select a transit type and generate engaging content
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -244,11 +451,34 @@ Return the result as a valid JSON object with this exact structure:
                     <Download className="mr-2" />
                     Download
                   </Button>
-                  <Button size="sm" onClick={handleSave}>
+                  <Button variant="outline" size="sm" onClick={handleSave}>
                     Save Post
                   </Button>
+                  {wpSettings && (
+                    <Button 
+                      size="sm" 
+                      onClick={handlePublishToWordPress}
+                      disabled={isPublishing}
+                      className="bg-accent hover:bg-accent/90"
+                    >
+                      <Upload className="mr-2" />
+                      {isPublishing ? 'Publishing...' : 'Publish to WordPress'}
+                    </Button>
+                  )}
                 </div>
               </div>
+              {wpSettings && (
+                <div className="flex items-center gap-2 mt-4">
+                  <Switch
+                    id="publish-draft"
+                    checked={publishAsDraft}
+                    onCheckedChange={setPublishAsDraft}
+                  />
+                  <Label htmlFor="publish-draft" className="text-white cursor-pointer">
+                    Publish as draft (recommended for review before publishing)
+                  </Label>
+                </div>
+              )}
             </CardHeader>
             <CardContent className="space-y-4">
               {editMode ? (
@@ -306,10 +536,28 @@ Return the result as a valid JSON object with this exact structure:
                       className="flex items-start justify-between p-4 rounded-lg bg-card/50 border border-border hover:border-accent/50 transition-colors"
                     >
                       <div className="flex-1 min-w-0 cursor-pointer" onClick={() => handleLoadPost(post)}>
-                        <h4 className="font-semibold text-white truncate">{post.title}</h4>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-semibold text-white truncate">{post.title}</h4>
+                          {post.wordpressId && (
+                            <span className="text-xs bg-accent/20 text-accent px-2 py-0.5 rounded">
+                              Published
+                            </span>
+                          )}
+                        </div>
                         <p className="text-sm text-muted-foreground mt-1">
                           {transitInfo?.label} • {new Date(post.createdAt).toLocaleDateString()}
                         </p>
+                        {post.publishedUrl && (
+                          <a
+                            href={post.publishedUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-accent hover:underline mt-1 inline-block"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            View on WordPress →
+                          </a>
+                        )}
                       </div>
                       <Button
                         variant="ghost"
