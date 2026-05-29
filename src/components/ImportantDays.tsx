@@ -117,22 +117,23 @@ FORECAST PERIOD:
 - Start Date: ${startDateStr}
 - End Date: ${endDateStr}
 
-Generate a forecast of important days over the next 6 months. Include exactly 24 significant dates (8 romance, 8 career, 8 money) distributed evenly across the time period.
+Generate a forecast of important days over the next 6 months. Include exactly 15 significant dates (5 romance, 5 career, 5 money) distributed evenly across the time period.
 
 For each important day, provide:
 - Specific date (use format: YYYY-MM-DD)
 - Category (romance, career, or money)
 - Intensity level (high, medium, or low)
-- Brief description (maximum 100 characters - keep it concise)
+- Brief description (maximum 60 characters)
 - Transit details showing which planets are creating the opportunity
 
 CRITICAL FORMATTING RULES:
-1. Descriptions MUST be under 100 characters
-2. Do NOT use apostrophes or quotes in descriptions - use simple language
-3. Keep all text simple and avoid special characters
-4. Ensure proper JSON formatting throughout
+1. Descriptions MUST be under 60 characters total
+2. Do NOT use apostrophes quotes or special punctuation
+3. Use simple words only
+4. Keep transit planet names short
+5. Ensure valid JSON format
 
-Return ONLY a valid JSON object with a single property "days" containing exactly 24 forecast objects. Each forecast object must have: date (string), category (string: "romance", "career", or "money"), intensity (string: "high", "medium", or "low"), description (string under 100 chars), and transitDetails (object with: transitingPlanet, natalPlanet, aspect, and optional houses).
+Return ONLY a valid JSON object with a single property "days" containing exactly 15 forecast objects. Each forecast object must have: date (string), category (string: "romance", "career", or "money"), intensity (string: "high", "medium", or "low"), description (string under 60 chars), and transitDetails (object with: transitingPlanet, natalPlanet, aspect, and optional houses).
 
 Example format:
 {
@@ -141,17 +142,17 @@ Example format:
       "date": "2024-02-14",
       "category": "romance",
       "intensity": "high",
-      "description": "Venus aligns with natal Sun bringing magnetic attraction and romantic energy",
+      "description": "Venus aligns with Sun for magnetic attraction",
       "transitDetails": {
         "transitingPlanet": "Venus",
         "natalPlanet": "Sun",
         "aspect": "conjunction",
-        "houses": "5th house"
+        "houses": "5th"
       }
     }
   ]
 }`
-      const response = await (window.spark as any).llm(prompt, 'gpt-4o', true)
+      const response = await (window.spark as any).llm(prompt, 'gpt-4o-mini', true)
       console.log('LLM response received, length:', response.length)
       console.log('Raw LLM response (first 500 chars):', response.substring(0, 500))
       
