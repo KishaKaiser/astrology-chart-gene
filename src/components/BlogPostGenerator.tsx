@@ -125,7 +125,9 @@ export function BlogPostGenerator() {
     try {
       const transitInfo = TRANSIT_TYPES.find(t => t.value === selectedTransit)
       
-      const prompt = (window.spark.llmPrompt as any)`You are an expert astrologer writing an engaging blog post for a general audience interested in astrology.
+      const llmPrompt = window.spark.llmPrompt as unknown as (strings: TemplateStringsArray, ...values: any[]) => string
+      
+      const prompt = llmPrompt`You are an expert astrologer writing an engaging blog post for a general audience interested in astrology.
 
 Write a comprehensive, informative blog post about ${transitInfo?.label}.
 
@@ -298,7 +300,9 @@ Return the result as a valid JSON object with this exact structure:
     try {
       const transitInfo = TRANSIT_TYPES.find(t => t.value === schedule.transitType)
       
-      const prompt = (window.spark.llmPrompt as any)`You are an expert astrologer writing an engaging blog post for a general audience interested in astrology.
+      const llmPrompt = window.spark.llmPrompt as unknown as (strings: TemplateStringsArray, ...values: any[]) => string
+      
+      const prompt = llmPrompt`You are an expert astrologer writing an engaging blog post for a general audience interested in astrology.
 
 Write a comprehensive, informative blog post about ${transitInfo?.label}.
 
