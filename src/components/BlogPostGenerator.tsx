@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { Copy, Download, PencilSimple, GearSix, Upload, Check, Clock, Calendar, Trash, Repeat, CalendarPlus, Play, Pause, Plus, ChartBar, Bell } from '@phosphor-icons/react'
+import { Copy, Download, PencilSimple, GearSix, Upload, Check, Clock, Calendar, Trash, Repeat, CalendarPlus, Play, Pause, Plus, ChartBar, Bell, Image as ImageIcon, Sparkle } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { useKV } from '@github/spark/hooks'
 import {
@@ -37,6 +37,8 @@ interface BlogPost {
   publishStatus?: 'draft' | 'published' | 'scheduled' | 'failed'
   publishError?: string
   fromRecurring?: string
+  featuredImagePrompt?: string
+  featuredImageUrl?: string
 }
 
 interface RecurringSchedule {
@@ -88,12 +90,16 @@ export function BlogPostGenerator() {
   const [notificationHistory, setNotificationHistory] = useKV<NotificationHistoryEntry[]>('notification-history', [])
   const [selectedTransit, setSelectedTransit] = useState<string>('')
   const [additionalContext, setAdditionalContext] = useState<string>('')
-  const [generatedPost, setGeneratedPost] = useState<{ title: string; content: string } | null>(null)
+  const [generatedPost, setGeneratedPost] = useState<{ title: string; content: string; imagePrompt?: string } | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [editMode, setEditMode] = useState(false)
   const [editedTitle, setEditedTitle] = useState('')
   const [editedContent, setEditedContent] = useState('')
+  const [editedImagePrompt, setEditedImagePrompt] = useState('')
   const [isPublishing, setIsPublishing] = useState(false)
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false)
+  const [generatedImageUrl, setGeneratedImageUrl] = useState<string>('')
+  const [imageDialogOpen, setImageDialogOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [publishAsDraft, setPublishAsDraft] = useState(true)
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false)
@@ -144,10 +150,13 @@ Write in an accessible, warm tone that balances astrological knowledge with prac
 
 IMPORTANT: Keep the content concise (around 500-800 words total) to ensure complete generation.
 
+Also create a visual description for a featured image that captures the essence of this transit in a mystical, celestial style.
+
 Return ONLY a valid JSON object with this EXACT structure (no additional text before or after):
 {
   "title": "An engaging, SEO-friendly blog post title (one line)",
-  "content": "The complete blog post content. Write 4-6 paragraphs. Separate paragraphs with TWO newline characters. Keep total length under 800 words."
+  "content": "The complete blog post content. Write 4-6 paragraphs. Separate paragraphs with TWO newline characters. Keep total length under 800 words.",
+  "imagePrompt": "A detailed image generation prompt (2-3 sentences) describing a mystical, celestial scene that embodies the energy and themes of ${transitInfo?.label || selectedTransit}. Include visual elements like cosmic imagery, astrological symbols, colors, and atmosphere that match the transit's essence."
 }
 
 Ensure all quotes and special characters in the JSON are properly escaped. Do not include any text outside the JSON object.`
@@ -184,6 +193,8 @@ Ensure all quotes and special characters in the JSON are properly escaped. Do no
       setGeneratedPost(parsed)
       setEditedTitle(parsed.title)
       setEditedContent(parsed.content)
+      setEditedImagePrompt(parsed.imagePrompt || '')
+      setGeneratedImageUrl('')
       toast.success('Blog post generated successfully!')
     } catch (error) {
       console.error('Blog post generation error:', error)
@@ -209,6 +220,7 @@ Ensure all quotes and special characters in the JSON are properly escaped. Do no
 
     const finalTitle = editMode ? editedTitle : generatedPost.title
     const finalContent = editMode ? editedContent : generatedPost.content
+    const finalImagePrompt = editMode ? editedImagePrompt : (generatedPost.imagePrompt || '')
 
     const newPost: BlogPost = {
       id: Date.now().toString(),
@@ -216,11 +228,50 @@ Ensure all quotes and special characters in the JSON are properly escaped. Do no
       content: finalContent,
       transitType: selectedTransit,
       createdAt: Date.now(),
+      featuredImagePrompt: finalImagePrompt,
+      featuredImageUrl: generatedImageUrl || undefined,
     }
 
     setSavedPosts((current) => [newPost, ...(current || [])])
     toast.success('Blog post saved!')
     setEditMode(false)
+  }
+
+  const handleGenerateImageDescription = async () => {
+    if (!generatedPost) return
+    
+    const finalTitle = editMode ? editedTitle : generatedPost.title
+    const finalImagePrompt = editMode ? editedImagePrompt : (generatedPost.imagePrompt || '')
+    
+    if (!finalImagePrompt) {
+      toast.error('No image prompt available. Try regenerating the blog post.')
+      return
+    }
+
+    setImageDialogOpen(true)
+  }
+
+  const handleCopyImagePrompt = () => {
+    const finalImagePrompt = editMode ? editedImagePrompt : (generatedPost?.imagePrompt || '')
+    
+    if (!finalImagePrompt) {
+      toast.error('No image prompt available')
+      return
+    }
+
+    navigator.clipboard.writeText(finalImagePrompt)
+    toast.success('Image prompt copied to clipboard!', {
+      description: 'Use this with DALL-E, Midjourney, Stable Diffusion, or other AI image generators'
+    })
+  }
+
+  const handleImageUrlSubmit = () => {
+    if (generatedImageUrl) {
+      toast.success('Featured image URL saved!')
+      setImageDialogOpen(false)
+    } else {
+      toast.error('Please enter an image URL')
+    }
   }
 
   const handleSaveSettings = () => {
@@ -354,10 +405,13 @@ Write in an accessible, warm tone that balances astrological knowledge with prac
 
 IMPORTANT: Keep the content concise (around 500-800 words total) to ensure complete generation.
 
+Also create a visual description for a featured image that captures the essence of this transit in a mystical, celestial style.
+
 Return ONLY a valid JSON object with this EXACT structure (no additional text before or after):
 {
   "title": "An engaging, SEO-friendly blog post title (one line)",
-  "content": "The complete blog post content. Write 4-6 paragraphs. Separate paragraphs with TWO newline characters. Keep total length under 800 words."
+  "content": "The complete blog post content. Write 4-6 paragraphs. Separate paragraphs with TWO newline characters. Keep total length under 800 words.",
+  "imagePrompt": "A detailed image generation prompt (2-3 sentences) describing a mystical, celestial scene that embodies the energy and themes of ${transitInfo?.label || schedule.transitType}. Include visual elements like cosmic imagery, astrological symbols, colors, and atmosphere that match the transit's essence."
 }
 
 Ensure all quotes and special characters in the JSON are properly escaped. Do not include any text outside the JSON object.`
@@ -396,6 +450,7 @@ Ensure all quotes and special characters in the JSON are properly escaped. Do no
         scheduledFor: publishTime,
         publishStatus: 'scheduled',
         fromRecurring: schedule.id,
+        featuredImagePrompt: parsed.imagePrompt || undefined,
       }
 
       setSavedPosts((current) => [newPost, ...(current || [])])
@@ -586,6 +641,7 @@ Ensure all quotes and special characters in the JSON are properly escaped. Do no
 
     const finalTitle = editMode ? editedTitle : generatedPost.title
     const finalContent = editMode ? editedContent : generatedPost.content
+    const finalImagePrompt = editMode ? editedImagePrompt : (generatedPost.imagePrompt || '')
 
     const scheduledDateTime = new Date(`${scheduleDate}T${scheduleTime}`)
     const scheduledTimestamp = scheduledDateTime.getTime()
@@ -603,6 +659,8 @@ Ensure all quotes and special characters in the JSON are properly escaped. Do no
       createdAt: Date.now(),
       scheduledFor: scheduledTimestamp,
       publishStatus: 'scheduled',
+      featuredImagePrompt: finalImagePrompt,
+      featuredImageUrl: generatedImageUrl || undefined,
     }
 
     setSavedPosts((current) => [newPost, ...(current || [])])
@@ -765,9 +823,15 @@ Ensure all quotes and special characters in the JSON are properly escaped. Do no
   }
 
   const handleLoadPost = (post: BlogPost) => {
-    setGeneratedPost({ title: post.title, content: post.content })
+    setGeneratedPost({ 
+      title: post.title, 
+      content: post.content,
+      imagePrompt: post.featuredImagePrompt 
+    })
     setEditedTitle(post.title)
     setEditedContent(post.content)
+    setEditedImagePrompt(post.featuredImagePrompt || '')
+    setGeneratedImageUrl(post.featuredImageUrl || '')
     setSelectedTransit(post.transitType)
     setEditMode(false)
   }
@@ -1215,12 +1279,96 @@ Ensure all quotes and special characters in the JSON are properly escaped. Do no
                       if (!editMode) {
                         setEditedTitle(generatedPost.title)
                         setEditedContent(generatedPost.content)
+                        setEditedImagePrompt(generatedPost.imagePrompt || '')
                       }
                     }}
                   >
                     <PencilSimple className="mr-2" />
                     {editMode ? 'Cancel Edit' : 'Edit'}
                   </Button>
+                  <Button variant="outline" size="sm" onClick={handleCopyImagePrompt}>
+                    <ImageIcon className="mr-2" />
+                    Copy Image Prompt
+                  </Button>
+                  <Dialog open={imageDialogOpen} onOpenChange={setImageDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Sparkle className="mr-2" weight="fill" />
+                        Featured Image
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="bg-card border-border text-white max-w-2xl">
+                      <DialogHeader>
+                        <DialogTitle className="text-white">Featured Image Setup</DialogTitle>
+                        <DialogDescription className="text-white/70">
+                          Generate an AI image using the prompt below, then paste the URL here
+                        </DialogDescription>
+                      </DialogHeader>
+                      
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label className="text-white">AI Image Generation Prompt</Label>
+                          <div className="relative">
+                            <Textarea
+                              value={editMode ? editedImagePrompt : (generatedPost.imagePrompt || '')}
+                              readOnly={!editMode}
+                              onChange={(e) => editMode && setEditedImagePrompt(e.target.value)}
+                              className="min-h-[120px] bg-background text-white border-border pr-10"
+                            />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="absolute top-2 right-2"
+                              onClick={handleCopyImagePrompt}
+                            >
+                              <Copy weight="bold" />
+                            </Button>
+                          </div>
+                          <p className="text-xs text-white/60">
+                            Use this prompt with DALL-E, Midjourney, Stable Diffusion, Leonardo.ai, or any AI image generator
+                          </p>
+                        </div>
+
+                        {generatedImageUrl && (
+                          <div className="space-y-2">
+                            <Label className="text-white">Preview</Label>
+                            <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-border bg-muted">
+                              <img 
+                                src={generatedImageUrl} 
+                                alt="Featured" 
+                                className="w-full h-full object-cover"
+                                onError={() => toast.error('Failed to load image. Please check the URL.')}
+                              />
+                            </div>
+                          </div>
+                        )}
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="image-url" className="text-white">
+                            Featured Image URL
+                          </Label>
+                          <Input
+                            id="image-url"
+                            type="url"
+                            placeholder="https://example.com/your-generated-image.jpg"
+                            value={generatedImageUrl}
+                            onChange={(e) => setGeneratedImageUrl(e.target.value)}
+                            className="bg-background text-white border-border"
+                          />
+                          <p className="text-xs text-white/60">
+                            After generating your image with an AI tool, upload it to your preferred hosting service and paste the URL here
+                          </p>
+                        </div>
+                        
+                        <div className="pt-2">
+                          <Button onClick={handleImageUrlSubmit} className="w-full">
+                            <Check className="mr-2" />
+                            Save Featured Image
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                   <Button variant="outline" size="sm" onClick={handleCopy}>
                     <Copy className="mr-2" />
                     Copy
@@ -1309,6 +1457,37 @@ Ensure all quotes and special characters in the JSON are properly escaped. Do no
               )}
             </CardHeader>
             <CardContent className="space-y-4">
+              {generatedImageUrl && (
+                <div className="space-y-2">
+                  <Label className="text-white">Featured Image</Label>
+                  <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-accent/30 bg-muted">
+                    <img 
+                      src={generatedImageUrl} 
+                      alt="Featured" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {(generatedPost.imagePrompt || editedImagePrompt) && !generatedImageUrl && (
+                <Card className="bg-accent/10 border-accent/30">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <ImageIcon className="text-accent mt-1" size={20} weight="bold" />
+                      <div className="flex-1">
+                        <p className="text-sm text-white/90 font-medium mb-1">
+                          Featured Image Prompt Available
+                        </p>
+                        <p className="text-xs text-white/70">
+                          Click "Featured Image" button above to generate or add an image for this post
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {editMode ? (
                 <>
                   <div className="space-y-2">
@@ -1327,6 +1506,16 @@ Ensure all quotes and special characters in the JSON are properly escaped. Do no
                       value={editedContent}
                       onChange={(e) => setEditedContent(e.target.value)}
                       className="min-h-[400px] bg-card text-white border-border font-mono text-sm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-image-prompt" className="text-white">Image Generation Prompt (Optional)</Label>
+                    <Textarea
+                      id="edit-image-prompt"
+                      value={editedImagePrompt}
+                      onChange={(e) => setEditedImagePrompt(e.target.value)}
+                      placeholder="Describe the visual style and elements for the featured image..."
+                      className="min-h-[100px] bg-card text-white border-border text-sm"
                     />
                   </div>
                 </>
@@ -1370,6 +1559,12 @@ Ensure all quotes and special characters in the JSON are properly escaped. Do no
                       <div className="flex-1 min-w-0 cursor-pointer" onClick={() => handleLoadPost(post)}>
                         <div className="flex items-center gap-2 flex-wrap">
                           <h4 className="font-semibold text-white truncate">{post.title}</h4>
+                          {(post.featuredImagePrompt || post.featuredImageUrl) && (
+                            <Badge variant="outline" className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+                              <ImageIcon className="mr-1" size={12} weight="fill" />
+                              Image
+                            </Badge>
+                          )}
                           {isScheduled && post.scheduledFor && (
                             <Badge variant="outline" className="bg-accent/20 text-accent border-accent/30">
                               <Clock className="mr-1" size={12} weight="bold" />
