@@ -149,10 +149,13 @@ Return the result as a valid JSON object with this exact structure:
 }`
 
       const response = await (window.spark as any).llm(promptText, 'gpt-4o', true)
+      
+      console.log('LLM Response:', response)
+      
       const parsed = JSON.parse(response)
 
       if (!parsed.title || !parsed.content) {
-        throw new Error('Invalid response structure')
+        throw new Error('Invalid response structure - missing title or content')
       }
 
       setGeneratedPost(parsed)
@@ -161,7 +164,11 @@ Return the result as a valid JSON object with this exact structure:
       toast.success('Blog post generated successfully!')
     } catch (error) {
       console.error('Blog post generation error:', error)
-      toast.error('Failed to generate blog post. Please try again.')
+      if (error instanceof Error) {
+        toast.error(`Failed to generate blog post: ${error.message}`)
+      } else {
+        toast.error('Failed to generate blog post. Please try again.')
+      }
     } finally {
       setIsGenerating(false)
     }
@@ -322,10 +329,13 @@ Return the result as a valid JSON object with this exact structure:
 }`
 
       const response = await (window.spark as any).llm(promptText, 'gpt-4o', true)
+      
+      console.log('Recurring post LLM Response:', response)
+      
       const parsed = JSON.parse(response)
 
       if (!parsed.title || !parsed.content) {
-        throw new Error('Invalid response structure')
+        throw new Error('Invalid response structure - missing title or content')
       }
 
       const publishTime = calculateNextScheduledTime(schedule)
@@ -344,10 +354,14 @@ Return the result as a valid JSON object with this exact structure:
       setSavedPosts((current) => [newPost, ...(current || [])])
       
       console.log(`Generated recurring post for schedule ${schedule.id}: ${parsed.title}`)
+      toast.success('Recurring post generated!', {
+        description: `"${parsed.title}" scheduled for ${new Date(publishTime).toLocaleString()}`,
+      })
     } catch (error) {
       console.error('Failed to generate recurring post:', error)
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error'
       toast.error('Failed to generate recurring post', {
-        description: 'Check console for details',
+        description: errorMsg,
       })
     }
   }
