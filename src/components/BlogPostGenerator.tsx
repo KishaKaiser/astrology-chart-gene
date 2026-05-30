@@ -125,7 +125,7 @@ export function BlogPostGenerator() {
     try {
       const transitInfo = TRANSIT_TYPES.find(t => t.value === selectedTransit)
       
-      const prompt = (window.spark.llmPrompt as any)`You are an expert astrologer writing an engaging blog post for a general audience interested in astrology.
+      const promptText = (window.spark.llmPrompt as any)`You are an expert astrologer writing an engaging blog post for a general audience interested in astrology.
 
 Write a comprehensive, informative blog post about ${transitInfo?.label || selectedTransit}.
 
@@ -148,7 +148,7 @@ Return the result as a valid JSON object with this exact structure:
   "content": "The full blog post content with paragraphs separated by double line breaks (\\n\\n). Use markdown formatting for emphasis."
 }`
 
-      const response = await (window.spark as any).llm(prompt, 'gpt-4o', true)
+      const response = await (window.spark as any).llm(promptText, 'gpt-4o', true)
       const parsed = JSON.parse(response)
 
       if (!parsed.title || !parsed.content) {
@@ -298,7 +298,7 @@ Return the result as a valid JSON object with this exact structure:
     try {
       const transitInfo = TRANSIT_TYPES.find(t => t.value === schedule.transitType)
       
-      const prompt = (window.spark.llmPrompt as any)`You are an expert astrologer writing an engaging blog post for a general audience interested in astrology.
+      const promptText = (window.spark.llmPrompt as any)`You are an expert astrologer writing an engaging blog post for a general audience interested in astrology.
 
 Write a comprehensive, informative blog post about ${transitInfo?.label || schedule.transitType}.
 
@@ -321,7 +321,7 @@ Return the result as a valid JSON object with this exact structure:
   "content": "The full blog post content with paragraphs separated by double line breaks (\\n\\n). Use markdown formatting for emphasis."
 }`
 
-      const response = await window.spark.llm(prompt, 'gpt-4o', true)
+      const response = await (window.spark as any).llm(promptText, 'gpt-4o', true)
       const parsed = JSON.parse(response)
 
       if (!parsed.title || !parsed.content) {
