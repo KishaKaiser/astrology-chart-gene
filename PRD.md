@@ -90,6 +90,13 @@ This is a sophisticated tool requiring astronomical calculations, data visualiza
 - Progression: Chart view → Export options dialog → Select elements to include → Generate PDF → Download/print dialog
 - Success criteria: PDF contains high-quality chart image, readable tables, maintains branding, prints correctly
 
+**WooCommerce Integration**
+- Functionality: Automatically generate natal charts from WooCommerce orders via webhooks, enabling seamless e-commerce integration for selling astrology chart services
+- Purpose: Allows astrologers to sell chart generation services online through their WooCommerce store and automatically fulfill orders by generating charts from customer birth data
+- Trigger: Customer completes order purchase on WooCommerce store, webhook fires to application
+- Progression: WooCommerce tab → Configure API credentials (Store URL, Consumer Key, Consumer Secret, Webhook Secret) → Test connection → Enable integration → Create webhook in WooCommerce settings → Configure products with custom birth data fields → Customer places order → Webhook event received → Display in events list → Process event to generate chart → Chart auto-saved to library → Success confirmation
+- Success criteria: Successfully connects to WooCommerce REST API; Displays pending, completed, and failed event counts; Lists all webhook events with order details, customer info, and birth data; Processes events to automatically generate charts using provided birth information; Charts saved to library with customer name and order reference; Handles errors gracefully with retry capability; Provides clear setup instructions for WooCommerce webhook configuration and required product fields; Includes test simulation feature for development; Persists configuration and event history; Can clear individual events or all events; Shows processing status for each event; Provides webhook endpoint URL for easy copying to WooCommerce settings
+
 ## Edge Case Handling
 
 - **Invalid Birth Data**: Display clear validation errors for impossible dates, future dates, or missing required fields with helpful correction prompts
@@ -103,6 +110,9 @@ This is a sophisticated tool requiring astronomical calculations, data visualiza
 - **Electional Date Range Limits**: Prevent searches exceeding 90 days with clear error message explaining performance constraints
 - **Electional Calculation Failures**: Gracefully handle ephemeris errors during multi-date analysis, skip failed dates, continue analysis
 - **No Optimal Dates Found**: When all scores are low, still display best available options with clear warning about challenging timing
+- **WooCommerce Webhook Failures**: Handle cases where webhook payload is malformed, incomplete birth data, or authentication fails with clear error messages and retry options
+- **Duplicate Orders**: Prevent generating duplicate charts from the same order by tracking order IDs
+- **Network Issues**: Handle connection failures when testing WooCommerce API with helpful troubleshooting messages
 
 ## Design Direction
 

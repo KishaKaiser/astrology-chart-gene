@@ -20,7 +20,8 @@ import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 import { CrystalBallLogo } from '@/components/CrystalBallLogo'
-import { BookOpen, Sparkle, Star, ArrowsClockwise, Heart, ClockCounterClockwise, Infinity, Scales, UsersFour, CalendarDots, Article, Image } from '@phosphor-icons/react'
+import { WooCommerceWebhook } from '@/components/WooCommerceWebhook'
+import { BookOpen, Sparkle, Star, ArrowsClockwise, Heart, ClockCounterClockwise, Infinity, Scales, UsersFour, CalendarDots, Article, Image, ShoppingBag } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { DiagnosticTool } from '@/components/DiagnosticTool'
 import { TroubleshootingWizard } from '@/components/TroubleshootingWizard'
@@ -30,7 +31,7 @@ function App() {
   const [charts, setCharts] = useKV<ChartData[]>('astrology-charts', [])
   const [selectedChart, setSelectedChart] = useState<ChartData | null>(null)
   const [view, setView] = useState<'library' | 'chart'>('library')
-  const [activeTab, setActiveTab] = useState<'charts' | 'personal-horoscope' | 'zodiac-horoscope' | 'lovers-chart' | 'karmic-relationship' | 'past-life' | 'karmic-debt' | 'family' | 'important-days' | 'blog-generator' | 'image-generator'>('charts')
+  const [activeTab, setActiveTab] = useState<'charts' | 'personal-horoscope' | 'zodiac-horoscope' | 'lovers-chart' | 'karmic-relationship' | 'past-life' | 'karmic-debt' | 'family' | 'important-days' | 'blog-generator' | 'image-generator' | 'woocommerce'>('charts')
   const [ephemerisError, setEphemerisError] = useState(false)
 
   useEffect(() => {
@@ -217,8 +218,8 @@ function App() {
 
       <main className="container mx-auto px-6 py-12">
         {view === 'library' ? (
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'charts' | 'personal-horoscope' | 'zodiac-horoscope' | 'lovers-chart' | 'karmic-relationship' | 'past-life' | 'karmic-debt' | 'family' | 'important-days' | 'blog-generator' | 'image-generator')} className="space-y-6">
-            <TabsList className="grid w-full max-w-7xl mx-auto grid-cols-11">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'charts' | 'personal-horoscope' | 'zodiac-horoscope' | 'lovers-chart' | 'karmic-relationship' | 'past-life' | 'karmic-debt' | 'family' | 'important-days' | 'blog-generator' | 'image-generator' | 'woocommerce')} className="space-y-6">
+            <TabsList className="grid w-full max-w-7xl mx-auto grid-cols-12">
               <TabsTrigger value="charts" className="gap-2 text-white">
                 <BookOpen weight="bold" />
                 Chart Library
@@ -262,6 +263,10 @@ function App() {
               <TabsTrigger value="image-generator" className="gap-2">
                 <Image weight="fill" />
                 Images
+              </TabsTrigger>
+              <TabsTrigger value="woocommerce" className="gap-2">
+                <ShoppingBag weight="fill" />
+                WooCommerce
               </TabsTrigger>
             </TabsList>
 
@@ -344,6 +349,15 @@ function App() {
 
             <TabsContent value="image-generator">
               <MysticalImageGenerator />
+            </TabsContent>
+
+            <TabsContent value="woocommerce">
+              <WooCommerceWebhook
+                onChartGenerated={(chart) => {
+                  setCharts((currentCharts) => [...(currentCharts || []), chart])
+                  toast.success(`Chart generated from WooCommerce order: ${chart.name}`)
+                }}
+              />
             </TabsContent>
           </Tabs>
         ) : selectedChart ? (
