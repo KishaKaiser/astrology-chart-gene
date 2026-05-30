@@ -9,10 +9,11 @@ import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Copy, Check, Link, ArrowsClockwise, ClockCounterClockwise, Trash, ShoppingBag } from '@phosphor-icons/react'
+import { Copy, Check, Link, ArrowsClockwise, ClockCounterClockwise, Trash, ShoppingBag, EnvelopeSimple, Bell, X } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { generateChartData } from '@/lib/astrology-calc'
 import { ChartData } from '@/lib/astrology-types'
+import { sendChartGenerationNotification, ChartEmailNotificationSettings, createChartNotificationHistory, ChartNotificationHistoryEntry } from '@/lib/email-notifications'
 
 interface WooCommerceConfig {
   storeUrl: string
@@ -56,10 +57,20 @@ export function WooCommerceWebhook({ onChartGenerated }: WooCommerceWebhookProps
     enabled: false,
   })
   const [webhookEvents, setWebhookEvents] = useKV<WebhookEvent[]>('webhook-events', [])
+  const [emailSettings, setEmailSettings] = useKV<ChartEmailNotificationSettings>('woocommerce-email-settings', {
+    enabled: false,
+    recipientEmails: [],
+    notifyOnSuccess: true,
+    notifyOnFailure: true,
+    includeChartDetails: true,
+  })
+  const [notificationHistory, setNotificationHistory] = useKV<ChartNotificationHistoryEntry[]>('woocommerce-notification-history', [])
   
   const [copiedField, setCopiedField] = useState<string | null>(null)
   const [testingConnection, setTestingConnection] = useState(false)
   const [processingEvent, setProcessingEvent] = useState<string | null>(null)
+  const [emailInput, setEmailInput] = useState('')
+  const [isValidEmail, setIsValidEmail] = useState(false)
 
   const webhookUrl = `${window.location.origin}/api/webhook/woocommerce`
   
@@ -72,6 +83,19 @@ export function WooCommerceWebhook({ onChartGenerated }: WooCommerceWebhookProps
   }
   
   const currentEvents = webhookEvents || []
+  const currentEmailSettings = emailSettings || {
+    enabled: false,
+    recipientEmails: [],
+    notifyOnSuccess: true,
+    notifyOnFailure: true,
+    includeChartDetails: true,
+  }
+  const currentNotificationHistory = notificationHistory || []
+
+  useEffect(() => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    setIsValidEmail(emailRegex.test(emailInput))
+  }, [emailInput])
 
   const handleCopyToClipboard = async (text: string, field: string) => {
     try {
@@ -162,6 +186,33 @@ export function WooCommerceWebhook({ onChartGenerated }: WooCommerceWebhookProps
       if (onChartGenerated) {
         onChartGenerated(chart)
       }
+
+      if (currentEmailSettings.enabled && currentEmailSettings.recipientEmails.length > 0) {
+        await sendChartGenerationNotification(
+          chart,
+          currentEmailSettings,
+          true,
+          {
+            orderId: event.orderId,
+            customerName: event.customerName,
+            customerEmail: event.customerEmail,
+          }
+        )
+
+        const historyEntry = createChartNotificationHistory(
+          chart,
+          true,
+          currentEmailSettings.recipientEmails,
+          {
+            orderId: event.orderId,
+            customerName: event.customerName,
+            customerEmail: event.customerEmail,
+          }
+        )
+
+        setNotificationHistory((current) => [historyEntry, ...(current || [])])
+        toast.success(`Email notification sent to ${currentEmailSettings.recipientEmails.length} recipient(s)`)
+      }
     } catch (error) {
       console.error('Chart generation failed:', error)
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
@@ -176,6 +227,34 @@ export function WooCommerceWebhook({ onChartGenerated }: WooCommerceWebhookProps
       })
       
       toast.error(`Failed to generate chart: ${errorMessage}`)
+
+      if (currentEmailSettings.enabled && currentEmailSettings.recipientEmails.length > 0 && currentEmailSettings.notifyOnFailure) {
+        await sendChartGenerationNotification(
+          null,
+          currentEmailSettings,
+          false,
+          {
+            orderId: event.orderId,
+            customerName: event.customerName,
+            customerEmail: event.customerEmail,
+          },
+          errorMessage
+        )
+
+        const historyEntry = createChartNotificationHistory(
+          null,
+          false,
+          currentEmailSettings.recipientEmails,
+          {
+            orderId: event.orderId,
+            customerName: event.customerName,
+            customerEmail: event.customerEmail,
+          },
+          errorMessage
+        )
+
+        setNotificationHistory((current) => [historyEntry, ...(current || [])])
+      }
     } finally {
       setProcessingEvent(null)
     }
@@ -192,6 +271,73 @@ export function WooCommerceWebhook({ onChartGenerated }: WooCommerceWebhookProps
   const handleClearAllEvents = () => {
     setWebhookEvents([])
     toast.success('All events cleared')
+  }
+
+  const handleAddEmail = () => {
+    if (!isValidEmail) {
+      toast.error('Please enter a valid email address')
+      return
+    }
+
+    if (currentEmailSettings.recipientEmails.includes(emailInput)) {
+      toast.error('This email is already in the list')
+      return
+    }
+
+    setEmailSettings((current) => {
+      const c = current || {
+        enabled: false,
+        recipientEmails: [],
+        notifyOnSuccess: true,
+        notifyOnFailure: true,
+        includeChartDetails: true,
+      }
+      return {
+        ...c,
+        recipientEmails: [...c.recipientEmails, emailInput],
+      }
+    })
+
+    setEmailInput('')
+    toast.success('Email added to notification list')
+  }
+
+  const handleRemoveEmail = (email: string) => {
+    setEmailSettings((current) => {
+      const c = current || {
+        enabled: false,
+        recipientEmails: [],
+        notifyOnSuccess: true,
+        notifyOnFailure: true,
+        includeChartDetails: true,
+      }
+      return {
+        ...c,
+        recipientEmails: c.recipientEmails.filter(e => e !== email),
+      }
+    })
+    toast.success('Email removed from notification list')
+  }
+
+  const handleToggleEmailSetting = (key: keyof ChartEmailNotificationSettings, value: boolean) => {
+    setEmailSettings((current) => {
+      const c = current || {
+        enabled: false,
+        recipientEmails: [],
+        notifyOnSuccess: true,
+        notifyOnFailure: true,
+        includeChartDetails: true,
+      }
+      return {
+        ...c,
+        [key]: value,
+      }
+    })
+  }
+
+  const handleClearNotificationHistory = () => {
+    setNotificationHistory([])
+    toast.success('Notification history cleared')
   }
 
   const simulateWebhookEvent = () => {
@@ -231,7 +377,7 @@ export function WooCommerceWebhook({ onChartGenerated }: WooCommerceWebhookProps
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">Pending</CardTitle>
@@ -256,13 +402,42 @@ export function WooCommerceWebhook({ onChartGenerated }: WooCommerceWebhookProps
             <div className="text-3xl font-bold text-red-400">{failedEvents}</div>
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              Email Notifications
+              {currentEmailSettings.enabled && (
+                <Badge variant="default" className="text-xs">On</Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2">
+              {currentEmailSettings.enabled ? (
+                <Bell weight="fill" className="text-accent" size={24} />
+              ) : (
+                <Bell weight="bold" className="text-muted-foreground" size={24} />
+              )}
+              <div className="text-2xl font-bold text-white">
+                {currentEmailSettings.recipientEmails.length}
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              {currentEmailSettings.enabled ? 'Recipients' : 'Disabled'}
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       <Tabs defaultValue="setup" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="setup" className="gap-2">
             <Link weight="bold" />
             Setup
+          </TabsTrigger>
+          <TabsTrigger value="notifications" className="gap-2">
+            <EnvelopeSimple weight="bold" />
+            Notifications
           </TabsTrigger>
           <TabsTrigger value="events" className="gap-2">
             <ClockCounterClockwise weight="bold" />
@@ -417,6 +592,215 @@ export function WooCommerceWebhook({ onChartGenerated }: WooCommerceWebhookProps
               </Button>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="notifications" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <EnvelopeSimple weight="bold" className="text-accent" />
+                Email Notifications
+              </CardTitle>
+              <CardDescription>
+                Get notified when charts are generated from WooCommerce orders
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between p-4 rounded-lg bg-card/50 border border-border">
+                <div className="flex items-center gap-3">
+                  {currentEmailSettings.enabled ? (
+                    <Bell weight="fill" className="text-accent" size={20} />
+                  ) : (
+                    <Bell weight="bold" className="text-muted-foreground" size={20} />
+                  )}
+                  <div>
+                    <Label htmlFor="enable-email-notifications" className="text-white cursor-pointer">
+                      Enable Email Notifications
+                    </Label>
+                    <p className="text-xs text-white/60 mt-0.5">
+                      Receive emails when charts are generated
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  id="enable-email-notifications"
+                  checked={currentEmailSettings.enabled}
+                  onCheckedChange={(checked) => handleToggleEmailSetting('enabled', checked)}
+                />
+              </div>
+
+              {currentEmailSettings.enabled && (
+                <>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="notification-email-input" className="text-white">
+                        Add Email Recipients
+                      </Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="notification-email-input"
+                          type="email"
+                          placeholder="email@example.com"
+                          value={emailInput}
+                          onChange={(e) => setEmailInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              handleAddEmail()
+                            }
+                          }}
+                          className="bg-background text-white border-border"
+                        />
+                        <Button
+                          onClick={handleAddEmail}
+                          disabled={!isValidEmail}
+                          variant="outline"
+                        >
+                          <Check weight="bold" className="mr-2" />
+                          Add
+                        </Button>
+                      </div>
+                    </div>
+
+                    {currentEmailSettings.recipientEmails.length > 0 && (
+                      <div className="space-y-2">
+                        <Label className="text-white">
+                          Email Recipients ({currentEmailSettings.recipientEmails.length})
+                        </Label>
+                        <div className="flex flex-wrap gap-2">
+                          {currentEmailSettings.recipientEmails.map((email) => (
+                            <Badge
+                              key={email}
+                              variant="outline"
+                              className="bg-accent/20 text-accent border-accent/30 pr-1 pl-3 py-1.5 text-sm"
+                            >
+                              {email}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRemoveEmail(email)}
+                                className="h-5 w-5 p-0 ml-2 hover:bg-accent/20"
+                              >
+                                <X weight="bold" size={14} />
+                              </Button>
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-3 pt-2 border-t border-border/50">
+                    <Label className="text-white">Notification Preferences</Label>
+                    
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-card/50 border border-border">
+                      <div>
+                        <Label htmlFor="notify-on-success" className="text-white cursor-pointer">
+                          Notify on successful generation
+                        </Label>
+                        <p className="text-xs text-white/60 mt-0.5">
+                          Get notified when charts generate successfully
+                        </p>
+                      </div>
+                      <Switch
+                        id="notify-on-success"
+                        checked={currentEmailSettings.notifyOnSuccess}
+                        onCheckedChange={(checked) => handleToggleEmailSetting('notifyOnSuccess', checked)}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-card/50 border border-border">
+                      <div>
+                        <Label htmlFor="notify-on-failure" className="text-white cursor-pointer">
+                          Notify on generation failure
+                        </Label>
+                        <p className="text-xs text-white/60 mt-0.5">
+                          Get alerted when chart generation fails
+                        </p>
+                      </div>
+                      <Switch
+                        id="notify-on-failure"
+                        checked={currentEmailSettings.notifyOnFailure}
+                        onCheckedChange={(checked) => handleToggleEmailSetting('notifyOnFailure', checked)}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-card/50 border border-border">
+                      <div>
+                        <Label htmlFor="include-chart-details" className="text-white cursor-pointer">
+                          Include chart details in email
+                        </Label>
+                        <p className="text-xs text-white/60 mt-0.5">
+                          Show birth data and chart information
+                        </p>
+                      </div>
+                      <Switch
+                        id="include-chart-details"
+                        checked={currentEmailSettings.includeChartDetails}
+                        onCheckedChange={(checked) => handleToggleEmailSetting('includeChartDetails', checked)}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          {currentNotificationHistory.length > 0 && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Notification History</CardTitle>
+                  <Button onClick={handleClearNotificationHistory} variant="outline" size="sm">
+                    <Trash className="mr-2" weight="bold" />
+                    Clear History
+                  </Button>
+                </div>
+                <CardDescription>
+                  Recent email notifications sent
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[400px]">
+                  <div className="space-y-3">
+                    {currentNotificationHistory.map((entry) => (
+                      <div
+                        key={entry.id}
+                        className="p-4 rounded-lg border border-border bg-card/50"
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <h4 className="font-semibold text-white">{entry.chartName}</h4>
+                            <p className="text-sm text-muted-foreground">
+                              Order #{entry.orderId}
+                            </p>
+                          </div>
+                          <Badge
+                            variant={entry.success ? 'default' : 'destructive'}
+                          >
+                            {entry.success ? 'Success' : 'Failed'}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-2">
+                          Sent to {entry.recipientEmails.length} recipient(s)
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(entry.timestamp).toLocaleString()}
+                        </p>
+                        {entry.errorMessage && (
+                          <Alert variant="destructive" className="mt-2">
+                            <AlertDescription className="text-xs">
+                              {entry.errorMessage}
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="events" className="space-y-4">

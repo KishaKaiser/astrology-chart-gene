@@ -1,4 +1,6 @@
 import type { EmailNotificationSettings } from '@/components/EmailNotificationSettings'
+import type { ChartData } from '@/lib/astrology-types'
+import { ZODIAC_SIGNS } from '@/lib/astrology-types'
 
 interface BlogPost {
   id: string
@@ -8,6 +10,19 @@ interface BlogPost {
   publishedUrl?: string
   publishStatus?: 'draft' | 'published' | 'scheduled' | 'failed'
   publishError?: string
+}
+
+export interface ChartEmailNotificationSettings {
+  enabled: boolean
+  recipientEmails: string[]
+  notifyOnSuccess: boolean
+  notifyOnFailure: boolean
+  includeChartDetails: boolean
+}
+
+function getZodiacSign(longitude: number): string {
+  const signIndex = Math.floor(longitude / 30)
+  return ZODIAC_SIGNS[signIndex]
 }
 
 export async function sendPublicationNotification(
@@ -178,6 +193,170 @@ export interface NotificationHistoryEntry {
   id: string
   postId: string
   postTitle: string
+  success: boolean
+  recipientEmails: string[]
+  timestamp: number
+  errorMessage?: string
+}
+
+export async function sendChartGenerationNotification(
+  chart: ChartData | null,
+  settings: ChartEmailNotificationSettings,
+  success: boolean,
+  orderInfo?: {
+    orderId: string
+    customerName: string
+    customerEmail: string
+  },
+  errorMessage?: string
+): Promise<void> {
+  if (!settings.enabled || settings.recipientEmails.length === 0) {
+    return
+  }
+
+  if (success && !settings.notifyOnSuccess) {
+    return
+  }
+
+  if (!success && !settings.notifyOnFailure) {
+    return
+  }
+
+  const emailContent = generateChartEmailContent(chart, settings, success, orderInfo, errorMessage)
+
+  for (const email of settings.recipientEmails) {
+    try {
+      await sendEmail(email, emailContent)
+    } catch (error) {
+      console.error(`Failed to send notification to ${email}:`, error)
+    }
+  }
+}
+
+function generateChartEmailContent(
+  chart: ChartData | null,
+  settings: ChartEmailNotificationSettings,
+  success: boolean,
+  orderInfo?: {
+    orderId: string
+    customerName: string
+    customerEmail: string
+  },
+  errorMessage?: string
+): EmailContent {
+  const subject = success
+    ? `✅ Chart Generated from WooCommerce Order #${orderInfo?.orderId || 'Unknown'}`
+    : `❌ Chart Generation Failed for Order #${orderInfo?.orderId || 'Unknown'}`
+
+  let body = success
+    ? `<h2 style="color: #10b981;">✅ Chart Successfully Generated</h2>`
+    : `<h2 style="color: #ef4444;">❌ Chart Generation Failed</h2>`
+
+  body += `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #1a1a2e; color: #ffffff;">
+      <div style="background-color: #252542; border-radius: 8px; padding: 24px; margin-bottom: 20px;">
+        <h3 style="margin-top: 0; color: #a78bfa;">WooCommerce Order Details</h3>
+        <p style="color: #9ca3af; margin: 8px 0;">
+          <strong>Order ID:</strong> #${orderInfo?.orderId || 'Unknown'}
+        </p>
+        <p style="color: #9ca3af; margin: 8px 0;">
+          <strong>Customer:</strong> ${orderInfo?.customerName || 'Unknown'}
+        </p>
+        <p style="color: #9ca3af; margin: 8px 0;">
+          <strong>Email:</strong> ${orderInfo?.customerEmail || 'Unknown'}
+        </p>
+  `
+
+  if (success && chart && settings.includeChartDetails) {
+    const sunPlanet = chart.planets.find(p => p.name === 'Sun')
+    const moonPlanet = chart.planets.find(p => p.name === 'Moon')
+    const ascendantSign = getZodiacSign(chart.ascendant)
+    
+    body += `
+        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #374151;">
+          <h4 style="color: #a78bfa; margin-bottom: 12px;">Chart Details</h4>
+          <p style="color: #9ca3af; margin: 8px 0;">
+            <strong>Name:</strong> ${escapeHtml(chart.name)}
+          </p>
+          <p style="color: #9ca3af; margin: 8px 0;">
+            <strong>Birth Date:</strong> ${chart.date}
+          </p>
+          <p style="color: #9ca3af; margin: 8px 0;">
+            <strong>Birth Time:</strong> ${chart.time}
+          </p>
+          <p style="color: #9ca3af; margin: 8px 0;">
+            <strong>Location:</strong> ${escapeHtml(chart.location)}
+          </p>
+          <p style="color: #9ca3af; margin: 8px 0;">
+            <strong>Sun Sign:</strong> ${sunPlanet?.sign || 'N/A'}
+          </p>
+          <p style="color: #9ca3af; margin: 8px 0;">
+            <strong>Moon Sign:</strong> ${moonPlanet?.sign || 'N/A'}
+          </p>
+          <p style="color: #9ca3af; margin: 8px 0;">
+            <strong>Rising Sign:</strong> ${ascendantSign}
+          </p>
+        </div>
+    `
+  }
+
+  if (!success && errorMessage) {
+    body += `
+        <div style="background-color: #4c1d1d; border-left: 4px solid #ef4444; padding: 12px; margin: 16px 0; border-radius: 4px;">
+          <p style="margin: 0; color: #fca5a5;"><strong>Error Details:</strong></p>
+          <p style="margin: 8px 0 0 0; color: #fca5a5;">${escapeHtml(errorMessage)}</p>
+        </div>
+    `
+  }
+
+  body += `
+      </div>
+      
+      <div style="text-align: center; color: #6b7280; font-size: 12px; padding-top: 20px; border-top: 1px solid #374151;">
+        <p style="margin: 0;">
+          Psychic Link Charts - WooCommerce Integration
+        </p>
+        <p style="margin: 8px 0 0 0;">
+          ${new Date().toLocaleString()}
+        </p>
+      </div>
+    </div>
+  `
+
+  return {
+    subject,
+    body,
+  }
+}
+
+export function createChartNotificationHistory(
+  chart: ChartData | null,
+  success: boolean,
+  recipientEmails: string[],
+  orderInfo?: {
+    orderId: string
+    customerName: string
+    customerEmail: string
+  },
+  errorMessage?: string
+): ChartNotificationHistoryEntry {
+  return {
+    id: Date.now().toString(),
+    chartId: chart?.id || 'unknown',
+    chartName: chart?.name || orderInfo?.customerName || 'Unknown',
+    orderId: orderInfo?.orderId || 'unknown',
+    success,
+    recipientEmails,
+    timestamp: Date.now(),
+    errorMessage: success ? undefined : errorMessage,
+  }
+}
+
+export interface ChartNotificationHistoryEntry {
+  id: string
+  chartId: string
+  chartName: string
+  orderId: string
   success: boolean
   recipientEmails: string[]
   timestamp: number
