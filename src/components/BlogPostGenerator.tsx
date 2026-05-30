@@ -127,35 +127,58 @@ export function BlogPostGenerator() {
       
       const promptText = (window.spark.llmPrompt as any)`You are an expert astrologer writing an engaging blog post for a general audience interested in astrology.
 
-Write a comprehensive, informative blog post about ${transitInfo?.label || selectedTransit}.
+Write a comprehensive blog post about ${transitInfo?.label || selectedTransit}.
 
 Context: ${transitInfo?.description || 'astrological transit'}
 ${additionalContext ? `Additional focus areas: ${additionalContext}` : ''}
 
 The blog post should include:
 1. An engaging introduction explaining what ${transitInfo?.label || selectedTransit} is
-2. Key effects and themes people might experience
+2. Key effects and themes people might experience  
 3. What to expect during this transit
 4. Practical advice and tips for navigating this period
 5. Do's and don'ts during this transit
 6. A positive, empowering conclusion
 
-Write in an accessible, warm tone that balances astrological knowledge with practical wisdom. Use specific examples where helpful.
+Write in an accessible, warm tone that balances astrological knowledge with practical wisdom.
 
-Return the result as a valid JSON object with this exact structure:
+IMPORTANT: Keep the content concise (around 500-800 words total) to ensure complete generation.
+
+Return ONLY a valid JSON object with this EXACT structure (no additional text before or after):
 {
-  "title": "An engaging, SEO-friendly blog post title",
-  "content": "The full blog post content with paragraphs separated by double line breaks (\\n\\n). Use markdown formatting for emphasis."
-}`
+  "title": "An engaging, SEO-friendly blog post title (one line)",
+  "content": "The complete blog post content. Write 4-6 paragraphs. Separate paragraphs with TWO newline characters. Keep total length under 800 words."
+}
+
+Ensure all quotes and special characters in the JSON are properly escaped. Do not include any text outside the JSON object.`
 
       const response = await (window.spark as any).llm(promptText, 'gpt-4o', true)
       
-      console.log('LLM Response:', response)
+      console.log('LLM Response (first 500 chars):', response.substring(0, 500))
+      console.log('LLM Response (last 500 chars):', response.substring(Math.max(0, response.length - 500)))
       
-      const parsed = JSON.parse(response)
+      let parsed: any
+      try {
+        parsed = JSON.parse(response)
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError)
+        console.error('Response length:', response.length)
+        
+        const jsonMatch = response.match(/\{[\s\S]*"title"[\s\S]*"content"[\s\S]*\}/)
+        if (jsonMatch) {
+          console.log('Attempting to extract JSON from response...')
+          parsed = JSON.parse(jsonMatch[0])
+        } else {
+          throw new Error('Could not parse blog post response. The response may be incomplete or incorrectly formatted. Please try again.')
+        }
+      }
 
       if (!parsed.title || !parsed.content) {
         throw new Error('Invalid response structure - missing title or content')
+      }
+
+      if (parsed.content.length < 100) {
+        throw new Error('Generated content is too short. Please try again.')
       }
 
       setGeneratedPost(parsed)
@@ -165,7 +188,14 @@ Return the result as a valid JSON object with this exact structure:
     } catch (error) {
       console.error('Blog post generation error:', error)
       if (error instanceof Error) {
-        toast.error(`Failed to generate blog post: ${error.message}`)
+        const errorMsg = error.message
+        if (errorMsg.includes('Unterminated string') || errorMsg.includes('JSON')) {
+          toast.error('Failed to generate complete blog post. Please try again.', {
+            description: 'The AI response was incomplete or improperly formatted. This usually resolves on retry.'
+          })
+        } else {
+          toast.error(`Failed to generate blog post: ${errorMsg}`)
+        }
       } else {
         toast.error('Failed to generate blog post. Please try again.')
       }
@@ -307,32 +337,49 @@ Return the result as a valid JSON object with this exact structure:
       
       const promptText = (window.spark.llmPrompt as any)`You are an expert astrologer writing an engaging blog post for a general audience interested in astrology.
 
-Write a comprehensive, informative blog post about ${transitInfo?.label || schedule.transitType}.
+Write a comprehensive blog post about ${transitInfo?.label || schedule.transitType}.
 
 Context: ${transitInfo?.description || 'astrological transit'}
 ${schedule.additionalContext ? `Additional focus areas: ${schedule.additionalContext}` : ''}
 
 The blog post should include:
 1. An engaging introduction explaining what ${transitInfo?.label || schedule.transitType} is
-2. Key effects and themes people might experience
+2. Key effects and themes people might experience  
 3. What to expect during this transit
 4. Practical advice and tips for navigating this period
 5. Do's and don'ts during this transit
 6. A positive, empowering conclusion
 
-Write in an accessible, warm tone that balances astrological knowledge with practical wisdom. Use specific examples where helpful.
+Write in an accessible, warm tone that balances astrological knowledge with practical wisdom.
 
-Return the result as a valid JSON object with this exact structure:
+IMPORTANT: Keep the content concise (around 500-800 words total) to ensure complete generation.
+
+Return ONLY a valid JSON object with this EXACT structure (no additional text before or after):
 {
-  "title": "An engaging, SEO-friendly blog post title",
-  "content": "The full blog post content with paragraphs separated by double line breaks (\\n\\n). Use markdown formatting for emphasis."
-}`
+  "title": "An engaging, SEO-friendly blog post title (one line)",
+  "content": "The complete blog post content. Write 4-6 paragraphs. Separate paragraphs with TWO newline characters. Keep total length under 800 words."
+}
+
+Ensure all quotes and special characters in the JSON are properly escaped. Do not include any text outside the JSON object.`
 
       const response = await (window.spark as any).llm(promptText, 'gpt-4o', true)
       
-      console.log('Recurring post LLM Response:', response)
+      console.log('Recurring post LLM Response (first 500 chars):', response.substring(0, 500))
       
-      const parsed = JSON.parse(response)
+      let parsed: any
+      try {
+        parsed = JSON.parse(response)
+      } catch (parseError) {
+        console.error('JSON parse error for recurring post:', parseError)
+        
+        const jsonMatch = response.match(/\{[\s\S]*"title"[\s\S]*"content"[\s\S]*\}/)
+        if (jsonMatch) {
+          console.log('Attempting to extract JSON from recurring response...')
+          parsed = JSON.parse(jsonMatch[0])
+        } else {
+          throw new Error('Could not parse blog post response. Please try again.')
+        }
+      }
 
       if (!parsed.title || !parsed.content) {
         throw new Error('Invalid response structure - missing title or content')
@@ -360,9 +407,16 @@ Return the result as a valid JSON object with this exact structure:
     } catch (error) {
       console.error('Failed to generate recurring post:', error)
       const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-      toast.error('Failed to generate recurring post', {
-        description: errorMsg,
-      })
+      
+      if (errorMsg.includes('Unterminated string') || errorMsg.includes('JSON')) {
+        toast.error('Failed to generate recurring post', {
+          description: 'Response was incomplete. Will retry on next schedule.',
+        })
+      } else {
+        toast.error('Failed to generate recurring post', {
+          description: errorMsg,
+        })
+      }
     }
   }
 
