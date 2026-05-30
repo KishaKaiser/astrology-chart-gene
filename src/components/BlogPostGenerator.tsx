@@ -24,6 +24,7 @@ import { BlogAnalyticsDashboard } from '@/components/BlogAnalyticsDashboard'
 import { EmailNotificationSettings, type EmailNotificationSettings as EmailNotificationSettingsType } from '@/components/EmailNotificationSettings'
 import { NotificationHistory } from '@/components/NotificationHistory'
 import { sendPublicationNotification, createNotificationHistory, type NotificationHistoryEntry } from '@/lib/email-notifications'
+import { MysticalImageGeneratorEmbed } from '@/components/MysticalImageGeneratorEmbed'
 
 interface BlogPost {
   id: string
@@ -1297,166 +1298,123 @@ Ensure all quotes and special characters in the JSON are properly escaped. Do no
                         Generate Image
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="bg-card border-border text-white max-w-3xl max-h-[90vh] overflow-y-auto">
+                    <DialogContent className="bg-card border-border text-white max-w-5xl max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
                         <DialogTitle className="text-white text-2xl">Generate Featured Image</DialogTitle>
                         <DialogDescription className="text-white/70">
-                          Follow these steps to create a stunning AI-generated image for your blog post
+                          Create a stunning mystical or solar image for your blog post
                         </DialogDescription>
                       </DialogHeader>
                       
-                      <div className="space-y-6 py-4">
-                        <Card className="bg-accent/10 border-accent/30">
-                          <CardContent className="p-4">
-                            <div className="flex items-start gap-3">
-                              <div className="w-8 h-8 rounded-full bg-accent/20 text-accent flex items-center justify-center font-bold flex-shrink-0">
-                                1
-                              </div>
-                              <div className="flex-1 space-y-3">
-                                <div>
-                                  <h4 className="text-white font-semibold mb-1">Copy the Image Prompt</h4>
-                                  <p className="text-sm text-white/70 mb-3">
-                                    We've generated a detailed prompt optimized for AI image generation
-                                  </p>
-                                </div>
-                                <div className="relative">
-                                  <Textarea
-                                    value={editMode ? editedImagePrompt : (generatedPost.imagePrompt || '')}
-                                    readOnly={!editMode}
-                                    onChange={(e) => editMode && setEditedImagePrompt(e.target.value)}
-                                    className="min-h-[100px] bg-background text-white border-border pr-10 text-sm"
-                                  />
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="absolute top-2 right-2 hover:bg-accent/20"
-                                    onClick={handleCopyImagePrompt}
-                                  >
-                                    <Copy weight="bold" />
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-
-                        <Card className="bg-accent/10 border-accent/30">
-                          <CardContent className="p-4">
-                            <div className="flex items-start gap-3">
-                              <div className="w-8 h-8 rounded-full bg-accent/20 text-accent flex items-center justify-center font-bold flex-shrink-0">
-                                2
-                              </div>
-                              <div className="flex-1">
-                                <h4 className="text-white font-semibold mb-2">Generate with AI Tools</h4>
-                                <p className="text-sm text-white/70 mb-3">
-                                  Use the copied prompt with any of these popular AI image generators:
-                                </p>
-                                <div className="grid grid-cols-2 gap-2">
-                                  <a 
-                                    href="https://openai.com/dall-e-3" 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-2 p-2 rounded-lg bg-background/50 hover:bg-background border border-border hover:border-accent/50 transition-colors text-sm text-white"
-                                  >
-                                    <Sparkle weight="fill" className="text-accent" size={16} />
-                                    <span>DALL-E 3</span>
-                                  </a>
-                                  <a 
-                                    href="https://www.midjourney.com" 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-2 p-2 rounded-lg bg-background/50 hover:bg-background border border-border hover:border-accent/50 transition-colors text-sm text-white"
-                                  >
-                                    <Sparkle weight="fill" className="text-accent" size={16} />
-                                    <span>Midjourney</span>
-                                  </a>
-                                  <a 
-                                    href="https://leonardo.ai" 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-2 p-2 rounded-lg bg-background/50 hover:bg-background border border-border hover:border-accent/50 transition-colors text-sm text-white"
-                                  >
-                                    <Sparkle weight="fill" className="text-accent" size={16} />
-                                    <span>Leonardo.ai</span>
-                                  </a>
-                                  <a 
-                                    href="https://stablediffusionweb.com" 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-2 p-2 rounded-lg bg-background/50 hover:bg-background border border-border hover:border-accent/50 transition-colors text-sm text-white"
-                                  >
-                                    <Sparkle weight="fill" className="text-accent" size={16} />
-                                    <span>Stable Diffusion</span>
-                                  </a>
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-
-                        <Card className="bg-accent/10 border-accent/30">
-                          <CardContent className="p-4">
-                            <div className="flex items-start gap-3">
-                              <div className="w-8 h-8 rounded-full bg-accent/20 text-accent flex items-center justify-center font-bold flex-shrink-0">
-                                3
-                              </div>
-                              <div className="flex-1 space-y-3">
-                                <div>
-                                  <h4 className="text-white font-semibold mb-1">Paste Image URL</h4>
-                                  <p className="text-sm text-white/70 mb-3">
-                                    After generating your image, paste the direct URL here
-                                  </p>
-                                </div>
-                                
-                                {generatedImageUrl && (
-                                  <div className="space-y-2">
-                                    <Label className="text-white text-xs">Preview</Label>
-                                    <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-border bg-muted">
-                                      <img 
-                                        src={generatedImageUrl} 
-                                        alt="Featured" 
-                                        className="w-full h-full object-cover"
-                                        onError={() => toast.error('Failed to load image. Please check the URL.')}
-                                      />
-                                    </div>
-                                  </div>
-                                )}
-                                
-                                <div className="space-y-2">
-                                  <Input
-                                    id="image-url"
-                                    type="url"
-                                    placeholder="https://example.com/your-generated-image.jpg"
-                                    value={generatedImageUrl}
-                                    onChange={(e) => setGeneratedImageUrl(e.target.value)}
-                                    className="bg-background text-white border-border"
-                                  />
-                                  <p className="text-xs text-white/50">
-                                    Tip: Most AI tools provide a direct image URL. You can also upload to imgur.com or another image host.
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
+                      <Tabs defaultValue="generator" className="py-4">
+                        <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="generator">Custom Generator</TabsTrigger>
+                          <TabsTrigger value="external">External URL</TabsTrigger>
+                        </TabsList>
                         
-                        <div className="flex gap-3 pt-2">
-                          <Button 
-                            variant="outline" 
-                            onClick={() => setImageDialogOpen(false)} 
-                            className="flex-1"
-                          >
-                            Cancel
-                          </Button>
-                          <Button 
-                            onClick={handleImageUrlSubmit} 
-                            className="flex-1"
-                            disabled={!generatedImageUrl}
-                          >
-                            <Check className="mr-2" />
-                            Save Featured Image
-                          </Button>
-                        </div>
+                        <TabsContent value="generator" className="space-y-4 mt-4">
+                          <MysticalImageGeneratorEmbed onImageGenerated={(dataUrl) => {
+                            setGeneratedImageUrl(dataUrl)
+                            toast.success('Image generated! You can use it for your blog post.')
+                          }} />
+                        </TabsContent>
+                        
+                        <TabsContent value="external" className="space-y-4 mt-4">
+                          <Card className="bg-accent/10 border-accent/30">
+                            <CardContent className="p-4">
+                              <div className="flex items-start gap-3">
+                                <div className="w-8 h-8 rounded-full bg-accent/20 text-accent flex items-center justify-center font-bold flex-shrink-0">
+                                  1
+                                </div>
+                                <div className="flex-1 space-y-3">
+                                  <div>
+                                    <h4 className="text-white font-semibold mb-1">Image Prompt</h4>
+                                    <p className="text-sm text-white/70 mb-3">
+                                      Use this prompt with external AI image generators if preferred
+                                    </p>
+                                  </div>
+                                  <div className="relative">
+                                    <Textarea
+                                      value={editMode ? editedImagePrompt : (generatedPost.imagePrompt || '')}
+                                      readOnly={!editMode}
+                                      onChange={(e) => editMode && setEditedImagePrompt(e.target.value)}
+                                      className="min-h-[100px] bg-background text-white border-border pr-10 text-sm"
+                                    />
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="absolute top-2 right-2 hover:bg-accent/20"
+                                      onClick={handleCopyImagePrompt}
+                                    >
+                                      <Copy weight="bold" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+
+                          <Card className="bg-accent/10 border-accent/30">
+                            <CardContent className="p-4">
+                              <div className="flex items-start gap-3">
+                                <div className="w-8 h-8 rounded-full bg-accent/20 text-accent flex items-center justify-center font-bold flex-shrink-0">
+                                  2
+                                </div>
+                                <div className="flex-1 space-y-3">
+                                  <div>
+                                    <h4 className="text-white font-semibold mb-1">Paste Image URL</h4>
+                                    <p className="text-sm text-white/70 mb-3">
+                                      After generating your image externally, paste the direct URL here
+                                    </p>
+                                  </div>
+                                  
+                                  {generatedImageUrl && (
+                                    <div className="space-y-2">
+                                      <Label className="text-white text-xs">Preview</Label>
+                                      <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-border bg-muted">
+                                        <img 
+                                          src={generatedImageUrl} 
+                                          alt="Featured" 
+                                          className="w-full h-full object-cover"
+                                          onError={() => toast.error('Failed to load image. Please check the URL.')}
+                                        />
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  <div className="space-y-2">
+                                    <Input
+                                      id="image-url"
+                                      type="url"
+                                      placeholder="https://example.com/your-generated-image.jpg"
+                                      value={generatedImageUrl}
+                                      onChange={(e) => setGeneratedImageUrl(e.target.value)}
+                                      className="bg-background text-white border-border"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </TabsContent>
+                      </Tabs>
+                      
+                      <div className="flex gap-3 pt-2">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setImageDialogOpen(false)} 
+                          className="flex-1"
+                        >
+                          Close
+                        </Button>
+                        <Button 
+                          onClick={handleImageUrlSubmit} 
+                          className="flex-1"
+                          disabled={!generatedImageUrl}
+                        >
+                          <Check className="mr-2" />
+                          Use This Image
+                        </Button>
                       </div>
                     </DialogContent>
                   </Dialog>
