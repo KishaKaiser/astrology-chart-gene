@@ -2,10 +2,8 @@ import { ChartData, PLANET_SYMBOLS, ZODIAC_SYMBOLS, ZodiacSign } from '@/lib/ast
 import { getPlanetaryDignity, getDignityDescription, HOUSE_INFO } from '@/lib/zodiac-info'
 import { detectAspectPatterns } from '@/lib/aspect-patterns'
 import { getAspectInterpretation } from '@/lib/aspect-interpretations'
-import * as jsPDFModule from 'jspdf'
+import jsPDF from 'jspdf'
 import logoImage from '@/assets/images/logo.jpg'
-
-const jsPDF = (jsPDFModule as any).default || jsPDFModule
 
 export interface PDFExportOptions {
   includeChartWheel: boolean
