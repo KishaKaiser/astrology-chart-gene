@@ -38,5 +38,8 @@ export default defineConfig({
   define: {
     'process.env': {},
     global: 'globalThis'
+  },
+  preview: {
+    allowedHosts: ['astrology.link', 'www.astrology.link']
   }
 });
