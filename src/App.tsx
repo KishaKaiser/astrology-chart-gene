@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useKV } from '@github/spark/hooks'
+import { useKV } from '@/hooks/use-kv'
 import { ChartData } from '@/lib/astrology-types'
 import { generateChartData, resetSwissEphemeris } from '@/lib/astrology-calc'
 import { ChartForm, ChartFormData } from '@/components/ChartForm'
@@ -26,13 +26,23 @@ import { Button } from '@/components/ui/button'
 import { DiagnosticTool } from '@/components/DiagnosticTool'
 import { TroubleshootingWizard } from '@/components/TroubleshootingWizard'
 import { TimezoneTestTool } from '@/components/TimezoneTestTool'
+import { AstroAuth } from '@/components/AstroAuth'
+import { astroApi, getToken, type AstroUser } from '@/lib/astro-api'
 
 function App() {
   const [charts, setCharts] = useKV<ChartData[]>('astrology-charts', [])
   const [selectedChart, setSelectedChart] = useState<ChartData | null>(null)
   const [view, setView] = useState<'library' | 'chart'>('library')
+  const [astroUser, setAstroUser] = useState<AstroUser | null>(null)
   const [activeTab, setActiveTab] = useState<'charts' | 'personal-horoscope' | 'zodiac-horoscope' | 'lovers-chart' | 'karmic-relationship' | 'past-life' | 'karmic-debt' | 'family' | 'important-days' | 'blog-generator' | 'image-generator' | 'woocommerce'>('charts')
   const [ephemerisError, setEphemerisError] = useState(false)
+
+  // Restore session on mount
+  useEffect(() => {
+    const token = getToken()
+    if (!token) return
+    astroApi.user.me().then(setAstroUser).catch(() => {})
+  }, [])
 
   useEffect(() => {
     const preInitialize = async () => {
@@ -196,6 +206,7 @@ function App() {
             </motion.div>
             
             <div className="flex items-center gap-3">
+              <AstroAuth user={astroUser} onUserChange={setAstroUser} />
               <TimezoneTestTool />
               <TroubleshootingWizard />
               <DiagnosticTool />

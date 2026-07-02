@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useKV } from '@github/spark/hooks'
+import { useKV } from '@/hooks/use-kv'
 import { ChartData, PLANET_SYMBOLS, ZODIAC_SYMBOLS, ZodiacSign } from '@/lib/astrology-types'
 import { calculateTransitsForDate } from '@/lib/astrology-calc'
 import { LifeEvent, detectRecurringPatterns, AstrologicalPattern } from '@/lib/pattern-detection'

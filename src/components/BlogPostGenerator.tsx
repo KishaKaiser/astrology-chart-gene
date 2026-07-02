@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { Copy, Download, PencilSimple, GearSix, Upload, Check, Clock, Calendar, Trash, Repeat, CalendarPlus, Play, Pause, Plus, ChartBar, Bell, Image as ImageIcon, Sparkle } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
-import { useKV } from '@github/spark/hooks'
+import { useKV } from '@/hooks/use-kv'
 import {
   Dialog,
   DialogContent,

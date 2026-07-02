@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useKV } from '@github/spark/hooks'
+import { useKV } from '@/hooks/use-kv'
 import { ChartData } from '@/lib/astrology-types'
 import { KarmicRelationshipData, generateKarmicRelationshipData } from '@/lib/karmic-calc'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'

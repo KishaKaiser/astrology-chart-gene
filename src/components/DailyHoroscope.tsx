@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useKV } from '@github/spark/hooks'
+import { useKV } from '@/hooks/use-kv'
 import { ChartData, TransitData } from '@/lib/astrology-types'
 import { calculateCurrentTransits } from '@/lib/astrology-calc'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'

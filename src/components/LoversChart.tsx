@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useKV } from '@github/spark/hooks'
+import { useKV } from '@/hooks/use-kv'
 import { ChartData } from '@/lib/astrology-types'
 import { SynastryData, generateSynastryData, RelationshipType } from '@/lib/synastry-calc'
 import { analyzeSoulmateConnection, SoulmateAnalysis } from '@/lib/soulmate-detection'
