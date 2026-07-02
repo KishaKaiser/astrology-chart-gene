@@ -1,0 +1,191 @@
+# Planning Guide
+
+A professional astrology software platform called "Psychic Link Charts" that generates accurate natal charts with comprehensive planetary calculations, house systems, and aspects, allowing astrologers to save, edit, and export charts in PDF format for client readings.
+
+**Experience Qualities**:
+1. **Mystical yet Professional** - Combines celestial aesthetics with clean, business-ready presentation that balances spiritual wonder with technical precision
+2. **Intuitive and Accessible** - Complex astrological calculations presented through clear visualizations that both professional astrologers and clients can understand
+3. **Empowering and Precise** - Provides complete control over chart details with accurate astronomical data that inspires confidence in readings
+
+**Complexity Level**: Complex Application (advanced functionality, likely with multiple views)
+This is a sophisticated tool requiring astronomical calculations, data visualization, persistent storage, PDF generation, and multiple editing capabilities. It combines computational complexity with rich user interaction across chart generation, editing, and export workflows.
+
+## Essential Features
+
+**Chart Generation**
+- Functionality: Calculate and display natal chart based on birth date, time, and location with planetary positions, houses, and aspects using Swiss Ephemeris for professional-grade accuracy
+- Purpose: Core feature that provides the foundational astrological data for readings with industry-standard precision
+- Trigger: User inputs birth details (date, time, location) and clicks generate
+- Progression: Input form → Location validation → Swiss Ephemeris astronomical calculation → Visual chart rendering → Display chart with data tables
+- Success criteria: Chart displays accurate planetary positions using Swiss Ephemeris calculations, correct house cusps for Placidus system, and major aspects with orbs
+- Technical Note: Integrated @swisseph/browser WebAssembly library for precise ephemeris calculations, providing accuracy comparable to professional astrology software
+
+**Birth Time Rectification**
+- Functionality: Refine unknown or uncertain birth times by analyzing significant life events through astrological transits and progressions using AI-powered analysis
+- Purpose: Helps clients and astrologers narrow down approximate birth times when exact birth time is unknown, a common challenge in professional astrology practice
+- Trigger: User clicks "Unknown Time? Rectify" button in chart generation form (appears after date and location are entered)
+- Progression: Chart form → Click rectification button → Add life events dialog → Select event type (marriage, child, career, relocation, accident, loss, education, financial, health, spiritual) → Enter event date and optional description → Add multiple events → Click analyze → AI analyzes astrological correlations → Display 3 suggested birth times with confidence scores and reasoning → Select preferred time → Auto-populate time field
+- Success criteria: User can add unlimited life events with 10 predefined categories; AI generates 3 birth time suggestions (70-95% confidence scores); Each suggestion includes detailed astrological reasoning (2-3 sentences) explaining house placements, planetary rulers, and transit correlations; Selected time auto-fills the birth time field; UI shows event count and allows removal of individual events; Works with any date and location combination; Provides fallback suggestions if AI analysis fails; Clear guidance that 3-5 significant events provide better accuracy
+
+**Transit Tracking**
+- Functionality: Calculate and display current planetary positions overlaid on natal charts with visual distinction between natal and transit positions
+- Purpose: Allows astrologers to analyze current planetary influences on natal chart positions for predictive readings
+- Trigger: User toggles "Show Transits" switch on chart view
+- Progression: Chart view → Enable transits → Calculate current positions → Overlay on chart wheel → Display transit table
+- Success criteria: Transit planets appear in distinct color/style, correct house placement relative to natal chart, timestamp shows calculation time, seamless toggle on/off
+
+**Daily Horoscope Predictions**
+- Functionality: Generate personalized daily, weekly, and monthly horoscope readings based on current planetary transits to the user's natal chart with AI-powered interpretation, plus general horoscopes by zodiac sign
+- Purpose: Provides both personalized guidance by analyzing how current transiting planets interact with natal positions, and general forecasts for all zodiac signs
+- Trigger: User navigates to "Personal" tab for personalized horoscopes or "Zodiac" tab for general zodiac forecasts
+- Progression: Horoscope tab → Select timeframe (daily/weekly/monthly) → For personal: Calculate current transits → Generate button → AI analyzes transit aspects → Display reading | For zodiac: Select sign → Generate button → AI creates general forecast → Display reading
+- Success criteria: Personal horoscopes consider current Sun/Moon positions and significant transit aspects to natal planets; Zodiac horoscopes provide general guidance for all 12 signs with sign selector; Both include practical guidance for emotions/relationships/work/growth; Display includes current date and timeframe badge; Allows regeneration for fresh perspectives; Separate tabs for personalized vs general horoscopes
+
+**Lover's Compatibility Chart (Synastry Analysis)**
+- Functionality: Compare two saved natal charts to analyze romantic compatibility through synastry aspects, calculating compatibility scores across multiple dimensions (core connection, romantic attraction, communication, passion, long-term potential), with optional AI-powered interpretation
+- Purpose: Enables relationship astrology readings by revealing how two individuals' planetary positions interact, highlighting areas of harmony and challenge in romantic partnerships
+- Trigger: User navigates to "Compatibility" tab and selects two different saved charts from dropdowns
+- Progression: Compatibility tab → Select first person → Select second person → Generate compatibility report → Calculate synastry aspects → Display overall compatibility score → Show breakdown by category with scores and descriptions → List planetary aspects with interpretations → Optional: Generate AI interpretation for detailed analysis
+- Success criteria: Calculates inter-chart aspects between major planets (Sun, Moon, Mercury, Venus, Mars, Jupiter, Saturn); Provides overall compatibility percentage; Shows category breakdowns with visual progress bars; Displays harmonious/challenging/intense aspect classifications; Color-coded scores (green for high, yellow for moderate, orange for low); Lists top 12 most significant aspects with orbs; AI interpretation provides personalized relationship insights covering emotional connection, communication, romance, values, growth, challenges, and long-term outlook; Requires at least 2 saved charts in library to function
+
+**Family Compatibility Analysis**
+- Functionality: Compare two saved natal charts to analyze parent-child or sibling relationships through synastry aspects, calculating compatibility scores across family-specific dimensions with optional AI-powered interpretation tailored to family dynamics
+- Purpose: Enables parents to understand their children better and helps families navigate sibling dynamics by revealing astrological patterns that influence family relationships, communication styles, emotional needs, and conflict resolution
+- Trigger: User navigates to "Family" tab, selects relationship type (parent-child or sibling), and chooses two individuals from saved charts
+- Progression: Family tab → Select relationship type (parent-child/sibling) → Select first person (parent/sibling 1) → Select second person (child/sibling 2) → Generate analysis → Calculate family-specific aspects → Display overall compatibility score → Show breakdown by category with progress bars → List planetary aspects → Optional: Generate AI interpretation for detailed family guidance
+- Success criteria: For parent-child: Scores for emotional bond, communication, affection & warmth, identity support, learning & growth, discipline & structure, energy & activity; For siblings: Scores for core connection, emotional understanding, communication, competition vs cooperation, shared interests, mutual support, affection & harmony; Overall compatibility percentage with family-appropriate messaging; Color-coded scores (green/yellow/orange); Lists top 12 most significant aspects with orbs; AI interpretation provides compassionate, practical guidance specific to parent-child dynamics (nurturing style, supporting development, navigating challenges) or sibling relationships (personality differences, conflict resolution, building lifelong bonds); Requires at least 2 saved charts in library to function
+
+**Electional Astrology (Optimal Timing)**
+- Functionality: Find the most auspicious dates and times for important future events by analyzing planetary positions across a specified date range (up to 90 days), scoring each potential date based on event type and astrological factors
+- Purpose: Helps users plan significant life events (weddings, business launches, surgeries, contracts, investments, interviews, first dates, proposals, purchases, creative projects, moving, travel) at times when planetary energies are most supportive
+- Trigger: User navigates to "Optimal Timing" tab, selects event type, defines date range, and enters event location
+- Progression: Optimal Timing tab → Select event type from 12 categories → Set start/end dates (max 90-day span) → Enter event location with autocomplete → Toggle preferences (avoid retrograde, prefer daylight hours) → Click "Find Optimal Dates" → Progress bar shows analysis of multiple time slots → Display ranked results with scores, moon phases, favorable/challenging factors → View top 10 results or explore best date in detail with chart wheel
+- Success criteria: Analyzes 3-4 times per day across date range; Scores each potential time based on event-specific criteria (benefic planets, important houses, favorable aspects for that event type); Shows moon phase for each date; Lists planetary strengths and weaknesses; Warns about retrograde periods if applicable; Displays overall score (0-100) with color coding; Best date view includes chart wheel, detailed reasoning, and all favorable/challenging factors; Each event type has unique scoring algorithm (e.g., weddings favor Venus/Jupiter in houses 1/7/5/11, surgeries avoid Mars afflictions in houses 1/6/8/12); Results persist in storage for reference; Progress indicator shows X of Y time slots analyzed; Location search integrated with timezone detection
+
+**AI-Powered Natal Chart Interpretation**
+- Functionality: Generate comprehensive, professional astrological interpretation of natal charts using advanced AI that analyzes all planetary positions, aspects, house placements, and chart patterns to create personalized readings
+- Purpose: Provides deep, contextual analysis that goes beyond raw data, offering psychological insights and practical guidance based on the complete chart synthesis
+- Trigger: User navigates to "Interpretation" tab in chart view and clicks "Generate My Reading" button
+- Progression: Chart view → Interpretation tab → Click generate button → AI analyzes complete chart data (planets in signs/houses, aspects, patterns, element/modality balance, dignities) → Generate 13-section comprehensive reading → Display formatted interpretation → Save to chart data
+- Success criteria: Interpretation covers 13 detailed sections (Chart Overview, Sun/Moon/Rising synthesis, Mercury communication style, Venus love nature, Mars drive/action, Jupiter growth, Saturn lessons, Outer planets transformation, Aspect patterns, Career indicators, Relationships, Soul purpose, Practical guidance); Analysis is personalized to specific chart placements not generic; Professional astrological language while remaining accessible; Includes both strengths and challenges; Saved persistently to chart; Can be regenerated for fresh perspective; Included in PDF exports; Loading state shows "Channeling Cosmic Wisdom..." message
+
+**Chart Library Management**
+- Functionality: Save generated charts with client names and notes, view all saved charts, search and filter charts
+- Purpose: Enables astrologers to build a client database for ongoing readings and reference
+- Trigger: User clicks save button on generated chart or accesses library view
+- Progression: Save: Chart view → Name/notes dialog → Save to storage → Confirmation → Library: Main view → Charts grid → Click chart → Load chart details
+- Success criteria: Charts persist between sessions, searchable by name, load correctly with all original calculations intact
+
+**Chart Editing**
+- Functionality: Modify chart details (name, notes, birth data), recalculate with different house systems, adjust orb settings
+- Purpose: Allows refinement of charts and exploration of different astrological techniques
+- Trigger: User clicks edit button on saved chart
+- Progression: Chart view → Edit mode → Modify fields → Apply changes → Recalculate if needed → Save updated chart
+- Success criteria: Changes persist correctly, recalculation updates all dependent data, original chart preserved until save
+
+**PDF Export**
+- Functionality: Generate professional PDF document with chart wheel, aspect grid, planetary positions table, and custom notes
+- Purpose: Creates shareable, printable documents for client delivery and physical records
+- Trigger: User clicks export/print button on chart view
+- Progression: Chart view → Export options dialog → Select elements to include → Generate PDF → Download/print dialog
+- Success criteria: PDF contains high-quality chart image, readable tables, maintains branding, prints correctly
+
+**WooCommerce Integration**
+- Functionality: Automatically generate natal charts from WooCommerce orders via webhooks, enabling seamless e-commerce integration for selling astrology chart services
+- Purpose: Allows astrologers to sell chart generation services online through their WooCommerce store and automatically fulfill orders by generating charts from customer birth data
+- Trigger: Customer completes order purchase on WooCommerce store, webhook fires to application
+- Progression: WooCommerce tab → Configure API credentials (Store URL, Consumer Key, Consumer Secret, Webhook Secret) → Test connection → Enable integration → Create webhook in WooCommerce settings → Configure products with custom birth data fields → Customer places order → Webhook event received → Display in events list → Process event to generate chart → Chart auto-saved to library → Success confirmation
+- Success criteria: Successfully connects to WooCommerce REST API; Displays pending, completed, and failed event counts; Lists all webhook events with order details, customer info, and birth data; Processes events to automatically generate charts using provided birth information; Charts saved to library with customer name and order reference; Handles errors gracefully with retry capability; Provides clear setup instructions for WooCommerce webhook configuration and required product fields; Includes test simulation feature for development; Persists configuration and event history; Can clear individual events or all events; Shows processing status for each event; Provides webhook endpoint URL for easy copying to WooCommerce settings
+
+## Edge Case Handling
+
+- **Invalid Birth Data**: Display clear validation errors for impossible dates, future dates, or missing required fields with helpful correction prompts
+- **Location Lookup Failures**: Provide manual latitude/longitude input fallback when city search fails or returns no results
+- **Midnight/Boundary Times**: Handle births at exactly 00:00 or during timezone transitions with clear date disambiguation
+- **Southern Hemisphere**: Correctly calculate house systems and seasonal considerations for southern latitudes
+- **Missing Birth Time**: Offer solar chart option (noon) with clear indication that houses are approximate
+- **PDF Generation Errors**: Gracefully handle browser limitations, show progress indicators, offer retry options
+- **Large Chart Libraries**: Implement pagination or virtual scrolling for users with 100+ saved charts
+- **Concurrent Edits**: Prevent data loss by saving chart state before navigation or showing unsaved changes warning
+- **Electional Date Range Limits**: Prevent searches exceeding 90 days with clear error message explaining performance constraints
+- **Electional Calculation Failures**: Gracefully handle ephemeris errors during multi-date analysis, skip failed dates, continue analysis
+- **No Optimal Dates Found**: When all scores are low, still display best available options with clear warning about challenging timing
+- **WooCommerce Webhook Failures**: Handle cases where webhook payload is malformed, incomplete birth data, or authentication fails with clear error messages and retry options
+- **Duplicate Orders**: Prevent generating duplicate charts from the same order by tracking order IDs
+- **Network Issues**: Handle connection failures when testing WooCommerce API with helpful troubleshooting messages
+
+## Design Direction
+
+The design should evoke celestial wonder and ancient wisdom while maintaining modern professional credibility. Think of a contemporary observatory meets luxury stationery - deep cosmic backgrounds with precise technical overlays, elegant typography that feels both timeless and refined, and interactions that feel like navigating through the stars themselves.
+
+## Color Selection
+
+A sophisticated celestial palette anchored by deep cosmic blues and purples with luminous accent highlights that evoke starlight and planetary energies.
+
+- **Primary Color**: Deep Cosmic Indigo (oklch(0.25 0.08 270)) - Represents the depth of space and mystical knowledge, used for primary actions and chart backgrounds
+- **Secondary Colors**: Rich Midnight Blue (oklch(0.18 0.05 260)) for cards and panels, Soft Celestial Purple (oklch(0.35 0.06 285)) for secondary UI elements
+- **Accent Color**: Luminous Star Gold (oklch(0.78 0.15 85)) - Bright celestial highlight for CTAs, active states, and key planetary markers that draws the eye like a bright star
+- **Foreground/Background Pairings**: 
+  - Background Deep Indigo (oklch(0.15 0.08 270)): White text (oklch(0.98 0 0)) - Ratio 11.2:1 ✓
+  - Primary Cosmic Indigo (oklch(0.25 0.08 270)): White text (oklch(0.98 0 0)) - Ratio 7.8:1 ✓
+  - Card Midnight Blue (oklch(0.18 0.05 260)): White text (oklch(0.98 0 0)) - Ratio 9.5:1 ✓
+  - Accent Star Gold (oklch(0.78 0.15 85)): Deep Indigo text (oklch(0.15 0.08 270)) - Ratio 8.1:1 ✓
+
+## Font Selection
+
+Typography should bridge ancient astronomical texts with modern technical precision, using an elegant decorative script for headings that evokes mystical and classical aesthetics, and a clean technical sans-serif for data that ensures readability of complex calculations.
+
+- **Typographic Hierarchy**: 
+  - H1 (App Title/Page Headers): Corinthia Regular/48px/tight letter-spacing (-0.02em) - Elegant script that evokes mystical and classical aesthetics
+  - H2 (Section Headers): Corinthia Regular/36px/normal letter-spacing
+  - H3 (Chart Names/Subsections): Corinthia Regular/28px/normal letter-spacing
+  - Body (Data Tables/Forms): IBM Plex Sans Regular/15px/relaxed line-height (1.6) - Technical clarity for numerical data
+  - Labels/Captions: IBM Plex Sans Medium/13px/normal letter-spacing - Clear hierarchy for form fields
+  - Data Values: IBM Plex Mono Regular/14px/tabular figures - Precise alignment for degrees, coordinates, times
+
+## Animations
+
+Animations should feel cosmic and fluid - planets gliding into position, charts rotating gently as they render, and modal transitions that feel like opening ancient tomes or gazing through a telescope. Chart generation should include a subtle sequential reveal of elements (wheel structure → planets → aspects) to create a sense of calculation and cosmic alignment. Hover states on planetary symbols should pulse very subtly like distant stars. All transitions should use gentle easing (0.3-0.4s) to maintain the contemplative, mystical atmosphere while keeping interactions responsive.
+
+## Component Selection
+
+- **Components**: 
+  - Dialog for chart creation form and editing workflows with custom backdrop blur
+  - Card components for chart library grid with hover elevation effects
+  - Tabs for switching between chart view, aspect table, and planetary positions
+  - Form components (Input, Label, Select) for birth data entry with validation
+  - Button variants: primary (Star Gold) for generate/save, secondary (Midnight) for cancel, ghost for icon actions
+  - Scroll Area for long data tables and chart lists
+  - Popover for quick info tooltips on planetary symbols and aspects
+  - Separator for dividing sections within chart data displays
+  - Badge for aspect types (conjunction, trine, square, etc.) with color coding
+
+- **Customizations**: 
+  - Custom SVG chart wheel component for zodiac circle with houses, planets, and aspect lines
+  - Aspect grid table with colored cells indicating aspect types
+  - Location autocomplete search input (using native datalist or custom combobox)
+  - PDF preview modal before export
+  - Custom loading spinner with rotating celestial motif
+
+- **States**: 
+  - Buttons: default (subtle glow), hover (brightness increase + subtle scale 1.02), active (slight press inset), disabled (reduced opacity 0.5)
+  - Inputs: default (subtle border), focus (gold ring + border color shift), error (red border + shake animation), filled (slight background tint)
+  - Chart cards: default (subtle border), hover (elevation lift + gold border glow), selected (gold border solid)
+
+- **Icon Selection**: 
+  - @phosphor-icons/react: Plus for new chart, FloppyDisk for save, PencilSimple for edit, DownloadSimple for PDF export, Printer for print, MagnifyingGlass for search, X for close, Star for favorites, Calendar for date, Clock for time, MapPin for location, List for library view, Grid for grid view
+
+- **Spacing**: 
+  - Page padding: p-6 on mobile, p-8 on tablet, p-12 on desktop
+  - Card padding: p-6 for content, p-4 for compact lists
+  - Form spacing: space-y-4 for form fields, gap-6 for form sections
+  - Grid gaps: gap-4 for chart library grid on mobile, gap-6 on desktop
+  - Component spacing: gap-2 for button groups, gap-3 for icon+text buttons
+
+- **Mobile**: 
+  - Chart creation form: Full-screen dialog on mobile (< 768px) with bottom sheet feel
+  - Chart wheel: Scales to fit viewport width with touch zoom/pan gestures disabled initially
+  - Library view: Single column grid on mobile, 2 columns on tablet (768px+), 3 columns on desktop (1024px+)
+  - Data tables: Horizontal scroll with sticky first column for planetary positions
+  - Action buttons: Fixed bottom bar on mobile with primary actions, overflow menu for secondary actions
+  - Navigation: Collapsible sidebar on desktop, bottom tab bar on mobile
