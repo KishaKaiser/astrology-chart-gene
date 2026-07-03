@@ -387,25 +387,49 @@ Modalities: Cardinal ${modalityCount.Cardinal}, Fixed ${modalityCount.Fixed}, Mu
 Major Aspects: ${aspectList}`
 
       console.log('=== GENERATING CHART INTERPRETATION (13 SECTIONS) ===')
-      
+
+      const sectionTitles: Record<number, string> = {
+        1: 'CHART OVERVIEW & DOMINANT THEMES',
+        2: 'CORE IDENTITY: SUN, MOON & RISING',
+        3: 'COMMUNICATION & INTELLECT: MERCURY',
+        4: 'LOVE & VALUES: VENUS',
+        5: 'ACTION & DESIRE: MARS',
+        6: 'EXPANSION & WISDOM: JUPITER',
+        7: 'DISCIPLINE & LESSONS: SATURN',
+        8: 'TRANSFORMATION & OUTER PLANETS',
+        9: 'ASPECT PATTERNS & DYNAMICS',
+        10: 'LIFE PATH & CAREER',
+        11: 'RELATIONSHIPS & PARTNERSHIPS',
+        12: 'SOUL PURPOSE & SPIRITUAL PATH',
+        13: 'PRACTICAL GUIDANCE & INTEGRATION',
+      }
+
       const sections: string[] = []
-      
+
       for (let i = 1; i <= 13; i++) {
         toast.loading(`Generating section ${i}/13...`, { id: 'interpretation-progress' })
-        
+
         const promptText = getSectionPromptData(i)
         if (!promptText) {
           console.error(`No prompt for section ${i}`)
           continue
         }
-        
+
         try {
           const prompt = llmPrompt`${promptText}`
-          const sectionContent = await llm(prompt)
-          
+          let sectionContent = await llm(prompt)
+
+          // Ensure section always starts with the proper ## heading
+          const headingPattern = new RegExp(`^##\\s*${i}\\.`)
+          if (!headingPattern.test(sectionContent.trimStart())) {
+            // Strip any heading the LLM may have produced in a different format
+            sectionContent = sectionContent.replace(/^#{1,4}\s+\d+\.\s*[^\n]*\n?/, '').replace(/^\*\*\d+\.\s*[^*]+\*\*\n?/, '')
+            sectionContent = `## ${i}. ${sectionTitles[i]}\n${sectionContent.trimStart()}`
+          }
+
           console.log(`Section ${i} generated: ${sectionContent.length} characters`)
           sections.push(sectionContent)
-          
+
           await new Promise(resolve => setTimeout(resolve, 500))
         } catch (sectionError) {
           console.error(`Failed to generate section ${i}:`, sectionError)
