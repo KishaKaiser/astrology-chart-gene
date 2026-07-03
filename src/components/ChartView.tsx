@@ -419,13 +419,14 @@ Major Aspects: ${aspectList}`
           const prompt = llmPrompt`${promptText}`
           let sectionContent = await llm(prompt)
 
-          // Ensure section always starts with the proper ## heading
-          const headingPattern = new RegExp(`^##\\s*${i}\\.`)
-          if (!headingPattern.test(sectionContent.trimStart())) {
-            // Strip any heading the LLM may have produced in a different format
-            sectionContent = sectionContent.replace(/^#{1,4}\s+\d+\.\s*[^\n]*\n?/, '').replace(/^\*\*\d+\.\s*[^*]+\*\*\n?/, '')
-            sectionContent = `## ${i}. ${sectionTitles[i]}\n${sectionContent.trimStart()}`
-          }
+          // Strip any heading the LLM may have included (various formats)
+          sectionContent = sectionContent
+            .replace(/^#{1,4}\s+\d+\.\s*[^\n]*\n?/m, '')
+            .replace(/^\*\*\d+\.\s*[^*]+\*\*\n?/m, '')
+            .trimStart()
+
+          // Always prepend our canonical heading
+          sectionContent = `## ${i}. ${sectionTitles[i]}\n${sectionContent}`
 
           console.log(`Section ${i} generated: ${sectionContent.length} characters`)
           sections.push(sectionContent)
