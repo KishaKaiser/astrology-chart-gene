@@ -59,14 +59,14 @@ export function GeneralHoroscope() {
   const [weeklyHoroscope, setWeeklyHoroscope] = useState<Record<ZodiacSign, string>>({} as Record<ZodiacSign, string>)
   const [monthlyHoroscope, setMonthlyHoroscope] = useState<Record<ZodiacSign, string>>({} as Record<ZodiacSign, string>)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isGeneratingAll, setIsGeneratingAll] = useState(false)
+  const [generateAllProgress, setGenerateAllProgress] = useState<{ current: number; total: number } | null>(null)
   const [lastGenerated, setLastGenerated] = useState<Record<string, Date>>({})
 
-  const generateHoroscope = async (timeframe: TimeframePeriod, sign: ZodiacSign) => {
-    setIsGenerating(true)
-    try {
+  const buildHoroscopePrompt = (timeframe: TimeframePeriod, sign: ZodiacSign): string => {
       let promptText: string
       const today = new Date()
-      
+
       if (timeframe === 'daily') {
         promptText = llmPrompt`You are an expert astrologer creating a daily horoscope reading for ${sign}.
 
@@ -135,27 +135,57 @@ Create a comprehensive monthly horoscope forecast for ${sign} (${ZODIAC_DATES[si
 Write in a wise, inspiring tone that balances cosmic insight with actionable guidance. Keep the reading between 650-800 words. Use clear section headings for different life areas and time periods.`
       }
 
+      return promptText
+  }
+
+  const applyHoroscopeResult = (timeframe: TimeframePeriod, sign: ZodiacSign, response: string) => {
+    if (timeframe === 'daily') {
+      setDailyHoroscope(prev => ({ ...prev, [sign]: response }))
+    } else if (timeframe === 'weekly') {
+      setWeeklyHoroscope(prev => ({ ...prev, [sign]: response }))
+    } else {
+      setMonthlyHoroscope(prev => ({ ...prev, [sign]: response }))
+    }
+
+    setLastGenerated(prev => ({
+      ...prev,
+      [`${timeframe}-${sign}`]: new Date()
+    }))
+  }
+
+  const generateHoroscope = async (timeframe: TimeframePeriod, sign: ZodiacSign) => {
+    setIsGenerating(true)
+    try {
+      const promptText = buildHoroscopePrompt(timeframe, sign)
       const response = await llm(promptText)
-      
-      if (timeframe === 'daily') {
-        setDailyHoroscope(prev => ({ ...prev, [sign]: response }))
-      } else if (timeframe === 'weekly') {
-        setWeeklyHoroscope(prev => ({ ...prev, [sign]: response }))
-      } else {
-        setMonthlyHoroscope(prev => ({ ...prev, [sign]: response }))
-      }
-      
-      setLastGenerated(prev => ({
-        ...prev,
-        [`${timeframe}-${sign}`]: new Date()
-      }))
-      
+      applyHoroscopeResult(timeframe, sign, response)
       toast.success(`${timeframe.charAt(0).toUpperCase() + timeframe.slice(1)} horoscope generated for ${sign}!`)
     } catch (error) {
       console.error('Error generating horoscope:', error)
       toast.error('Failed to generate horoscope. Please try again.')
     } finally {
       setIsGenerating(false)
+    }
+  }
+
+  const generateAllHoroscopes = async (timeframe: TimeframePeriod) => {
+    setIsGeneratingAll(true)
+    setGenerateAllProgress({ current: 0, total: ZODIAC_SIGNS.length })
+    try {
+      for (let i = 0; i < ZODIAC_SIGNS.length; i++) {
+        const sign = ZODIAC_SIGNS[i]
+        const promptText = buildHoroscopePrompt(timeframe, sign)
+        const response = await llm(promptText)
+        applyHoroscopeResult(timeframe, sign, response)
+        setGenerateAllProgress({ current: i + 1, total: ZODIAC_SIGNS.length })
+      }
+      toast.success(`${timeframe.charAt(0).toUpperCase() + timeframe.slice(1)} horoscopes generated for all signs!`)
+    } catch (error) {
+      console.error('Error generating horoscopes for all signs:', error)
+      toast.error('Failed to generate horoscopes for all signs. Please try again.')
+    } finally {
+      setIsGeneratingAll(false)
+      setGenerateAllProgress(null)
     }
   }
 
@@ -267,6 +297,24 @@ Write in a wise, inspiring tone that balances cosmic insight with actionable gui
                   </Badge>
                 </div>
 
+                <div className="flex items-center justify-between gap-2 pb-2 flex-wrap">
+                  <span className="text-xs text-muted-foreground">
+                    {isGeneratingAll && generateAllProgress
+                      ? `Generating for all signs... (${generateAllProgress.current}/${generateAllProgress.total})`
+                      : 'Generate this reading for every zodiac sign at once.'}
+                  </span>
+                  <Button
+                    onClick={() => generateAllHoroscopes(timeframe)}
+                    disabled={isGenerating || isGeneratingAll}
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                  >
+                    <Sparkle weight="fill" />
+                    {isGeneratingAll ? 'Generating All...' : 'Generate for All Signs'}
+                  </Button>
+                </div>
+
                 {!getHoroscopeForTab(timeframe, selectedSign) && (
                   <div className="text-center py-8">
                     <p className="text-muted-foreground mb-2">
@@ -277,7 +325,7 @@ Write in a wise, inspiring tone that balances cosmic insight with actionable gui
                     </p>
                     <Button
                       onClick={() => generateHoroscope(timeframe, selectedSign)}
-                      disabled={isGenerating}
+                      disabled={isGenerating || isGeneratingAll}
                       className="gap-2"
                     >
                       <Sparkle weight="fill" />
@@ -309,7 +357,7 @@ Write in a wise, inspiring tone that balances cosmic insight with actionable gui
                       </div>
                       <Button
                         onClick={() => generateHoroscope(timeframe, selectedSign)}
-                        disabled={isGenerating}
+                        disabled={isGenerating || isGeneratingAll}
                         variant="outline"
                         size="sm"
                         className="gap-2"
