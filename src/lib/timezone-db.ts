@@ -540,7 +540,7 @@ export function formatDSTDisplay(timezone: string): string {
     return 'Does not observe Daylight Saving Time'
   }
   
-  const parts = []
+  const parts: string[] = []
   if (dstInfo.dstOffset) {
     parts.push(`DST offset: UTC${dstInfo.dstOffset}`)
   }
