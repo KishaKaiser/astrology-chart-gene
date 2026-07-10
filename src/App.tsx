@@ -21,7 +21,8 @@ import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 import { CrystalBallLogo } from '@/components/CrystalBallLogo'
 import { WooCommerceWebhook } from '@/components/WooCommerceWebhook'
-import { BookOpen, Sparkle, Star, ArrowsClockwise, Heart, ClockCounterClockwise, Infinity, Scales, UsersFour, CalendarDots, Article, Image, ShoppingBag } from '@phosphor-icons/react'
+import { PLCMSIntegration } from '@/components/PLCMSIntegration'
+import { BookOpen, Sparkle, Star, ArrowsClockwise, Heart, ClockCounterClockwise, Infinity, Scales, UsersFour, CalendarDots, Article, Image, ShoppingBag, CloudArrowUp } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { DiagnosticTool } from '@/components/DiagnosticTool'
 import { TroubleshootingWizard } from '@/components/TroubleshootingWizard'
@@ -34,7 +35,7 @@ function App() {
   const [selectedChart, setSelectedChart] = useState<ChartData | null>(null)
   const [view, setView] = useState<'library' | 'chart'>('library')
   const [astroUser, setAstroUser] = useState<AstroUser | null>(null)
-  const [activeTab, setActiveTab] = useState<'charts' | 'personal-horoscope' | 'zodiac-horoscope' | 'lovers-chart' | 'karmic-relationship' | 'past-life' | 'karmic-debt' | 'family' | 'important-days' | 'blog-generator' | 'image-generator' | 'woocommerce'>('charts')
+  const [activeTab, setActiveTab] = useState<'charts' | 'personal-horoscope' | 'zodiac-horoscope' | 'lovers-chart' | 'karmic-relationship' | 'past-life' | 'karmic-debt' | 'family' | 'important-days' | 'blog-generator' | 'image-generator' | 'woocommerce' | 'pl-cms'>('charts')
   const [ephemerisError, setEphemerisError] = useState(false)
 
   // Restore session on mount
@@ -229,55 +230,59 @@ function App() {
 
       <main className="container mx-auto px-6 py-12">
         {view === 'library' ? (
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'charts' | 'personal-horoscope' | 'zodiac-horoscope' | 'lovers-chart' | 'karmic-relationship' | 'past-life' | 'karmic-debt' | 'family' | 'important-days' | 'blog-generator' | 'image-generator' | 'woocommerce')} className="space-y-6">
-            <TabsList className="grid w-full max-w-7xl mx-auto grid-cols-12">
-              <TabsTrigger value="charts" className="gap-2 text-white">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'charts' | 'personal-horoscope' | 'zodiac-horoscope' | 'lovers-chart' | 'karmic-relationship' | 'past-life' | 'karmic-debt' | 'family' | 'important-days' | 'blog-generator' | 'image-generator' | 'woocommerce' | 'pl-cms')} className="space-y-6">
+            <TabsList className="flex h-auto w-full max-w-7xl mx-auto flex-wrap justify-center gap-1">
+              <TabsTrigger value="charts" className="h-9 gap-2 text-white">
                 <BookOpen weight="bold" />
                 Chart Library
               </TabsTrigger>
-              <TabsTrigger value="personal-horoscope" className="gap-2">
+              <TabsTrigger value="personal-horoscope" className="h-9 gap-2">
                 <Sparkle weight="fill" />
                 Personal
               </TabsTrigger>
-              <TabsTrigger value="important-days" className="gap-2">
+              <TabsTrigger value="important-days" className="h-9 gap-2">
                 <CalendarDots weight="fill" />
                 Important Days
               </TabsTrigger>
-              <TabsTrigger value="zodiac-horoscope" className="gap-2">
+              <TabsTrigger value="zodiac-horoscope" className="h-9 gap-2">
                 <Star weight="fill" />
                 Zodiac
               </TabsTrigger>
-              <TabsTrigger value="lovers-chart" className="gap-2">
+              <TabsTrigger value="lovers-chart" className="h-9 gap-2">
                 <Heart weight="fill" />
                 Compatibility
               </TabsTrigger>
-              <TabsTrigger value="karmic-relationship" className="gap-2">
+              <TabsTrigger value="karmic-relationship" className="h-9 gap-2">
                 <Infinity weight="fill" />
                 Karmic Bond
               </TabsTrigger>
-              <TabsTrigger value="past-life" className="gap-2">
+              <TabsTrigger value="past-life" className="h-9 gap-2">
                 <ClockCounterClockwise weight="fill" />
                 Past Life
               </TabsTrigger>
-              <TabsTrigger value="karmic-debt" className="gap-2">
+              <TabsTrigger value="karmic-debt" className="h-9 gap-2">
                 <Scales weight="fill" />
                 Karmic Debt
               </TabsTrigger>
-              <TabsTrigger value="family" className="gap-2">
+              <TabsTrigger value="family" className="h-9 gap-2">
                 <UsersFour weight="fill" />
                 Family
               </TabsTrigger>
-              <TabsTrigger value="blog-generator" className="gap-2">
+              <TabsTrigger value="blog-generator" className="h-9 gap-2">
                 <Article weight="fill" />
                 Blog Posts
               </TabsTrigger>
-              <TabsTrigger value="image-generator" className="gap-2">
+              <TabsTrigger value="image-generator" className="h-9 gap-2">
                 <Image weight="fill" />
                 Images
               </TabsTrigger>
-              <TabsTrigger value="woocommerce" className="gap-2">
+              <TabsTrigger value="woocommerce" className="h-9 gap-2">
                 <ShoppingBag weight="fill" />
                 WooCommerce
+              </TabsTrigger>
+              <TabsTrigger value="pl-cms" className="h-9 gap-2">
+                <CloudArrowUp weight="fill" />
+                PL_CMS
               </TabsTrigger>
             </TabsList>
 
@@ -369,6 +374,10 @@ function App() {
                   toast.success(`Chart generated from WooCommerce order: ${chart.name}`)
                 }}
               />
+            </TabsContent>
+
+            <TabsContent value="pl-cms">
+              <PLCMSIntegration />
             </TabsContent>
           </Tabs>
         ) : selectedChart ? (
