@@ -219,6 +219,9 @@ export function BirthTimeRectification({
                             <span className="font-medium text-sm">{getEventLabel(event.type)}</span>
                             <span className="text-xs text-muted-foreground">
                               {new Date(event.date).toLocaleDateString('en-US', {
+                                // Date inputs contain a calendar date, parsed as UTC midnight.
+                                // Keep formatting in UTC so the browser cannot shift the day.
+                                timeZone: 'UTC',
                                 year: 'numeric',
                                 month: 'long',
                                 day: 'numeric'
