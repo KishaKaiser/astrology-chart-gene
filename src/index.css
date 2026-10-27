@@ -69,6 +69,7 @@
 }
 
 body {
+  color: var(--foreground);
   font-family: 'IBM Plex Sans', sans-serif;
   background: 
     radial-gradient(ellipse at 20% 20%, oklch(0.20 0.10 280) 0%, transparent 50%),
@@ -108,6 +109,7 @@ body {
 @media print {
   body {
     background: white !important;
+    color: black !important;
   }
 
   header,

@@ -1,5 +1,6 @@
 import { ChartData, Planet as PlanetInfo, House, Aspect, TransitData, TransitAspect, ZODIAC_SIGNS, ASPECT_TYPES } from './astrology-types'
 import { loadSwissEphemeris } from './swisseph-loader'
+import { birthTimeToUTC } from './birth-time'
 
 let swissEph: any = null
 let SwissEphemeris: any = null
@@ -287,89 +288,8 @@ export async function generateChartData(
   console.log('Raw inputs - date:', date, 'time:', time, 'timezone:', timezone)
   let dateTime: Date
   try {
-    const [year, month, day] = date.split('-').map(Number)
-    const [hour, minute] = time.split(':').map(Number)
-    
-    console.log('Parsed date components:', { year, month, day, hour, minute })
-    
-    const timezoneMatch = timezone.match(/([+-])(\d{2}):(\d{2})/)
-    if (!timezoneMatch) {
-      throw new Error(`Invalid timezone format: ${timezone}. Expected format like +05:30 or -05:00`)
-    }
-    
-    const sign = timezoneMatch[1]
-    const offsetHours = parseInt(timezoneMatch[2], 10)
-    const offsetMinutes = parseInt(timezoneMatch[3], 10)
-    
-    console.log('Timezone offset parsed:', { sign, offsetHours, offsetMinutes })
-    console.log('Conversion logic: Converting local time to UTC')
-    console.log('  - For timezone -05:00 (5 hours BEHIND UTC): UTC = local + 5 hours')
-    console.log('  - For timezone +05:30 (5.5 hours AHEAD of UTC): UTC = local - 5.5 hours')
-    
-    const localHour = hour
-    const localMinute = minute
-    let utcHour = localHour
-    let utcMinute = localMinute
-    let utcDay = day
-    let utcMonth = month
-    let utcYear = year
-    
-    if (sign === '-') {
-      utcHour += offsetHours
-      utcMinute += offsetMinutes
-    } else {
-      utcHour -= offsetHours
-      utcMinute -= offsetMinutes
-    }
-    
-    if (utcMinute >= 60) {
-      utcHour += 1
-      utcMinute -= 60
-    } else if (utcMinute < 0) {
-      utcHour -= 1
-      utcMinute += 60
-    }
-    
-    if (utcHour >= 24) {
-      utcDay += 1
-      utcHour -= 24
-      const daysInMonth = new Date(utcYear, utcMonth, 0).getDate()
-      if (utcDay > daysInMonth) {
-        utcDay = 1
-        utcMonth += 1
-        if (utcMonth > 12) {
-          utcMonth = 1
-          utcYear += 1
-        }
-      }
-    } else if (utcHour < 0) {
-      utcDay -= 1
-      utcHour += 24
-      if (utcDay < 1) {
-        utcMonth -= 1
-        if (utcMonth < 1) {
-          utcMonth = 12
-          utcYear -= 1
-        }
-        utcDay = new Date(utcYear, utcMonth, 0).getDate()
-      }
-    }
-    
-    dateTime = new Date(Date.UTC(utcYear, utcMonth - 1, utcDay, utcHour, utcMinute, 0, 0))
-    
-    console.log('Input local time:', `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')} ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')} (${timezone})`)
-    console.log('Calculated UTC time:', dateTime.toISOString())
-    console.log('Verification: For timezone', timezone, '→ UTC is', sign === '-' ? 'AHEAD of' : 'BEHIND', 'local time by', offsetHours, 'hours', offsetMinutes, 'minutes')
-    
-    console.log('Created UTC-adjusted Date object:', dateTime)
-    console.log('Date object timestamp:', dateTime.getTime())
-    console.log('Date toUTCString:', dateTime.toUTCString())
-    console.log('Date toISOString:', dateTime.toISOString())
-    
-    if (isNaN(dateTime.getTime())) {
-      throw new Error(`Invalid date/time components. Year: ${year}, Month: ${month}, Day: ${day}, Hour: ${hour}, Minute: ${minute}`)
-    }
-    console.log('✓ Date parsing successful (UTC-adjusted from local timezone):', dateTime.toISOString())
+    dateTime = birthTimeToUTC(date, time, timezone)
+    console.log('UTC birth time:', dateTime.toISOString())
   } catch (error) {
     console.error('✗ Date parsing failed:', error)
     const errorMsg = error instanceof Error ? error.message : String(error)
