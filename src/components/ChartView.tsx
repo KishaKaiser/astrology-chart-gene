@@ -23,6 +23,7 @@ import { exportChartToPDF, PDFExportOptions } from '@/lib/pdf-export'
 import { toast } from 'sonner'
 import logoImage from '@/assets/images/logo.jpg'
 import { llm, llmPrompt } from "@/lib/llm"
+import { InterpretationModelSelector, readInterpretationModel } from './InterpretationModelSelector'
 
 interface ChartViewProps {
   chart: ChartData
@@ -38,6 +39,9 @@ export function ChartView({ chart, onBack, onEdit, onUpdateChart }: ChartViewPro
   const [interpretation, setInterpretation] = useState<string>(chart.interpretation || '')
   const [isGeneratingInterpretation, setIsGeneratingInterpretation] = useState(false)
   const [regeneratingSections, setRegeneratingSections] = useState<Set<number>>(new Set())
+  const [interpretationModel, setInterpretationModel] = useState(readInterpretationModel)
+  const [lastModelUsed, setLastModelUsed] = useState('')
+  const interpretationBusy = isGeneratingInterpretation || regeneratingSections.size > 0
 
   useEffect(() => {
     const loadTransits = async () => {
@@ -291,7 +295,7 @@ Write the complete section with empowering, practical guidance that ties togethe
       }
 
       const prompt = llmPrompt`${promptText}`
-      const newSectionContent = await llm(prompt)
+      const newSectionContent = await llm(prompt, false, { model: interpretationModel, onModelUsed: setLastModelUsed })
       
       const sections = parseInterpretationSections(interpretation)
       const sectionIndex = sections.findIndex(s => s.number === sectionNumber)
@@ -319,7 +323,7 @@ Write the complete section with empowering, practical guidance that ties togethe
       toast.success(`Section ${sectionNumber} regenerated successfully!`, { id: `regen-${sectionNumber}` })
     } catch (error) {
       console.error('Section regeneration error:', error)
-      toast.error(`Failed to regenerate section ${sectionNumber}`, { id: `regen-${sectionNumber}` })
+      toast.error(error instanceof Error ? error.message : `Failed to regenerate section ${sectionNumber}`, { id: `regen-${sectionNumber}` })
     } finally {
       setRegeneratingSections(prev => {
         const updated = new Set(prev)
@@ -417,7 +421,7 @@ Major Aspects: ${aspectList}`
 
         try {
           const prompt = llmPrompt`${promptText}`
-          let sectionContent = await llm(prompt)
+          let sectionContent = await llm(prompt, false, { model: interpretationModel, onModelUsed: setLastModelUsed })
 
           // Strip any heading the LLM may have included (various formats)
           sectionContent = sectionContent
@@ -434,11 +438,17 @@ Major Aspects: ${aspectList}`
           await new Promise(resolve => setTimeout(resolve, 500))
         } catch (sectionError) {
           console.error(`Failed to generate section ${i}:`, sectionError)
-          toast.error(`Section ${i} failed to generate`, { id: `section-${i}-error`, duration: 3000 })
+          // Stop on a service/model error instead of retrying the same invalid choice 13 times.
+          toast.error(sectionError instanceof Error ? sectionError.message : `Section ${i} failed to generate`, { id: `section-${i}-error`, duration: 8000 })
+          break
         }
       }
       
       const fullInterpretation = sections.join('\n\n')
+      if (sections.length === 0) {
+        toast.error('No sections generated. Your existing reading was kept.', { id: 'interpretation-progress' })
+        return
+      }
       
       console.log('=== INTERPRETATION COMPLETE ===')
       console.log(`Total length: ${fullInterpretation.length} characters`)
@@ -1164,7 +1174,7 @@ Major Aspects: ${aspectList}`
                 </div>
                 <Button 
                   onClick={generateInterpretation}
-                  disabled={isGeneratingInterpretation}
+                  disabled={interpretationBusy}
                   className="gap-2 bg-accent hover:bg-accent/90"
                 >
                   {isGeneratingInterpretation ? (
@@ -1180,6 +1190,12 @@ Major Aspects: ${aspectList}`
                   )}
                 </Button>
               </div>
+              <InterpretationModelSelector
+                value={interpretationModel}
+                onChange={setInterpretationModel}
+                disabled={interpretationBusy}
+                lastModel={lastModelUsed}
+              />
             </CardHeader>
             <CardContent>
               {interpretation ? (
@@ -1229,7 +1245,7 @@ Major Aspects: ${aspectList}`
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => regenerateSection(section.number)}
-                                disabled={regeneratingSections.has(section.number)}
+                                disabled={interpretationBusy}
                                 className="gap-2 text-xs hover:bg-accent/10 hover:text-accent shrink-0"
                               >
                                 <ArrowsClockwise 
@@ -1296,7 +1312,7 @@ Major Aspects: ${aspectList}`
 
                   <Button 
                     onClick={generateInterpretation}
-                    disabled={isGeneratingInterpretation}
+                    disabled={interpretationBusy}
                     size="lg"
                     className="gap-2 px-8 bg-accent hover:bg-accent/90"
                   >
