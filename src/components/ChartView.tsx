@@ -278,7 +278,13 @@ Write section 13 in warm, professional tone. This is the FINAL section - make it
 ## 13. PRACTICAL GUIDANCE & INTEGRATION
 Provide concrete, actionable advice for working with this chart energy. Discuss shadow work needed, gifts to develop, life areas requiring attention, and specific practices or approaches that support growth. How can they integrate all these energies into a fulfilling life?
 
-Write the complete section with empowering, practical guidance that ties together all the themes from the chart. Be thorough and insightful.`
+Write the complete section with empowering, practical guidance that ties together all the themes from the chart. Be thorough and insightful.
+
+End this final section with exactly:
+With warmth and best wishes,
+The Psychic Link
+
+Use The Psychic Link as the signature, never a placeholder such as [Your Name].`
     }
 
     return prompts[sectionNumber] || ''
@@ -295,7 +301,10 @@ Write the complete section with empowering, practical guidance that ties togethe
       }
 
       const prompt = llmPrompt`${promptText}`
-      const newSectionContent = await llm(prompt, false, { model: interpretationModel, onModelUsed: setLastModelUsed })
+      let newSectionContent = await llm(prompt, false, { model: interpretationModel, onModelUsed: setLastModelUsed })
+      if (sectionNumber === 13) {
+        newSectionContent = newSectionContent.replace(/\[\s*your name\s*\]/gi, 'The Psychic Link')
+      }
       
       const sections = parseInterpretationSections(interpretation)
       const sectionIndex = sections.findIndex(s => s.number === sectionNumber)
@@ -422,6 +431,9 @@ Major Aspects: ${aspectList}`
         try {
           const prompt = llmPrompt`${promptText}`
           let sectionContent = await llm(prompt, false, { model: interpretationModel, onModelUsed: setLastModelUsed })
+          if (i === 13) {
+            sectionContent = sectionContent.replace(/\[\s*your name\s*\]/gi, 'The Psychic Link')
+          }
 
           // Strip any heading the LLM may have included (various formats)
           sectionContent = sectionContent
