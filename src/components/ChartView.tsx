@@ -24,6 +24,7 @@ import { toast } from 'sonner'
 import logoImage from '@/assets/images/logo.jpg'
 import { llm, llmPrompt } from "@/lib/llm"
 import { InterpretationModelSelector, readInterpretationModel } from './InterpretationModelSelector'
+import { INTERPRETATION_TITLES, parseInterpretationSections, missingInterpretationSections, generateInterpretationSections } from '@/lib/interpretation-sections'
 
 interface ChartViewProps {
   chart: ChartData
@@ -37,11 +38,14 @@ export function ChartView({ chart, onBack, onEdit, onUpdateChart }: ChartViewPro
   const [showTransits, setShowTransits] = useState(false)
   const [transits, setTransits] = useState<TransitData | null>(null)
   const [interpretation, setInterpretation] = useState<string>(chart.interpretation || '')
-  const [isGeneratingInterpretation, setIsGeneratingInterpretation] = useState(false)
-  const [regeneratingSections, setRegeneratingSections] = useState<Set<number>>(new Set())
+  const [activeSection, setActiveSection] = useState<number | null>(null)
+  const [sectionError, setSectionError] = useState<{ number: number; message: string } | null>(null)
+  const generationLock = useRef(false)
   const [interpretationModel, setInterpretationModel] = useState(readInterpretationModel)
   const [lastModelUsed, setLastModelUsed] = useState('')
-  const interpretationBusy = isGeneratingInterpretation || regeneratingSections.size > 0
+  const interpretationBusy = activeSection !== null
+  const parsedSections = parseInterpretationSections(interpretation)
+  const missingSections = missingInterpretationSections(interpretation)
 
   useEffect(() => {
     const loadTransits = async () => {
@@ -80,22 +84,6 @@ export function ChartView({ chart, onBack, onEdit, onUpdateChart }: ChartViewPro
   }
 
 
-
-  const parseInterpretationSections = (text: string) => {
-    const sections: Array<{ number: number; title: string; content: string }> = []
-    const sectionRegex = /##\s*(\d+)\.\s*([^\n]+)\n([\s\S]*?)(?=##\s*\d+\.|$)/g
-    
-    let match
-    while ((match = sectionRegex.exec(text)) !== null) {
-      sections.push({
-        number: parseInt(match[1]),
-        title: match[2].trim(),
-        content: match[3].trim()
-      })
-    }
-    
-    return sections
-  }
 
   const getSectionPromptData = (sectionNumber: number) => {
     const sun = chart.planets.find(p => p.name === 'Sun')
@@ -290,199 +278,38 @@ Use The Psychic Link as the signature, never a placeholder such as [Your Name].`
     return prompts[sectionNumber] || ''
   }
 
-  const regenerateSection = async (sectionNumber: number) => {
-    setRegeneratingSections(prev => new Set(prev).add(sectionNumber))
-    toast.loading(`Regenerating section ${sectionNumber}...`, { id: `regen-${sectionNumber}` })
-    
+  const generateSections = async (numbers: number[]) => {
+    if (generationLock.current || numbers.length === 0) return
+    generationLock.current = true
+    setSectionError(null)
+    let currentSection = numbers[0]
     try {
-      const promptText = getSectionPromptData(sectionNumber)
-      if (!promptText) {
-        throw new Error('Invalid section number')
-      }
-
-      const prompt = llmPrompt`${promptText}`
-      let newSectionContent = await llm(prompt, false, { model: interpretationModel, onModelUsed: setLastModelUsed })
-      if (sectionNumber === 13) {
-        newSectionContent = newSectionContent.replace(/\[\s*your name\s*\]/gi, 'The Psychic Link')
-      }
-      
-      const sections = parseInterpretationSections(interpretation)
-      const sectionIndex = sections.findIndex(s => s.number === sectionNumber)
-      
-      if (sectionIndex === -1) {
-        toast.error(`Section ${sectionNumber} not found in interpretation`, { id: `regen-${sectionNumber}` })
-        return
-      }
-      
-      const cleanedContent = newSectionContent.replace(/^##\s*\d+\.\s*[^\n]+\n/, '').trim()
-      
-      const updatedSections = sections.map(section => 
-        section.number === sectionNumber 
-          ? { ...section, content: cleanedContent }
-          : section
-      )
-      
-      const newInterpretation = updatedSections
-        .map(s => `## ${s.number}. ${s.title}\n${s.content}`)
-        .join('\n\n')
-      
-      setInterpretation(newInterpretation)
-      onUpdateChart(chart.id, newInterpretation)
-      
-      toast.success(`Section ${sectionNumber} regenerated successfully!`, { id: `regen-${sectionNumber}` })
-    } catch (error) {
-      console.error('Section regeneration error:', error)
-      toast.error(error instanceof Error ? error.message : `Failed to regenerate section ${sectionNumber}`, { id: `regen-${sectionNumber}` })
-    } finally {
-      setRegeneratingSections(prev => {
-        const updated = new Set(prev)
-        updated.delete(sectionNumber)
-        return updated
+      await generateInterpretationSections({
+        initialText: interpretation,
+        numbers,
+        progress: number => {
+          currentSection = number
+          setActiveSection(number)
+          toast.loading(`Generating section ${number}/13...`, { id: 'interpretation-progress' })
+        },
+        generate: async number => {
+          const promptText = getSectionPromptData(number)
+          if (!promptText) throw new Error('Invalid section number')
+          return llm(llmPrompt`${promptText}`, false, { model: interpretationModel, onModelUsed: setLastModelUsed })
+        },
+        save: text => {
+          setInterpretation(text)
+          onUpdateChart(chart.id, text)
+        },
       })
-    }
-  }
-
-  const generateInterpretation = async () => {
-    setIsGeneratingInterpretation(true)
-    toast.loading('Generating comprehensive chart interpretation...', { id: 'interpretation-progress' })
-    
-    try {
-      const sun = chart.planets.find(p => p.name === 'Sun')
-      const moon = chart.planets.find(p => p.name === 'Moon')
-      const mercury = chart.planets.find(p => p.name === 'Mercury')
-      const venus = chart.planets.find(p => p.name === 'Venus')
-      const mars = chart.planets.find(p => p.name === 'Mars')
-      const jupiter = chart.planets.find(p => p.name === 'Jupiter')
-      const saturn = chart.planets.find(p => p.name === 'Saturn')
-      const uranus = chart.planets.find(p => p.name === 'Uranus')
-      const neptune = chart.planets.find(p => p.name === 'Neptune')
-      const pluto = chart.planets.find(p => p.name === 'Pluto')
-
-      const risingSign = chart.houses.find(h => h.number === 1)?.sign || 'Unknown'
-      const mcSign = chart.houses.find(h => h.number === 10)?.sign || 'Unknown'
-
-      const aspectList = chart.aspects.map(a => 
-        `${a.planet1} ${a.type} ${a.planet2} (orb: ${a.orb.toFixed(2)}°)`
-      ).join('\n')
-
-      const elementCount = {
-        Fire: 0,
-        Earth: 0,
-        Air: 0,
-        Water: 0
-      }
-
-      const modalityCount = {
-        Cardinal: 0,
-        Fixed: 0,
-        Mutable: 0
-      }
-
-      chart.planets.forEach(p => {
-        if (['Aries', 'Leo', 'Sagittarius'].includes(p.sign)) elementCount.Fire++
-        if (['Taurus', 'Virgo', 'Capricorn'].includes(p.sign)) elementCount.Earth++
-        if (['Gemini', 'Libra', 'Aquarius'].includes(p.sign)) elementCount.Air++
-        if (['Cancer', 'Scorpio', 'Pisces'].includes(p.sign)) elementCount.Water++
-
-        if (['Aries', 'Cancer', 'Libra', 'Capricorn'].includes(p.sign)) modalityCount.Cardinal++
-        if (['Taurus', 'Leo', 'Scorpio', 'Aquarius'].includes(p.sign)) modalityCount.Fixed++
-        if (['Gemini', 'Virgo', 'Sagittarius', 'Pisces'].includes(p.sign)) modalityCount.Mutable++
-      })
-
-      const chartData = `Birth Data: ${chart.name}, ${chart.date} at ${chart.time}, ${chart.location}
-Ascendant: ${risingSign} ${chart.ascendant.toFixed(1)}° | MC: ${mcSign} ${chart.midheaven.toFixed(1)}°
-
-Planets: Sun ${sun?.sign} H${sun?.house}, Moon ${moon?.sign} H${moon?.house}, Mercury ${mercury?.sign} H${mercury?.house}, Venus ${venus?.sign} H${venus?.house}, Mars ${mars?.sign} H${mars?.house}, Jupiter ${jupiter?.sign} H${jupiter?.house}, Saturn ${saturn?.sign} H${saturn?.house}, Uranus ${uranus?.sign} H${uranus?.house}, Neptune ${neptune?.sign} H${neptune?.house}, Pluto ${pluto?.sign} H${pluto?.house}
-
-Elements: Fire ${elementCount.Fire}, Earth ${elementCount.Earth}, Air ${elementCount.Air}, Water ${elementCount.Water}
-Modalities: Cardinal ${modalityCount.Cardinal}, Fixed ${modalityCount.Fixed}, Mutable ${modalityCount.Mutable}
-
-Major Aspects: ${aspectList}`
-
-      console.log('=== GENERATING CHART INTERPRETATION (13 SECTIONS) ===')
-
-      const sectionTitles: Record<number, string> = {
-        1: 'CHART OVERVIEW & DOMINANT THEMES',
-        2: 'CORE IDENTITY: SUN, MOON & RISING',
-        3: 'COMMUNICATION & INTELLECT: MERCURY',
-        4: 'LOVE & VALUES: VENUS',
-        5: 'ACTION & DESIRE: MARS',
-        6: 'EXPANSION & WISDOM: JUPITER',
-        7: 'DISCIPLINE & LESSONS: SATURN',
-        8: 'TRANSFORMATION & OUTER PLANETS',
-        9: 'ASPECT PATTERNS & DYNAMICS',
-        10: 'LIFE PATH & CAREER',
-        11: 'RELATIONSHIPS & PARTNERSHIPS',
-        12: 'SOUL PURPOSE & SPIRITUAL PATH',
-        13: 'PRACTICAL GUIDANCE & INTEGRATION',
-      }
-
-      const sections: string[] = []
-
-      for (let i = 1; i <= 13; i++) {
-        toast.loading(`Generating section ${i}/13...`, { id: 'interpretation-progress' })
-
-        const promptText = getSectionPromptData(i)
-        if (!promptText) {
-          console.error(`No prompt for section ${i}`)
-          continue
-        }
-
-        try {
-          const prompt = llmPrompt`${promptText}`
-          let sectionContent = await llm(prompt, false, { model: interpretationModel, onModelUsed: setLastModelUsed })
-          if (i === 13) {
-            sectionContent = sectionContent.replace(/\[\s*your name\s*\]/gi, 'The Psychic Link')
-          }
-
-          // Strip any heading the LLM may have included (various formats)
-          sectionContent = sectionContent
-            .replace(/^#{1,4}\s+\d+\.\s*[^\n]*\n?/m, '')
-            .replace(/^\*\*\d+\.\s*[^*]+\*\*\n?/m, '')
-            .trimStart()
-
-          // Always prepend our canonical heading
-          sectionContent = `## ${i}. ${sectionTitles[i]}\n${sectionContent}`
-
-          console.log(`Section ${i} generated: ${sectionContent.length} characters`)
-          sections.push(sectionContent)
-
-          await new Promise(resolve => setTimeout(resolve, 500))
-        } catch (sectionError) {
-          console.error(`Failed to generate section ${i}:`, sectionError)
-          // Stop on a service/model error instead of retrying the same invalid choice 13 times.
-          toast.error(sectionError instanceof Error ? sectionError.message : `Section ${i} failed to generate`, { id: `section-${i}-error`, duration: 8000 })
-          break
-        }
-      }
-      
-      const fullInterpretation = sections.join('\n\n')
-      if (sections.length === 0) {
-        toast.error('No sections generated. Your existing reading was kept.', { id: 'interpretation-progress' })
-        return
-      }
-      
-      console.log('=== INTERPRETATION COMPLETE ===')
-      console.log(`Total length: ${fullInterpretation.length} characters`)
-      
-      const sectionMatches = fullInterpretation.match(/##\s*\d+\./g)
-      const sectionCount = sectionMatches ? sectionMatches.length : 0
-      console.log(`Total sections detected: ${sectionCount}`)
-      console.log(`Total sections generated: ${sections.length}`)
-      
-      if (sections.length === 13) {
-        toast.success('Complete 13-section interpretation generated successfully!', { id: 'interpretation-progress' })
-      } else {
-        toast.warning(`Generated ${sections.length}/13 sections. Click "Regenerate Reading" to try again for a complete reading.`, { id: 'interpretation-progress', duration: 8000 })
-      }
-      
-      setInterpretation(fullInterpretation)
-      onUpdateChart(chart.id, fullInterpretation)
+      toast.success(numbers.length === 1 ? `Section ${numbers[0]} saved.` : `${numbers.length} sections generated and saved.`, { id: 'interpretation-progress' })
     } catch (error) {
-      toast.error('Failed to generate interpretation', { id: 'interpretation-progress' })
-      console.error('Interpretation error:', error)
+      const message = error instanceof Error ? error.message : 'Generation failed. Please try again.'
+      setSectionError({ number: currentSection, message })
+      toast.error(`Section ${currentSection} failed. Completed sections were kept.`, { id: 'interpretation-progress', duration: 8000 })
     } finally {
-      setIsGeneratingInterpretation(false)
+      generationLock.current = false
+      setActiveSection(null)
     }
   }
 
@@ -1174,174 +1001,59 @@ Major Aspects: ${aspectList}`
         <TabsContent value="interpretation">
           <Card>
             <CardHeader>
-              <div className="flex items-start justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Sparkle size={24} weight="fill" className="text-accent" />
-                    Chart Interpretation
-                  </CardTitle>
-                  <CardDescription>
-                    Comprehensive astrological analysis by The Psychic Link
-                  </CardDescription>
-                </div>
-                <Button 
-                  onClick={generateInterpretation}
-                  disabled={interpretationBusy}
-                  className="gap-2 bg-accent hover:bg-accent/90"
-                >
-                  {isGeneratingInterpretation ? (
-                    <>
-                      <Sparkle size={18} weight="fill" className="animate-spin" />
-                      Channeling Cosmic Wisdom...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkle size={18} weight="fill" />
-                      {interpretation ? 'Regenerate Reading' : 'Generate My Reading'}
-                    </>
-                  )}
+              <CardTitle className="flex items-center gap-2">
+                <Sparkle size={24} weight="fill" className="text-accent" />
+                Chart Interpretation
+              </CardTitle>
+              <CardDescription>
+                Generate the full 13-section reading, finish missing sections, or choose a section below.
+                Each completed section is saved as it finishes.
+              </CardDescription>
+              <InterpretationModelSelector value={interpretationModel} onChange={setInterpretationModel} disabled={interpretationBusy} lastModel={lastModelUsed} />
+              <div className="flex flex-wrap items-center gap-3">
+                <Button onClick={() => generateSections(INTERPRETATION_TITLES.map((_, i) => i + 1))} disabled={interpretationBusy} className="bg-accent hover:bg-accent/90">
+                  {missingSections.length === 13 ? 'Generate all sections' : 'Regenerate all sections'}
                 </Button>
-              </div>
-              <InterpretationModelSelector
-                value={interpretationModel}
-                onChange={setInterpretationModel}
-                disabled={interpretationBusy}
-                lastModel={lastModelUsed}
-              />
-            </CardHeader>
-            <CardContent>
-              {interpretation ? (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between p-4 bg-accent/10 rounded-lg border border-accent/20">
-                    <div className="flex items-center gap-3">
-                      <Sparkle size={24} weight="fill" className="text-accent" />
-                      <div>
-                        <p className="font-semibold text-sm">AI-Powered Astrological Reading</p>
-                        <p className="text-xs text-muted-foreground">Generated by The Psychic Link's advanced interpretation engine</p>
-                      </div>
-                    </div>
-                    <ExportOptionsDialog 
-                      onExport={handleExport}
-                      hasInterpretation={true}
-                      variant="outline"
-                    />
-                  </div>
-                  
-                  {(() => {
-                    const sections = parseInterpretationSections(interpretation)
-                    
-                    if (sections.length === 0) {
-                      return (
-                        <div className="prose prose-invert max-w-none">
-                          <div className="space-y-6 text-sm leading-relaxed whitespace-pre-wrap text-foreground">
-                            {interpretation}
-                          </div>
-                        </div>
-                      )
-                    }
-                    
-                    return (
-                      <div className="space-y-6">
-                        {sections.map((section) => (
-                          <div 
-                            key={section.number} 
-                            className="border border-border rounded-lg p-5 bg-card hover:border-accent/30 transition-colors"
-                          >
-                            <div className="flex items-start justify-between gap-4 mb-4">
-                              <div className="flex-1">
-                                <h3 className="text-lg font-semibold text-foreground mb-1">
-                                  {section.number}. {section.title}
-                                </h3>
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => regenerateSection(section.number)}
-                                disabled={interpretationBusy}
-                                className="gap-2 text-xs hover:bg-accent/10 hover:text-accent shrink-0"
-                              >
-                                <ArrowsClockwise 
-                                  size={16} 
-                                  weight="bold"
-                                  className={regeneratingSections.has(section.number) ? 'animate-spin' : ''}
-                                />
-                                {regeneratingSections.has(section.number) ? 'Regenerating...' : 'Regenerate'}
-                              </Button>
-                            </div>
-                            <div className="prose prose-invert max-w-none">
-                              <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">
-                                {section.content}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )
-                  })()}
-
-                  <Separator />
-
-                  <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border border-border">
-                    <div className="flex items-center gap-2">
-                      <Sparkle size={18} weight="fill" className="text-muted-foreground" />
-                      <p className="text-xs text-muted-foreground">
-                        Need a fresh perspective? You can regenerate individual sections or the entire reading at any time.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-16">
-                  <div className="mb-6">
-                    <div className="relative inline-block">
-                      <div className="absolute inset-0 bg-accent/20 rounded-full blur-2xl animate-pulse" />
-                      <Sparkle size={64} weight="fill" className="text-accent relative" />
-                    </div>
-                  </div>
-                  
-                  <h3 className="text-xl font-semibold">Unlock Your Chart's Secrets</h3>
-                  <p className="text-muted-foreground mb-6 max-w-lg mx-auto">
-                    Generate a comprehensive, AI-powered astrological interpretation that reveals the deeper meanings behind your natal chart's planetary positions, aspects, and life themes.
-                  </p>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto mb-8">
-                    <div className="p-4 rounded-lg bg-muted/20 border border-border">
-                      <div className="text-accent mb-2">📖</div>
-                      <p className="text-sm font-semibold mb-1 text-foreground">13 Detailed Sections</p>
-                      <p className="text-xs text-muted-foreground">From core identity to soul purpose</p>
-                    </div>
-                    <div className="p-4 rounded-lg bg-muted/20 border border-border">
-                      <div className="text-accent mb-2">🎯</div>
-                      <p className="text-sm font-semibold mb-1 text-foreground">Personalized Insights</p>
-                      <p className="text-xs text-muted-foreground">Tailored to your unique chart</p>
-                    </div>
-                    <div className="p-4 rounded-lg bg-muted/20 border border-border">
-                      <div className="text-accent mb-2">✨</div>
-                      <p className="text-sm font-semibold mb-1 text-foreground">Professional Analysis</p>
-                      <p className="text-xs text-muted-foreground">Expert astrological guidance</p>
-                    </div>
-                  </div>
-
-                  <Button 
-                    onClick={generateInterpretation}
-                    disabled={interpretationBusy}
-                    size="lg"
-                    className="gap-2 px-8 bg-accent hover:bg-accent/90"
-                  >
-                    {isGeneratingInterpretation ? (
-                      <>
-                        <Sparkle size={20} weight="fill" className="animate-spin" />
-                        Channeling Cosmic Wisdom...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkle size={20} weight="fill" />
-                        Generate My Reading
-                      </>
-                    )}
+                {missingSections.length > 0 && (
+                  <Button variant="outline" disabled={interpretationBusy} onClick={() => generateSections(missingSections)}>
+                    Generate missing sections ({missingSections.length})
                   </Button>
-                </div>
+                )}
+                <span role="status" className="text-sm text-muted-foreground">
+                  {interpretationBusy ? `Generating section ${activeSection} of 13…` : `${13 - missingSections.length} of 13 sections available`}
+                </span>
+                {interpretation && <ExportOptionsDialog onExport={handleExport} hasInterpretation={true} variant="outline" />}
+              </div>
+              {sectionError && (
+                <p role="alert" className="text-sm text-amber-300">
+                  Section {sectionError.number}: {sectionError.message} Completed sections and any previous version were kept. Retry that section below or generate the missing sections.
+                </p>
               )}
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {interpretation && parsedSections.length === 0 && (
+                <div className="whitespace-pre-wrap rounded-lg border p-4 text-sm">{interpretation}</div>
+              )}
+              {INTERPRETATION_TITLES.map((title, index) => {
+                const number = index + 1
+                const section = parsedSections.find(s => s.number === number)
+                const exists = Boolean(section?.content)
+                return (
+                  <section key={number} aria-label={`Section ${number}: ${title}`} className="rounded-lg border border-border p-5 bg-card">
+                    <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
+                      <h3 className="text-base font-semibold text-foreground">{number}. {title}</h3>
+                      <Button variant="outline" size="sm" onClick={() => generateSections([number])} disabled={interpretationBusy} aria-label={`${exists ? 'Regenerate' : 'Generate'} section ${number}`}>
+                        {activeSection === number ? 'Generating…' : exists ? 'Regenerate' : 'Generate'}
+                      </Button>
+                    </div>
+                    {exists ? (
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{section!.content}</p>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Not generated yet. Generate this section on its own or include it in the full reading.</p>
+                    )}
+                  </section>
+                )
+              })}
             </CardContent>
           </Card>
         </TabsContent>
