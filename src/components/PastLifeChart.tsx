@@ -11,6 +11,8 @@ import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
 import { llm, llmPrompt } from "@/lib/llm"
+import { generatePastLifeReading } from '@/lib/past-life-reading'
+import { InterpretationModelSelector, readInterpretationModel } from '@/components/InterpretationModelSelector'
 
 interface PastLifeReading {
   southNodeSign: string
@@ -33,6 +35,9 @@ export function PastLifeChart() {
   const [selectedChartId, setSelectedChartId] = useState<string>('')
   const [pastLifeReading, setPastLifeReading] = useState<PastLifeReading | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [generationError, setGenerationError] = useState('')
+  const [model, setModel] = useState(readInterpretationModel)
+  const [lastModel, setLastModel] = useState('')
   const [savedReadings, setSavedReadings] = useKV<Record<string, PastLifeReading>>('past-life-readings', {})
 
   const calculatePastLifeIndicators = (chart: ChartData) => {
@@ -93,7 +98,7 @@ export function PastLifeChart() {
     }
 
     setIsGenerating(true)
-    setPastLifeReading(null)
+    setGenerationError('')
 
     try {
       const indicators = calculatePastLifeIndicators(chart)
@@ -113,21 +118,20 @@ Karmic Indicators:
 Sun Sign: ${chart.planets.find(p => p.name === 'Sun')?.sign || 'Unknown'}
 Moon Sign: ${chart.planets.find(p => p.name === 'Moon')?.sign || 'Unknown'}
 
-Based on these karmic indicators, provide a detailed past life reading in the following JSON format:
+Based on these karmic indicators, provide concise reading details in the following JSON format. Return only valid JSON, with no markdown or narrative. Keep the entire response under 350 words:
 {
   "primaryLifeTheme": "A concise 2-4 word theme describing the main focus of the past life",
   "lifeEra": "The historical era or time period (e.g., 'Medieval Europe', 'Ancient Egypt', 'Victorian Era', etc.)",
   "occupation": "The likely profession or social role they held",
   "challenges": ["3-5 specific challenges or difficulties they faced"],
   "karmaLessons": ["3-5 karmic lessons they need to integrate in this lifetime"],
-  "talents": ["3-5 natural talents or abilities carried forward from the past life"],
-  "interpretation": "A detailed 4-6 paragraph narrative interpretation that weaves together all the karmic indicators. Describe their past life story, relationships, accomplishments, unfinished business, and how it relates to their current life purpose. Make it vivid, specific, and personally resonant."
+  "talents": ["3-5 natural talents or abilities carried forward from the past life"]
 }
 
-Important: Ensure the interpretation is deeply personal, evocative, and connects past life themes to current life challenges and gifts.`
+Connect past life themes to current life challenges and gifts.`
 
-      const response = await llm(prompt, true)
-      const parsedResponse = JSON.parse(response)
+      const parsedResponse = await generatePastLifeReading(prompt, (text, expectJson) =>
+        llm(text, expectJson, { model, onModelUsed: setLastModel }))
 
       const reading: PastLifeReading = {
         ...indicators,
@@ -143,7 +147,9 @@ Important: Ensure the interpretation is deeply personal, evocative, and connects
       toast.success('Past life reading complete!')
     } catch (error) {
       console.error('Past life reading error:', error)
-      toast.error('Failed to generate past life reading')
+      const message = error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.'
+      setGenerationError(message)
+      toast.error('Failed to generate past life reading', { description: message })
     } finally {
       setIsGenerating(false)
     }
@@ -208,7 +214,11 @@ Important: Ensure the interpretation is deeply personal, evocative, and connects
           <div className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-white">Select Your Natal Chart</label>
-              <Select value={selectedChartId} onValueChange={setSelectedChartId}>
+              <Select value={selectedChartId} disabled={isGenerating} onValueChange={id => {
+                setSelectedChartId(id)
+                setPastLifeReading(savedReadings?.[id] ?? null)
+                setGenerationError('')
+              }}>
                 <SelectTrigger className="text-white">
                   <SelectValue placeholder="Choose a chart..." />
                 </SelectTrigger>
@@ -221,6 +231,14 @@ Important: Ensure the interpretation is deeply personal, evocative, and connects
                 </SelectContent>
               </Select>
             </div>
+
+            <InterpretationModelSelector value={model} onChange={setModel} disabled={isGenerating} lastModel={lastModel} />
+
+            {generationError && (
+              <p role="alert" className="text-sm text-red-300">
+                Could not complete the past life reading: {generationError}
+              </p>
+            )}
 
             <Button
               onClick={handleGeneratePastLife}
