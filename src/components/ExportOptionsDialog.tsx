@@ -104,10 +104,9 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
   useEffect(() => {
     if (chartId && savedFamilyData) {
       const entries = Object.entries(savedFamilyData)
-        .filter(([key]) => key.startsWith(`${chartId}-`) || key.includes(`-${chartId}-`))
+        .filter(([, data]) => data.person1.id === chartId || data.person2.id === chartId)
         .map(([key, data]) => {
-          const parts = key.split('-')
-          const relationshipType = parts[2]
+          const relationshipType = data.relationshipType
           const relationshipLabel = relationshipType === 'parent-child' ? 'Parent-Child' : 'Sibling'
           
           return {
@@ -470,8 +469,7 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
         const data = savedFamilyData[key]
         if (!data) return ''
         
-        const parts = key.split('-')
-        const relationshipType = parts[2]
+        const relationshipType = data.relationshipType
         const relationshipLabel = relationshipType === 'parent-child' ? 'Parent-Child Relationship' : 'Sibling Relationship'
         
         let text = `${relationshipLabel}: ${data.person1.name} & ${data.person2.name}\n\n`
