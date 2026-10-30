@@ -4,7 +4,7 @@ import { jsPDF } from 'jspdf'
 import { writeFile } from 'node:fs/promises'
 import { EquatorFromVector, RotateVector, Rotation_ECT_EQD, VectorFromSphere, Observer, Horizon, SiderealTime } from 'astronomy-engine'
 const bundle = await build({ entryPoints: ['src/lib/relocation.ts'], bundle: true, write: false, format: 'esm', platform: 'node' })
-const { calculateRelocation, currentRelocation, relocationAngles, angularDistance, wholeSignHouse, relocationFacts, relocationPrompt, relocationExportText } = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`)
+const { findTopRelocationPlaces, scoreRelocation, calculateRelocation, currentRelocation, relocationAngles, angularDistance, wholeSignHouse, relocationFacts, relocationPrompt, relocationExportText } = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`)
 const chart = { id:'fixture', name:'Sample', date:'1998-08-04', time:'12:00', timezone:'America/New_York', latitude:40.7128, longitude:-74.006, location:'New York', planets:[], houses:[], aspects:[], createdAt:0, updatedAt:0 }
 const places = [{ name:'London', latitude:51.5074, longitude:-0.1278 }, { name:'Sydney', latitude:-33.8688, longitude:151.2093 }, { name:'New York', latitude:40.7128, longitude:-74.006 }]
 const before = JSON.stringify(chart)
@@ -77,3 +77,44 @@ if (process.argv[2]) {
   await writeFile(process.argv[2], new Uint8Array(pdf.output('arraybuffer')))
 }
 console.log('PASS: fixed birth instant, independent horizon/meridian checks, identical-location result, constant planetary positions, house wrapping, input validation, stale data, timezone independence, and report facts')
+
+const citiesBundle = await build({ entryPoints: ['src/lib/relocation-cities.ts'], bundle: true, write: false, format: 'esm', platform: 'node' })
+const { RELOCATION_CITIES } = await import(`data:text/javascript;base64,${Buffer.from(citiesBundle.outputFiles[0].text).toString('base64')}`)
+assert.ok(RELOCATION_CITIES.length > 200)
+assert.equal(new Set(RELOCATION_CITIES.map(p => p.name)).size, RELOCATION_CITIES.length)
+for (const city of ['Tokyo', 'London', 'New York', 'Sydney', 'Cape Town', 'Buenos Aires']) assert.ok(RELOCATION_CITIES.some(p => p.name.startsWith(city)), city)
+const top = findTopRelocationPlaces(chart)
+assert.equal(top.destinations.length, 5)
+assert.equal(top.search.candidateCount, RELOCATION_CITIES.length)
+assert.equal(top.search.priority, 'balanced')
+assert.deepEqual(findTopRelocationPlaces(chart).destinations, top.destinations)
+const exhaustive = []
+for (let i=0;i<RELOCATION_CITIES.length;i+=5) {
+  for (const item of calculateRelocation(chart, RELOCATION_CITIES.slice(i,i+5)).destinations) exhaustive.push({ name:item.place.name, score:scoreRelocation(item,'balanced').score })
+}
+exhaustive.sort((a,b) => b.score-a.score || a.name.localeCompare(b.name,'en'))
+assert.deepEqual(top.destinations.map(d => d.place.name), exhaustive.slice(0,5).map(d => d.name))
+for (const item of top.destinations) {
+  assert.ok(Number.isFinite(item.ranking.score))
+  assert.ok(item.ranking.reasons.length)
+  assert.deepEqual(item.planets.map(p => p.longitude), report.natal.planets.map(p => p.longitude))
+}
+assert.notDeepEqual(findTopRelocationPlaces({...chart,time:'00:00'}).destinations.map(d => d.place.name), top.destinations.map(d => d.place.name))
+assert.notDeepEqual(findTopRelocationPlaces(chart,'home').destinations.map(d => d.place.name), findTopRelocationPlaces(chart,'career').destinations.map(d => d.place.name))
+assert.equal(calculateRelocation(chart,places).search, undefined)
+assert.equal(currentRelocation({...chart,relocationAnalysis:JSON.parse(JSON.stringify(top))}).search.method,'worldwide-v1')
+assert.ok(relocationFacts(top).includes('Top five of'))
+assert.ok(relocationExportText(top).includes(top.destinations[0].ranking.reasons[0]))
+const synthetic = {...report.natal, ascendant:0, midheaven:90, ic:270, descendant:180, planets:[{name:'Venus',longitude:90,house:10}]}
+assert.equal(scoreRelocation(synthetic,'balanced').score, 4.75)
+assert.equal(scoreRelocation(synthetic,'career').score, 8.75)
+assert.equal(scoreRelocation({...synthetic,planets:[{name:'Saturn',longitude:90,house:10}]},'career').score,-6)
+assert.equal(JSON.stringify(chart),before)
+console.log('PASS: worldwide coverage, exhaustive top-five ranking, birth-time/priority sensitivity, score factors, persistence and export facts')
+
+
+const rankedPDF = new jsPDF()
+const rankedLayout = renderInterpretation(rankedPDF, relocationExportText(top), 25)
+assert.ok(rankedLayout.placements.every(line => line.y >= 25 && line.y < 273), 'ranked report stays above the footer')
+for (const destination of top.destinations) assert.ok(rankedLayout.placements.some(line => line.text.includes(destination.place.name)))
+console.log('PASS: top-five PDF report includes every destination and respects page boundaries')

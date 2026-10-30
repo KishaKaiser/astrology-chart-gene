@@ -33,8 +33,8 @@ no longer matches are excluded from section 1 and export until recalculated.
 - This implementation supports latitudes strictly between -66 and +66 degrees;
   polar comparisons are rejected rather than returning unstable rising angles.
 
-This is a selected-place relocated-chart comparison, not an astrocartography
-world map, automatic worldwide ranking, or a factual city/lifestyle assessment.
+This supports a worldwide candidate-city ranking and selected-place comparisons.
+It is not an astrocartography world map or a factual city/lifestyle assessment.
 Interpretive suitability is not a guarantee. Birth-time accuracy and practical
 factors such as work, budget, housing, and support networks still matter.
 
@@ -56,3 +56,34 @@ unchanged planetary longitudes, stale-data detection, and report facts.
 
 Redeploy the astrology frontend, preserving its storage folder. No additional
 API, database migration, or backend environment variable is needed.
+
+## Worldwide top five
+
+Choose Overall balance, Career, Home, or Relationships, then **Find my top 5
+worldwide**. Ranking works locally without Ollama; the optional narrative still
+uses Ollama. A new search replaces the saved comparison. Manual recalculation
+removes ranking metadata. Results, reasons and tradeoffs are included in export
+and supplied to section 1 when regenerated. Existing manual reports still work.
+
+The bundled 243-city list comes from Natural Earth's 1:110m populated places:
+https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/ne_110m_populated_places.geojson
+Downloaded 2026-10-30; English city/country names and city-center coordinates only.
+Coordinates are public domain: https://www.naturalearthdata.com/about/terms-of-use/
+The importer excludes latitudes outside the supported open interval (-66, 66).
+This is a fixed worldwide sample, not every city or a current livability dataset.
+
+Scoring method `worldwide-v1`: angular strength decreases linearly from 1 at
+conjunction to 0 at 12 degrees. Weights: Sun +3, Moon +2, Mercury +1.5,
+Venus/Jupiter +4, Mars/Pluto -2, Saturn -3, Uranus/Neptune -1.5. A specific
+priority doubles the corresponding MC (career), IC (home), or Descendant
+(relationships) contribution, including challenging contributions. Supportive
+planets receive +0.75 for relevant houses: career 2/6/10, home 4,
+relationships 5/7/11. Balanced includes all three groups. Raw scores are sorted
+descending with a stable English-name tie break. Scores are internal comparative
+weights, not probabilities. The top three positive and two negative factors are
+shown. All cities compete on the same basis; international coverage does not
+force a result from each continent or country.
+
+This heuristic does not evaluate local safety, immigration eligibility, cost,
+employment, climate, or the entire natal aspect pattern. It uses recalculated
+natal planetary positions at the fixed birth instant and relocated angles/houses.
