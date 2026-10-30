@@ -41,5 +41,8 @@ export default defineConfig({
   },
   preview: {
     allowedHosts: ['astrology.link', 'www.astrology.link']
+  },
+  server: {
+    proxy: { '/api/library': 'http://127.0.0.1:4173' }
   }
 });

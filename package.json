@@ -10,7 +10,9 @@
         "build": "tsc -b --noCheck && vite build",
         "lint": "eslint .",
         "optimize": "vite optimize",
-        "preview": "vite preview --host"
+        "preview": "node server/index.mjs",
+        "start": "node server/index.mjs",
+        "dev:library": "node server/index.mjs"
     },
     "dependencies": {
         "@github/spark": ">=0.43.1 <1",
