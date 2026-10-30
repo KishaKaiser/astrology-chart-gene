@@ -129,27 +129,14 @@ Modalities: Cardinal ${modalityCount.Cardinal}, Fixed ${modalityCount.Fixed}, Mu
 Major Aspects: ${aspectList}`
 
     const prompts: Record<number, string> = {
-      1: `You are an expert professional astrologer. Generate section 1 only of a natal chart interpretation.
-
-${chartData}
-
-Write section 1 in warm, professional tone. Section should be 3-4 detailed paragraphs.
-
-## 1. CHART OVERVIEW & DOMINANT THEMES
-Analyze the overall chart energy. Discuss dominant elements (Fire ${elementCount.Fire}, Earth ${elementCount.Earth}, Air ${elementCount.Air}, Water ${elementCount.Water}) and modalities (Cardinal ${modalityCount.Cardinal}, Fixed ${modalityCount.Fixed}, Mutable ${modalityCount.Mutable}). What are the key themes and patterns in this chart?
-
-Write the complete section. Be thorough and insightful.`,
       2: `You are an expert professional astrologer. Generate section 2 only of a natal chart interpretation.
 
 ${chartData}
 
 Write section 2 in warm, professional tone. Section should be 3-4 detailed paragraphs.
 
-## 2. CORE IDENTITY: SUN, MOON & RISING
-Sun in ${sun?.sign} House ${sun?.house}: Discuss core identity, life purpose, and ego expression.
-Moon in ${moon?.sign} House ${moon?.house}: Discuss emotional nature, needs, instincts, and inner world.
-Rising ${risingSign} at ${chart.ascendant.toFixed(1)}°: Discuss personality mask, approach to life, and first impressions.
-Explain how these three work together to create the person's essential nature.
+## 2. CHART OVERVIEW & DOMINANT THEMES
+Analyze the overall chart energy. Discuss dominant elements (Fire ${elementCount.Fire}, Earth ${elementCount.Earth}, Air ${elementCount.Air}, Water ${elementCount.Water}) and modalities (Cardinal ${modalityCount.Cardinal}, Fixed ${modalityCount.Fixed}, Mutable ${modalityCount.Mutable}). What are the key themes and patterns in this chart?
 
 Write the complete section. Be thorough and insightful.`,
       3: `You are an expert professional astrologer. Generate section 3 only of a natal chart interpretation.
@@ -158,8 +145,11 @@ ${chartData}
 
 Write section 3 in warm, professional tone. Section should be 3-4 detailed paragraphs.
 
-## 3. COMMUNICATION & INTELLECT: MERCURY
-Mercury in ${mercury?.sign} House ${mercury?.house}: Discuss communication style, thinking patterns, learning preferences, mental processes, and how they share ideas.
+## 3. CORE IDENTITY: SUN, MOON & RISING
+Sun in ${sun?.sign} House ${sun?.house}: Discuss core identity, life purpose, and ego expression.
+Moon in ${moon?.sign} House ${moon?.house}: Discuss emotional nature, needs, instincts, and inner world.
+Rising ${risingSign} at ${chart.ascendant.toFixed(1)}°: Discuss personality mask, approach to life, and first impressions.
+Explain how these three work together to create the person's essential nature.
 
 Write the complete section. Be thorough and insightful.`,
       4: `You are an expert professional astrologer. Generate section 4 only of a natal chart interpretation.
@@ -168,8 +158,8 @@ ${chartData}
 
 Write section 4 in warm, professional tone. Section should be 3-4 detailed paragraphs.
 
-## 4. LOVE & VALUES: VENUS
-Venus in ${venus?.sign} House ${venus?.house}: Discuss love language, aesthetic preferences, what they value, how they relate to others, and what brings them pleasure and harmony.
+## 4. COMMUNICATION & INTELLECT: MERCURY
+Mercury in ${mercury?.sign} House ${mercury?.house}: Discuss communication style, thinking patterns, learning preferences, mental processes, and how they share ideas.
 
 Write the complete section. Be thorough and insightful.`,
       5: `You are an expert professional astrologer. Generate section 5 only of a natal chart interpretation.
@@ -178,8 +168,8 @@ ${chartData}
 
 Write section 5 in warm, professional tone. Section should be 3-4 detailed paragraphs.
 
-## 5. ACTION & DESIRE: MARS
-Mars in ${mars?.sign} House ${mars?.house}: Discuss drive, assertiveness, anger expression, sexual nature, how they pursue desires, and what motivates action.
+## 5. LOVE & VALUES: VENUS
+Venus in ${venus?.sign} House ${venus?.house}: Discuss love language, aesthetic preferences, what they value, how they relate to others, and what brings them pleasure and harmony.
 
 Write the complete section. Be thorough and insightful.`,
       6: `You are an expert professional astrologer. Generate section 6 only of a natal chart interpretation.
@@ -188,8 +178,8 @@ ${chartData}
 
 Write section 6 in warm, professional tone. Section should be 3-4 detailed paragraphs.
 
-## 6. EXPANSION & WISDOM: JUPITER
-Jupiter in ${jupiter?.sign} House ${jupiter?.house}: Discuss growth areas, philosophy, beliefs, optimism, where luck flows, teaching/learning gifts, and how they expand consciousness.
+## 6. ACTION & DESIRE: MARS
+Mars in ${mars?.sign} House ${mars?.house}: Discuss drive, assertiveness, anger expression, sexual nature, how they pursue desires, and what motivates action.
 
 Write the complete section. Be thorough and insightful.`,
       7: `You are an expert professional astrologer. Generate section 7 only of a natal chart interpretation.
@@ -198,8 +188,8 @@ ${chartData}
 
 Write section 7 in warm, professional tone. Section should be 3-4 detailed paragraphs.
 
-## 7. DISCIPLINE & LESSONS: SATURN
-Saturn in ${saturn?.sign} House ${saturn?.house}: Discuss life lessons, discipline, responsibilities, karmic patterns, limitations to overcome, fears, and where mastery develops through time.
+## 7. EXPANSION & WISDOM: JUPITER
+Jupiter in ${jupiter?.sign} House ${jupiter?.house}: Discuss growth areas, philosophy, beliefs, optimism, where luck flows, teaching/learning gifts, and how they expand consciousness.
 
 Write the complete section. Be thorough and insightful.`,
       8: `You are an expert professional astrologer. Generate section 8 only of a natal chart interpretation.
@@ -208,10 +198,8 @@ ${chartData}
 
 Write section 8 in warm, professional tone. Section should be 3-4 detailed paragraphs.
 
-## 8. TRANSFORMATION & OUTER PLANETS
-Uranus in ${uranus?.sign} House ${uranus?.house}: Discuss innovation, rebellion, where they break conventions, and sudden insights.
-Neptune in ${neptune?.sign} House ${neptune?.house}: Discuss spirituality, dreams, imagination, illusions, and connection to the divine.
-Pluto in ${pluto?.sign} House ${pluto?.house}: Discuss transformation, power, death/rebirth cycles, shadow work, and deep psychological patterns.
+## 8. DISCIPLINE & LESSONS: SATURN
+Saturn in ${saturn?.sign} House ${saturn?.house}: Discuss life lessons, discipline, responsibilities, karmic patterns, limitations to overcome, fears, and where mastery develops through time.
 
 Write the complete section. Be thorough and insightful.`,
       9: `You are an expert professional astrologer. Generate section 9 only of a natal chart interpretation.
@@ -220,11 +208,10 @@ ${chartData}
 
 Write section 9 in warm, professional tone. Section should be 3-4 detailed paragraphs.
 
-## 9. ASPECT PATTERNS & DYNAMICS
-Analyze the major aspects in the chart:
-${aspectList}
-
-Discuss internal tensions, harmonies, talent configurations, and how different parts of the personality interact. Identify any special patterns like T-squares, grand trines, stelliums, or other significant configurations.
+## 9. TRANSFORMATION & OUTER PLANETS
+Uranus in ${uranus?.sign} House ${uranus?.house}: Discuss innovation, rebellion, where they break conventions, and sudden insights.
+Neptune in ${neptune?.sign} House ${neptune?.house}: Discuss spirituality, dreams, imagination, illusions, and connection to the divine.
+Pluto in ${pluto?.sign} House ${pluto?.house}: Discuss transformation, power, death/rebirth cycles, shadow work, and deep psychological patterns.
 
 Write the complete section. Be thorough and insightful.`,
       10: `You are an expert professional astrologer. Generate section 10 only of a natal chart interpretation.
@@ -233,8 +220,11 @@ ${chartData}
 
 Write section 10 in warm, professional tone. Section should be 3-4 detailed paragraphs.
 
-## 10. LIFE PATH & CAREER
-MC in ${mcSign} at ${chart.midheaven.toFixed(1)}°: Discuss career path, public role, reputation, and life direction. Consider 10th house themes, 2nd house (resources/income), and 6th house (daily work). What vocational paths suit this chart?
+## 10. ASPECT PATTERNS & DYNAMICS
+Analyze the major aspects in the chart:
+${aspectList}
+
+Discuss internal tensions, harmonies, talent configurations, and how different parts of the personality interact. Identify any special patterns like T-squares, grand trines, stelliums, or other significant configurations.
 
 Write the complete section. Be thorough and insightful.`,
       11: `You are an expert professional astrologer. Generate section 11 only of a natal chart interpretation.
@@ -243,8 +233,8 @@ ${chartData}
 
 Write section 11 in warm, professional tone. Section should be 3-4 detailed paragraphs.
 
-## 11. RELATIONSHIPS & PARTNERSHIPS
-Analyze 7th house themes, Venus-Mars dynamics, and relationship patterns. Discuss romantic partnerships, marriage indicators, business partnerships, and how they relate one-on-one. What do they seek in partners? What challenges and gifts do they bring to relationships?
+## 11. LIFE PATH & CAREER
+MC in ${mcSign} at ${chart.midheaven.toFixed(1)}°: Discuss career path, public role, reputation, and life direction. Consider 10th house themes, 2nd house (resources/income), and 6th house (daily work). What vocational paths suit this chart?
 
 Write the complete section. Be thorough and insightful.`,
       12: `You are an expert professional astrologer. Generate section 12 only of a natal chart interpretation.
@@ -253,22 +243,30 @@ ${chartData}
 
 Write section 12 in warm, professional tone. Section should be 3-4 detailed paragraphs.
 
-## 12. SOUL PURPOSE & SPIRITUAL PATH
-Synthesize the chart to reveal soul purpose and spiritual path. What is this person here to learn and embody? Discuss spiritual gifts, psychic abilities, past life indicators, and areas for conscious evolution. How can they serve their highest purpose?
+## 12. RELATIONSHIPS & PARTNERSHIPS
+Analyze 7th house themes, Venus-Mars dynamics, and relationship patterns. Discuss romantic partnerships, marriage indicators, business partnerships, and how they relate one-on-one. What do they seek in partners? What challenges and gifts do they bring to relationships?
 
 Write the complete section. Be thorough and insightful.`,
-      13: `You are an expert professional astrologer. Generate section 13 (THE FINAL SECTION) of a natal chart interpretation.
+      13: `You are an expert professional astrologer. Generate section 13 only of a natal chart interpretation.
 
 ${chartData}
 
-Write section 13 in warm, professional tone. This is the FINAL section - make it comprehensive with 3-4 detailed paragraphs.
+Write section 13 in warm, professional tone. Section should be 3-4 detailed paragraphs.
 
-## 13. PRACTICAL GUIDANCE & INTEGRATION
-Provide concrete, actionable advice for working with this chart energy. Discuss shadow work needed, gifts to develop, life areas requiring attention, and specific practices or approaches that support growth. How can they integrate all these energies into a fulfilling life?
+## 13. SOUL PURPOSE & SPIRITUAL PATH
+Synthesize the chart to reveal soul purpose and spiritual path. What is this person here to learn and embody? Discuss spiritual gifts, psychic abilities, past life indicators, and areas for conscious evolution. How can they serve their highest purpose?
 
-Write the complete section with empowering, practical guidance that ties together all the themes from the chart. Be thorough and insightful.
+Write the complete section. Be thorough and insightful.`,
+      1: `You are a warm, clear astrologer writing the opening summary of a natal chart reading for someone new to astrology.
 
-End this final section with exactly:
+${chartData}
+
+## 1. PRACTICAL GUIDANCE & INTEGRATION
+Write a simple, friendly introduction in everyday language, about 200-300 words. Speak directly to ${chart.name}. Use short sentences and short paragraphs. Avoid technical terms such as modalities, aspects, shadow work, karmic patterns, or "integrating energies". If a chart detail is essential, explain what it means in ordinary life rather than listing planets and houses.
+
+Start with a brief description of this person's main strengths and needs. Then offer three small, realistic actions they can try in daily life, with concrete examples for relationships, work, or looking after themselves. Finish with gentle encouragement. Present these as helpful reflections, not fixed predictions or diagnoses. This is the first section, so do not refer to earlier sections or call it a final conclusion.
+
+End with exactly:
 With warmth and best wishes,
 The Psychic Link
 
@@ -1047,7 +1045,7 @@ Use The Psychic Link as the signature, never a placeholder such as [Your Name].`
                       </Button>
                     </div>
                     {exists ? (
-                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{section!.content}</p>
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{section!.content.split(/(The Psychic Link)/g).map((part, i) => part === 'The Psychic Link' ? <span key={i} className="psychic-link-signature">{part}</span> : part)}</p>
                     ) : (
                       <p className="text-sm text-muted-foreground">Not generated yet. Generate this section on its own or include it in the full reading.</p>
                     )}
