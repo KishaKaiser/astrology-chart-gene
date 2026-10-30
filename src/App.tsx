@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useSyncExternalStore } from 'react'
 import { useKV } from '@/hooks/use-kv'
 import { ChartData } from '@/lib/astrology-types'
 import { generateChartData, resetSwissEphemeris } from '@/lib/astrology-calc'
@@ -14,36 +14,34 @@ import { KarmicDebtCalculator } from '@/components/KarmicDebtCalculator'
 import { FamilyChart } from '@/components/FamilyChart'
 import { ImportantDays } from '@/components/ImportantDays'
 import { BlogPostGenerator } from '@/components/BlogPostGenerator'
-import { MysticalImageGenerator } from '@/components/MysticalImageGenerator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 import { CrystalBallLogo } from '@/components/CrystalBallLogo'
-import { WooCommerceWebhook } from '@/components/WooCommerceWebhook'
-import { PLCMSIntegration } from '@/components/PLCMSIntegration'
-import { BookOpen, Sparkle, Star, ArrowsClockwise, Heart, ClockCounterClockwise, Infinity, Scales, UsersFour, CalendarDots, Article, Image, ShoppingBag, CloudArrowUp } from '@phosphor-icons/react'
+import { BookOpen, Sparkle, Star, ArrowsClockwise, Heart, ClockCounterClockwise, Infinity, Scales, UsersFour, CalendarDots, Article } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { DiagnosticTool } from '@/components/DiagnosticTool'
 import { TroubleshootingWizard } from '@/components/TroubleshootingWizard'
 import { TimezoneTestTool } from '@/components/TimezoneTestTool'
-import { AstroAuth } from '@/components/AstroAuth'
-import { astroApi, getToken, type AstroUser } from '@/lib/astro-api'
+
+import { SharedLibraryStatus } from '@/components/SharedLibraryStatus'
+import { subscribeLibrary, getLibrarySnapshot } from '@/lib/shared-library'
 
 function App() {
+  const sharedLibrary = useSyncExternalStore(subscribeLibrary, getLibrarySnapshot)
   const [charts, setCharts] = useKV<ChartData[]>('astrology-charts', [])
   const [selectedChart, setSelectedChart] = useState<ChartData | null>(null)
   const [view, setView] = useState<'library' | 'chart'>('library')
-  const [astroUser, setAstroUser] = useState<AstroUser | null>(null)
-  const [activeTab, setActiveTab] = useState<'charts' | 'personal-horoscope' | 'zodiac-horoscope' | 'lovers-chart' | 'karmic-relationship' | 'past-life' | 'karmic-debt' | 'family' | 'important-days' | 'blog-generator' | 'image-generator' | 'woocommerce' | 'pl-cms'>('charts')
+  const [activeTab, setActiveTab] = useState<'charts' | 'personal-horoscope' | 'zodiac-horoscope' | 'lovers-chart' | 'karmic-relationship' | 'past-life' | 'karmic-debt' | 'family' | 'important-days' | 'blog-generator'>('charts')
   const [ephemerisError, setEphemerisError] = useState(false)
 
-  // Restore session on mount
   useEffect(() => {
-    const token = getToken()
-    if (!token) return
-    astroApi.user.me().then(setAstroUser).catch(() => {})
-  }, [])
+    if (!sharedLibrary.ready || !selectedChart) return
+    const latest = charts.find(chart => chart.id === selectedChart.id)
+    if (!latest) { setSelectedChart(null); setView('library') }
+    else if (latest !== selectedChart) setSelectedChart(latest)
+  }, [charts, sharedLibrary.ready, selectedChart])
 
   useEffect(() => {
     const preInitialize = async () => {
@@ -207,7 +205,6 @@ function App() {
             </motion.div>
             
             <div className="flex items-center gap-3">
-              <AstroAuth user={astroUser} onUserChange={setAstroUser} />
               <TimezoneTestTool />
               <TroubleshootingWizard />
               <DiagnosticTool />
@@ -222,15 +219,16 @@ function App() {
                   Reset Engine
                 </Button>
               )}
-              {view === 'library' && activeTab === 'charts' && <ChartForm onSubmit={handleGenerateChart} />}
+              {sharedLibrary.ready && view === 'library' && activeTab === 'charts' && <ChartForm onSubmit={handleGenerateChart} />}
             </div>
           </div>
         </div>
       </header>
 
       <main className="container mx-auto px-6 py-12">
-        {view === 'library' ? (
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'charts' | 'personal-horoscope' | 'zodiac-horoscope' | 'lovers-chart' | 'karmic-relationship' | 'past-life' | 'karmic-debt' | 'family' | 'important-days' | 'blog-generator' | 'image-generator' | 'woocommerce' | 'pl-cms')} className="space-y-6">
+        <SharedLibraryStatus />
+        {!sharedLibrary.ready ? <p className="text-muted-foreground">Connect to the home server to open your chart library.</p> : view === 'library' ? (
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'charts' | 'personal-horoscope' | 'zodiac-horoscope' | 'lovers-chart' | 'karmic-relationship' | 'past-life' | 'karmic-debt' | 'family' | 'important-days' | 'blog-generator')} className="space-y-6">
             <TabsList className="flex h-auto w-full max-w-7xl mx-auto flex-wrap justify-center gap-1">
               <TabsTrigger value="charts" className="h-9 gap-2 text-white">
                 <BookOpen weight="bold" />
@@ -271,18 +269,6 @@ function App() {
               <TabsTrigger value="blog-generator" className="h-9 gap-2">
                 <Article weight="fill" />
                 Blog Posts
-              </TabsTrigger>
-              <TabsTrigger value="image-generator" className="h-9 gap-2">
-                <Image weight="fill" />
-                Images
-              </TabsTrigger>
-              <TabsTrigger value="woocommerce" className="h-9 gap-2">
-                <ShoppingBag weight="fill" />
-                WooCommerce
-              </TabsTrigger>
-              <TabsTrigger value="pl-cms" className="h-9 gap-2">
-                <CloudArrowUp weight="fill" />
-                PL_CMS
               </TabsTrigger>
             </TabsList>
 
@@ -361,23 +347,6 @@ function App() {
 
             <TabsContent value="blog-generator">
               <BlogPostGenerator />
-            </TabsContent>
-
-            <TabsContent value="image-generator">
-              <MysticalImageGenerator />
-            </TabsContent>
-
-            <TabsContent value="woocommerce">
-              <WooCommerceWebhook
-                onChartGenerated={(chart) => {
-                  setCharts((currentCharts) => [...(currentCharts || []), chart])
-                  toast.success(`Chart generated from WooCommerce order: ${chart.name}`)
-                }}
-              />
-            </TabsContent>
-
-            <TabsContent value="pl-cms">
-              <PLCMSIntegration />
             </TabsContent>
           </Tabs>
         ) : selectedChart ? (
