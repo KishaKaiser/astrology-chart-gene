@@ -38,6 +38,7 @@ export interface TransitData {
 }
 
 export interface ChartData {
+  relocationAnalysis?: import('./relocation').RelocationAnalysis
   id: string
   name: string
   date: string

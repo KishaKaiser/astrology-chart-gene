@@ -34,6 +34,15 @@ try {
   assert.equal(signature.getFont().fontName, 'Arizonia')
   assert.equal(signature.getNumberOfPages(), 2, 'closing and signature move together')
 
+  const separate = new jsPDF()
+  await registerSignatureFont(separate)
+  const sections = renderInterpretation(separate, '## 1. PRACTICAL GUIDANCE & INTEGRATION\nA short chart summary.\n\n### Careers and jobs to explore\nConsider roles that match your interests and skills.\n\n## 2. CHART OVERVIEW & DOMINANT THEMES\nA short overview.\n\n## 3. CORE IDENTITY: SUN, MOON & RISING\nA short identity reading.')
+  assert.equal(separate.getNumberOfPages(), 3, 'even short sections each start a new page')
+  assert.equal(sections.placements.find(p => p.text.startsWith('1. ')).page, 1)
+  assert.equal(sections.placements.find(p => p.text.startsWith('2. ')).page, 2)
+  assert.equal(sections.placements.find(p => p.text.startsWith('3. ')).page, 3)
+  assert.equal(sections.placements.find(p => p.text === 'Careers and jobs to explore').page, 1, 'subsections do not force a new page')
+
   if (process.argv[2]) {
     const preview = new jsPDF()
     await registerSignatureFont(preview)
@@ -43,10 +52,8 @@ try {
     preview.setFont('Arizonia','normal'); preview.setFontSize(18)
     preview.text('The Psychic Link',105,40,{align:'center'})
     const intro = `## 1. PRACTICAL GUIDANCE & INTEGRATION\nYou bring warmth and curiosity to the people around you. You may enjoy sharing ideas, while also needing quiet time to understand your own feelings. Both needs deserve room in your daily life.\n\nStart small. Choose one task each morning that matters to you, and give it your attention before taking on more. A short walk or a few quiet minutes can help you notice what you need.\n\nIn relationships, say what would help instead of hoping someone will guess. You might say, "I would like a little time to think, then we can talk." At work, break a large goal into one manageable step.\n\nYou do not have to change everything at once. Notice which habits leave you feeling calmer and more confident, and build on those. Your chart offers ideas to explore; you decide what fits your life.\n\nWith warmth and best wishes,\nThe Psychic Link`
-    const first = renderInterpretation(preview, intro, 58)
-    // Reproduce the reported layout: a new section arrives close to the footer.
-    const next = renderInterpretation(preview, '## 2. CHART OVERVIEW & DOMINANT THEMES\n'+paragraph+'\n\nA fresh page gives this section room to begin clearly, with the title and complete opening paragraph together.', Math.max(first.y, 255))
-    assert.equal(next.placements[0].page, 2)
+    const next = renderInterpretation(preview, intro+'\n\n## 2. CHART OVERVIEW & DOMINANT THEMES\n'+paragraph+'\n\nEach interpretation section starts on a fresh page, even when there was space left on the previous page.', 58)
+    assert.equal(next.placements.find(p => p.text.startsWith('2. ')).page, 2)
     const pages = preview.getNumberOfPages()
     for (let i=1;i<=pages;i++) {
       preview.setPage(i); preview.setFillColor(245,245,250); preview.rect(0,282,210,15,'F')

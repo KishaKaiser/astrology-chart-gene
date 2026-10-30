@@ -58,12 +58,16 @@ export function renderInterpretation(pdf: jsPDF, text: string, startY = 55) {
   const newPage = () => { pdf.addPage(); y = top }
   for (let index = 0; index < measured.length; index++) {
     const block = measured[index]
+    // Each main interpretation section starts on its own page. The first
+    // section shares the interpretation banner; subsections stay in the flow.
+    if (index > 0 && block.kind === 'heading' && block.level === 2 && y > top) newPage()
     let keep = block.height + block.gap
     if (block.kind === 'heading') {
       // Keep consecutive headings with the first complete paragraph whenever it
       // fits on a fresh page. Oversized paragraphs retain at least three lines.
       for (let next = index + 1; next < measured.length; next++) {
         const following = measured[next]
+        if (following.kind === 'heading' && following.level === 2) break
         if (following.kind === 'heading') keep += following.height + following.gap
         else {
           const leadingHeight = keep
