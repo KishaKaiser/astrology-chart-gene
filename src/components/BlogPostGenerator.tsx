@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -25,13 +25,18 @@ import { EmailNotificationSettings, type EmailNotificationSettings as EmailNotif
 import { NotificationHistory } from '@/components/NotificationHistory'
 import { sendPublicationNotification, createNotificationHistory, type NotificationHistoryEntry } from '@/lib/email-notifications'
 import { MysticalImageGeneratorEmbed } from '@/components/MysticalImageGeneratorEmbed'
-import { llm, llmPrompt } from "@/lib/llm"
+import { llm } from "@/lib/llm"
+import { UpcomingTransitList } from '@/components/UpcomingTransitList'
+import type { UpcomingTransit } from '@/lib/upcoming-transits'
+import { generateTransitBlog, transitFacts } from '@/lib/blog-generation'
+import { InterpretationModelSelector, readInterpretationModel } from '@/components/InterpretationModelSelector'
 
 interface BlogPost {
   id: string
   title: string
   content: string
   transitType: string
+  transitEvent?: UpcomingTransit
   createdAt: number
   wordpressId?: number
   publishedUrl?: string
@@ -91,6 +96,12 @@ export function BlogPostGenerator() {
   })
   const [notificationHistory, setNotificationHistory] = useKV<NotificationHistoryEntry[]>('notification-history', [])
   const [selectedTransit, setSelectedTransit] = useState<string>('')
+  const [generatedTransit, setGeneratedTransit] = useState<UpcomingTransit | undefined>()
+  const [model, setModel] = useState(readInterpretationModel)
+  const [lastModel, setLastModel] = useState('')
+  const [generationError, setGenerationError] = useState('')
+  const generationLock = useRef(false)
+  const generatedPostRef = useRef<HTMLDivElement>(null)
   const [additionalContext, setAdditionalContext] = useState<string>('')
   const [generatedPost, setGeneratedPost] = useState<{ title: string; content: string; imagePrompt?: string } | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -121,98 +132,33 @@ export function BlogPostGenerator() {
   const [tempUsername, setTempUsername] = useState(wpSettings?.username || '')
   const [tempPassword, setTempPassword] = useState(wpSettings?.applicationPassword || '')
 
-  const handleGenerate = async () => {
-    if (!selectedTransit) {
-      toast.error('Please select a transit type')
-      return
-    }
+  useEffect(() => {
+    if (generatedPost) generatedPostRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [generatedPost])
 
+  const handleGenerate = async (event: UpcomingTransit) => {
+    if (generationLock.current) return
+    generationLock.current = true
     setIsGenerating(true)
-    setGeneratedPost(null)
-
+    setGenerationError('')
     try {
-      const transitInfo = TRANSIT_TYPES.find(t => t.value === selectedTransit)
-      
-      const promptText = llmPrompt`You are an expert astrologer writing an engaging blog post for a general audience interested in astrology.
-
-Write a comprehensive blog post about ${transitInfo?.label || selectedTransit}.
-
-Context: ${transitInfo?.description || 'astrological transit'}
-${additionalContext ? `Additional focus areas: ${additionalContext}` : ''}
-
-The blog post should include:
-1. An engaging introduction explaining what ${transitInfo?.label || selectedTransit} is
-2. Key effects and themes people might experience
-3. What to expect during this transit
-4. Practical advice and tips for navigating this period
-5. Do's and don'ts during this transit
-6. A positive, empowering conclusion
-
-Write in an accessible, warm tone that balances astrological knowledge with practical wisdom.
-
-IMPORTANT: Keep the content concise (around 500-800 words total) to ensure complete generation.
-
-Also create a visual description for a featured image that captures the essence of this transit in a mystical, celestial style.
-
-Return ONLY a valid JSON object with this EXACT structure (no additional text before or after):
-{
-  "title": "An engaging, SEO-friendly blog post title (one line)",
-  "content": "The complete blog post content. Write 4-6 paragraphs. Separate paragraphs with TWO newline characters. Keep total length under 800 words.",
-  "imagePrompt": "A detailed image generation prompt (2-3 sentences) describing a mystical, celestial scene that embodies the energy and themes of ${transitInfo?.label || selectedTransit}. Include visual elements like cosmic imagery, astrological symbols, colors, and atmosphere that match the transit's essence."
-}
-
-Ensure all quotes and special characters in the JSON are properly escaped. Do not include any text outside the JSON object.`
-
-      const response = await llm(promptText, true)
-      
-      console.log('LLM Response (first 500 chars):', response.substring(0, 500))
-      console.log('LLM Response (last 500 chars):', response.substring(Math.max(0, response.length - 500)))
-      
-      let parsed: any
-      try {
-        parsed = JSON.parse(response)
-      } catch (parseError) {
-        console.error('JSON parse error:', parseError)
-        console.error('Response length:', response.length)
-        
-        const jsonMatch = response.match(/\{[\s\S]*"title"[\s\S]*"content"[\s\S]*\}/)
-        if (jsonMatch) {
-          console.log('Attempting to extract JSON from response...')
-          parsed = JSON.parse(jsonMatch[0])
-        } else {
-          throw new Error('Could not parse blog post response. The response may be incomplete or incorrectly formatted. Please try again.')
-        }
-      }
-
-      if (!parsed.title || !parsed.content) {
-        throw new Error('Invalid response structure - missing title or content')
-      }
-
-      if (parsed.content.length < 100) {
-        throw new Error('Generated content is too short. Please try again.')
-      }
-
+      const parsed = await generateTransitBlog(transitFacts(event), additionalContext,
+        prompt => llm(prompt, false, { model, onModelUsed: setLastModel }))
       setGeneratedPost(parsed)
+      setSelectedTransit(event.title)
+      setGeneratedTransit(event)
       setEditedTitle(parsed.title)
       setEditedContent(parsed.content)
-      setEditedImagePrompt(parsed.imagePrompt || '')
+      setEditedImagePrompt(parsed.imagePrompt)
       setGeneratedImageUrl('')
+      setEditMode(false)
       toast.success('Blog post generated successfully!')
     } catch (error) {
-      console.error('Blog post generation error:', error)
-      if (error instanceof Error) {
-        const errorMsg = error.message
-        if (errorMsg.includes('Unterminated string') || errorMsg.includes('JSON')) {
-          toast.error('Failed to generate complete blog post. Please try again.', {
-            description: 'The AI response was incomplete or improperly formatted. This usually resolves on retry.'
-          })
-        } else {
-          toast.error(`Failed to generate blog post: ${errorMsg}`)
-        }
-      } else {
-        toast.error('Failed to generate blog post. Please try again.')
-      }
+      const message = error instanceof Error ? error.message : 'Could not generate the article. Please try again.'
+      setGenerationError(message)
+      toast.error('Failed to generate blog post', { description: message })
     } finally {
+      generationLock.current = false
       setIsGenerating(false)
     }
   }
@@ -229,6 +175,7 @@ Ensure all quotes and special characters in the JSON are properly escaped. Do no
       title: finalTitle,
       content: finalContent,
       transitType: selectedTransit,
+      transitEvent: generatedTransit,
       createdAt: Date.now(),
       featuredImagePrompt: finalImagePrompt,
       featuredImageUrl: generatedImageUrl || undefined,
@@ -392,58 +339,9 @@ Ensure all quotes and special characters in the JSON are properly escaped. Do no
     try {
       const transitInfo = TRANSIT_TYPES.find(t => t.value === schedule.transitType)
       
-      const promptText = llmPrompt`You are an expert astrologer writing an engaging blog post for a general audience interested in astrology.
-
-Write a comprehensive blog post about ${transitInfo?.label || schedule.transitType}.
-
-Context: ${transitInfo?.description || 'astrological transit'}
-${schedule.additionalContext ? `Additional focus areas: ${schedule.additionalContext}` : ''}
-
-The blog post should include:
-1. An engaging introduction explaining what ${transitInfo?.label || schedule.transitType} is
-2. Key effects and themes people might experience
-3. What to expect during this transit
-4. Practical advice and tips for navigating this period
-5. Do's and don'ts during this transit
-6. A positive, empowering conclusion
-
-Write in an accessible, warm tone that balances astrological knowledge with practical wisdom.
-
-IMPORTANT: Keep the content concise (around 500-800 words total) to ensure complete generation.
-
-Also create a visual description for a featured image that captures the essence of this transit in a mystical, celestial style.
-
-Return ONLY a valid JSON object with this EXACT structure (no additional text before or after):
-{
-  "title": "An engaging, SEO-friendly blog post title (one line)",
-  "content": "The complete blog post content. Write 4-6 paragraphs. Separate paragraphs with TWO newline characters. Keep total length under 800 words.",
-  "imagePrompt": "A detailed image generation prompt (2-3 sentences) describing a mystical, celestial scene that embodies the energy and themes of ${transitInfo?.label || schedule.transitType}. Include visual elements like cosmic imagery, astrological symbols, colors, and atmosphere that match the transit's essence."
-}
-
-Ensure all quotes and special characters in the JSON are properly escaped. Do not include any text outside the JSON object.`
-
-      const response = await llm(promptText, true)
-      
-      console.log('Recurring post LLM Response (first 500 chars):', response.substring(0, 500))
-      
-      let parsed: any
-      try {
-        parsed = JSON.parse(response)
-      } catch (parseError) {
-        console.error('JSON parse error for recurring post:', parseError)
-        
-        const jsonMatch = response.match(/\{[\s\S]*"title"[\s\S]*"content"[\s\S]*\}/)
-        if (jsonMatch) {
-          console.log('Attempting to extract JSON from recurring response...')
-          parsed = JSON.parse(jsonMatch[0])
-        } else {
-          throw new Error('Could not parse blog post response. Please try again.')
-        }
-      }
-
-      if (!parsed.title || !parsed.content) {
-        throw new Error('Invalid response structure - missing title or content')
-      }
+      const parsed = await generateTransitBlog(
+        `Topic: ${transitInfo?.label || schedule.transitType}\nGeneral educational article only. No calculated event dates are available for this legacy recurring topic; do not claim the event is currently occurring or invent dates.`,
+        schedule.additionalContext || '', prompt => llm(prompt, false, { model }))
 
       const publishTime = calculateNextScheduledTime(schedule)
 
@@ -662,6 +560,7 @@ Ensure all quotes and special characters in the JSON are properly escaped. Do no
       title: finalTitle,
       content: finalContent,
       transitType: selectedTransit,
+      transitEvent: generatedTransit,
       createdAt: Date.now(),
       scheduledFor: scheduledTimestamp,
       publishStatus: 'scheduled',
@@ -763,6 +662,7 @@ Ensure all quotes and special characters in the JSON are properly escaped. Do no
         title: finalTitle,
         content: finalContent,
         transitType: selectedTransit,
+        transitEvent: generatedTransit,
         createdAt: Date.now(),
         wordpressId: data.id,
         publishedUrl: data.link,
@@ -829,6 +729,7 @@ Ensure all quotes and special characters in the JSON are properly escaped. Do no
   }
 
   const handleLoadPost = (post: BlogPost) => {
+    if (generationLock.current) return
     setGeneratedPost({ 
       title: post.title, 
       content: post.content,
@@ -839,6 +740,8 @@ Ensure all quotes and special characters in the JSON are properly escaped. Do no
     setEditedImagePrompt(post.featuredImagePrompt || '')
     setGeneratedImageUrl(post.featuredImageUrl || '')
     setSelectedTransit(post.transitType)
+    setGeneratedTransit(post.transitEvent)
+    setGenerationError('')
     setEditMode(false)
   }
 
@@ -1106,7 +1009,7 @@ Ensure all quotes and special characters in the JSON are properly escaped. Do no
                         <div className="flex-1">
                           <h4 className="font-semibold text-white">{post.title}</h4>
                           <p className="text-sm text-muted-foreground mt-1">
-                            {transitInfo?.label} • Publishes {new Date(post.scheduledFor!).toLocaleString()}
+                            {transitInfo?.label || post.transitType} • Publishes {new Date(post.scheduledFor!).toLocaleString()}
                           </p>
                           <p className="text-xs text-accent mt-1">
                             {timeUntil > 0 ? `Publishing in ${hoursUntil}h ${minutesUntil}m` : 'Publishing soon...'}
@@ -1225,28 +1128,11 @@ Ensure all quotes and special characters in the JSON are properly escaped. Do no
           <CardHeader>
             <CardTitle className="text-2xl text-white">Generate New Post</CardTitle>
             <CardDescription className="text-white/70">
-              Select a transit type and generate engaging content
+              Discover upcoming transits and generate a post using their calculated dates
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="transit-type" className="text-white">Transit Type</Label>
-              <Select value={selectedTransit} onValueChange={setSelectedTransit}>
-                <SelectTrigger id="transit-type" className="bg-card text-white border-border">
-                  <SelectValue placeholder="Select a transit..." />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border-border">
-                  {TRANSIT_TYPES.map((transit) => (
-                    <SelectItem key={transit.value} value={transit.value} className="text-white">
-                      <div className="flex flex-col items-start">
-                        <span className="font-medium">{transit.label}</span>
-                        <span className="text-xs text-muted-foreground">{transit.description}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <InterpretationModelSelector value={model} onChange={setModel} disabled={isGenerating} lastModel={lastModel} />
 
             <div className="space-y-2">
               <Label htmlFor="additional-context" className="text-white">
@@ -1261,18 +1147,14 @@ Ensure all quotes and special characters in the JSON are properly escaped. Do no
               />
             </div>
 
-            <Button
-              onClick={handleGenerate}
-              disabled={isGenerating || !selectedTransit}
-              className="w-full"
-            >
-              {isGenerating ? 'Generating...' : 'Generate Blog Post'}
-            </Button>
+            {generationError && <p role="alert" className="text-red-300">{generationError}</p>}
+            {isGenerating && <p role="status" className="text-white">Writing your transit article…</p>}
+            <UpcomingTransitList busy={isGenerating} onGenerate={event => void handleGenerate(event)} />
           </CardContent>
         </Card>
 
         {generatedPost && (
-          <Card className="border-accent/20">
+          <Card ref={generatedPostRef} className="border-accent/20 scroll-mt-32">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-xl text-white">Generated Post</CardTitle>
@@ -1643,7 +1525,7 @@ Ensure all quotes and special characters in the JSON are properly escaped. Do no
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground mt-1">
-                          {transitInfo?.label} • {new Date(post.createdAt).toLocaleDateString()}
+                          {transitInfo?.label || post.transitType} • {new Date(post.createdAt).toLocaleDateString()}
                         </p>
                         {post.publishedUrl && (
                           <a
