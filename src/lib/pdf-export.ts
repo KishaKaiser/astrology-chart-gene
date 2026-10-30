@@ -3,6 +3,7 @@ import { getPlanetaryDignity, getDignityDescription, HOUSE_INFO } from '@/lib/zo
 import { detectAspectPatterns } from '@/lib/aspect-patterns'
 import { getAspectInterpretation } from '@/lib/aspect-interpretations'
 import jsPDF from 'jspdf'
+import { registerSignatureFont, renderInterpretation } from './pdf-interpretation'
 import logoImage from '@/assets/images/logo.jpg'
 
 export interface PDFExportOptions {
@@ -50,9 +51,7 @@ export async function exportChartToPDF(
     const margin = 20
     let yPos = margin
 
-    let useCustomFonts = false
-    
-    console.log('Custom fonts disabled for stability - using system fonts')
+    if (interpretation && options.includeInterpretation) await registerSignatureFont(pdf)
 
     const elementCount = { Fire: 0, Earth: 0, Air: 0, Water: 0 }
     const modalityCount = { Cardinal: 0, Fixed: 0, Mutable: 0 }
@@ -770,7 +769,10 @@ export async function exportChartToPDF(
       pdf.setFontSize(10)
       pdf.setTextColor(230, 230, 230)
       pdf.setFont('helvetica', 'normal')
-      pdf.text('Comprehensive astrological analysis by The Psychic Link', pageWidth / 2, yPos, { align: 'center' })
+      pdf.text('Comprehensive astrological analysis', pageWidth / 2, yPos, { align: 'center' })
+      pdf.setFont('Arizonia', 'normal')
+      pdf.setFontSize(18)
+      pdf.text('The Psychic Link', pageWidth / 2, yPos + 9, { align: 'center' })
       
       yPos = 55
 
@@ -778,179 +780,7 @@ export async function exportChartToPDF(
       pdf.setFont('helvetica', 'normal')
       pdf.setTextColor(40, 40, 40)
       
-      const iconMap: { [key: string]: string } = {
-        '☉': '☀',  
-        '☽': '🌙',  
-        '☿': '☿',  
-        '♀': '♀',  
-        '♂': '♂',  
-        '♃': '♃',  
-        '♄': '♄',  
-        '♅': '♅',  
-        '♆': '♆',  
-        '♇': '♇',  
-        '⚸': '⚷',  
-        '♈': 'Aries',
-        '♉': 'Taurus',
-        '♊': 'Gemini',
-        '♋': 'Cancer',
-        '♌': 'Leo',
-        '♍': 'Virgo',
-        '♎': 'Libra',
-        '♏': 'Scorpio',
-        '♐': 'Sagittarius',
-        '♑': 'Capricorn',
-        '♒': 'Aquarius',
-        '♓': 'Pisces'
-      }
-      
-      let processedInterpretation = interpretation
-        .replace(/^##\s+(.+)$/gm, '\n=SECTION_HEADER=$1')
-        .replace(/^###\s+(.+)$/gm, '\n=SUBSECTION_HEADER=$1')
-        .replace(/####\s+(.+)$/gm, '\n=MINOR_HEADER=$1')
-      
-      Object.keys(iconMap).forEach(icon => {
-        const replacement = iconMap[icon]
-        processedInterpretation = processedInterpretation.replace(new RegExp(icon, 'g'), replacement)
-      })
-      
-      const rawLines = processedInterpretation.split('\n')
-      const interpretationLines: string[] = []
-      
-      rawLines.forEach(rawLine => {
-        if (rawLine.startsWith('=SECTION_HEADER=') || 
-            rawLine.startsWith('=SUBSECTION_HEADER=') || 
-            rawLine.startsWith('=MINOR_HEADER=') ||
-            rawLine.trim() === '' ||
-            rawLine.match(/^\*\*[0-9]+\.\s/) ||
-            rawLine.match(/^\*\*[A-Z\s&]+:\s*\*\*/) ||
-            rawLine.match(/^\*\*[^*]+\*\*$/) ||
-            rawLine.match(/^(Sun Sign|Moon Sign|Rising Sign|Planetary Positions|House Analysis|Major Aspects|Aspect Patterns|Life Purpose|Career|Relationships|Challenges|Strengths|Spiritual Path|Personality|Emotions|Communication|Love|Career Path|Home Life|Creative Expression|Daily Life|Relationships & Partnerships|Transformation|Philosophy|Career Ambitions|Community|Spirituality):/)) {
-          interpretationLines.push(rawLine)
-        } else {
-          const wrappedLines = pdf.splitTextToSize(rawLine, pageWidth - 2 * margin)
-          interpretationLines.push(...wrappedLines)
-        }
-      })
-      
-      console.log(`Processing ${interpretationLines.length} lines of interpretation for PDF`)
-      
-      for (let i = 0; i < interpretationLines.length; i++) {
-        const line = interpretationLines[i]
-        
-        if (yPos > pageHeight - 25) {
-          pdf.addPage()
-          yPos = margin + 5
-        }
-        
-        if (line.startsWith('=SECTION_HEADER=')) {
-          if (yPos > margin + 10) {
-            yPos += 8
-          }
-          if (yPos > pageHeight - 30) {
-            pdf.addPage()
-            yPos = margin + 5
-          }
-          pdf.setFont('helvetica', 'bold')
-          pdf.setFontSize(14)
-          pdf.setTextColor(68, 21, 104)
-          const headerText = line.replace('=SECTION_HEADER=', '').trim()
-          pdf.text(headerText, margin, yPos)
-          yPos += 8
-        } else if (line.startsWith('=SUBSECTION_HEADER=')) {
-          if (yPos > margin + 10) {
-            yPos += 6
-          }
-          if (yPos > pageHeight - 25) {
-            pdf.addPage()
-            yPos = margin + 5
-          }
-          pdf.setFont('helvetica', 'bold')
-          pdf.setFontSize(12)
-          pdf.setTextColor(90, 40, 120)
-          const headerText = line.replace('=SUBSECTION_HEADER=', '').trim()
-          pdf.text(headerText, margin, yPos)
-          yPos += 7
-        } else if (line.startsWith('=MINOR_HEADER=')) {
-          yPos += 4
-          if (yPos > pageHeight - 25) {
-            pdf.addPage()
-            yPos = margin + 5
-          }
-          pdf.setFont('helvetica', 'bold')
-          pdf.setFontSize(10)
-          pdf.setTextColor(90, 40, 120)
-          const headerText = line.replace('=MINOR_HEADER=', '').trim()
-          pdf.text(headerText, margin, yPos)
-          yPos += 6
-        } else if (line.match(/^(Sun Sign|Moon Sign|Rising Sign|Planetary Positions|House Analysis|Major Aspects|Aspect Patterns|Life Purpose|Career|Relationships|Challenges|Strengths|Spiritual Path|Personality|Emotions|Communication|Love|Career Path|Home Life|Creative Expression|Daily Life|Relationships & Partnerships|Transformation|Philosophy|Career Ambitions|Community|Spirituality):/)) {
-          if (yPos > margin + 10) {
-            yPos += 6
-          }
-          if (yPos > pageHeight - 25) {
-            pdf.addPage()
-            yPos = margin + 5
-          }
-          pdf.setFont('helvetica', 'bold')
-          pdf.setFontSize(11)
-          pdf.setTextColor(68, 21, 104)
-          pdf.text(line, margin, yPos)
-          yPos += 7
-        } else if (line.match(/^\*\*[0-9]+\.\s/)) {
-          if (yPos > margin + 10) {
-            yPos += 5
-          }
-          if (yPos > pageHeight - 25) {
-            pdf.addPage()
-            yPos = margin + 5
-          }
-          pdf.setFont('helvetica', 'bold')
-          pdf.setFontSize(11)
-          pdf.setTextColor(68, 21, 104)
-          const cleanLine = line.replace(/\*\*/g, '')
-          pdf.text(cleanLine, margin, yPos)
-          yPos += 7
-        } else if (line.match(/^\*\*[A-Z\s&]+:\s*\*\*/)) {
-          yPos += 3
-          if (yPos > pageHeight - 25) {
-            pdf.addPage()
-            yPos = margin + 5
-          }
-          pdf.setFont('helvetica', 'bold')
-          pdf.setFontSize(10)
-          pdf.setTextColor(90, 40, 120)
-          const cleanLine = line.replace(/\*\*/g, '').trim()
-          pdf.text(cleanLine, margin, yPos)
-          yPos += 6
-        } else if (line.match(/^\*\*[^*]+\*\*$/)) {
-          yPos += 2
-          if (yPos > pageHeight - 25) {
-            pdf.addPage()
-            yPos = margin + 5
-          }
-          pdf.setFont('helvetica', 'bold')
-          pdf.setFontSize(9)
-          pdf.setTextColor(60, 60, 60)
-          const cleanLine = line.replace(/\*\*/g, '')
-          pdf.text(cleanLine, margin, yPos)
-          yPos += 5
-        } else if (line.trim() === '') {
-          yPos += 2
-        } else {
-          if (yPos > pageHeight - 25) {
-            pdf.addPage()
-            yPos = margin + 5
-          }
-          pdf.setFont('helvetica', 'normal')
-          pdf.setFontSize(9)
-          pdf.setTextColor(50, 50, 50)
-          const cleanLine = line.replace(/\*\*/g, '').replace(/^[-•]\s*/, '  • ')
-          pdf.text(cleanLine, margin, yPos)
-          yPos += 5
-        }
-      }
-      
-      console.log(`Completed interpretation rendering. Final page count: ${pdf.getNumberOfPages()}`)
+      yPos = renderInterpretation(pdf, interpretation, yPos).y
     }
 
     if (options.includePersonalHoroscope && options.includePersonalHoroscope.trim() !== '') {
