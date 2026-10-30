@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useKV } from '@/hooks/use-kv'
 import { FamilyRelationshipData } from '@/lib/family-compatibility'
+import type { ChartData } from '@/lib/astrology-types'
+import { currentRelocation } from '@/lib/relocation'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -83,6 +85,9 @@ interface ImportantDaysReading {
 }
 
 export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, variant = 'default', chartId }: ExportOptionsDialogProps) {
+  const [charts] = useKV<ChartData[]>('astrology-charts', [])
+  const selectedChart = charts.find(chart => chart.id === chartId)
+  const hasRelocation = Boolean(selectedChart && currentRelocation(selectedChart))
   const [open, setOpen] = useState(false)
   const [options, setOptions] = useState<PDFExportOptions>(defaultPDFOptions)
   const [savedFamilyData] = useKV<Record<string, FamilyRelationshipData>>('family-dynamics', {})
@@ -626,6 +631,13 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
 
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-white">Additional Reports</h3>
+            <div className="flex items-center space-x-3">
+              <Checkbox id="includeRelocation" checked={Boolean(options.includeRelocation)} onCheckedChange={() => toggleOption('includeRelocation')} disabled={!hasRelocation} />
+              <Label htmlFor="includeRelocation" className={!hasRelocation ? 'opacity-50' : ''}>
+                <div className="font-medium text-white">Relocation analysis</div>
+                <div className="text-xs text-muted-foreground">{hasRelocation ? 'Selected places, calculated angles and houses, and any saved comparison' : 'Calculate places in the chart’s Relocation tab first'}</div>
+              </Label>
+            </div>
             
             <div className={`space-y-3 ${availableHoroscopes.length === 0 ? 'opacity-50' : ''}`}>
               <Label className="flex-1">

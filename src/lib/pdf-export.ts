@@ -4,9 +4,11 @@ import { detectAspectPatterns } from '@/lib/aspect-patterns'
 import { getAspectInterpretation } from '@/lib/aspect-interpretations'
 import jsPDF from 'jspdf'
 import { registerSignatureFont, renderInterpretation } from './pdf-interpretation'
+import { currentRelocation, relocationExportText } from './relocation'
 import logoImage from '@/assets/images/logo.jpg'
 
 export interface PDFExportOptions {
+  includeRelocation?: boolean
   includeChartWheel: boolean
   includeHouseMeanings: boolean
   includeMajorAspects: boolean
@@ -23,6 +25,7 @@ export interface PDFExportOptions {
 }
 
 export const defaultPDFOptions: PDFExportOptions = {
+  includeRelocation: false,
   includeChartWheel: true,
   includeHouseMeanings: false,
   includeMajorAspects: true,
@@ -51,7 +54,7 @@ export async function exportChartToPDF(
     const margin = 20
     let yPos = margin
 
-    if (interpretation && options.includeInterpretation) await registerSignatureFont(pdf)
+    if ((interpretation && options.includeInterpretation) || (options.includeRelocation && currentRelocation(chart))) await registerSignatureFont(pdf)
 
     const elementCount = { Fire: 0, Earth: 0, Air: 0, Water: 0 }
     const modalityCount = { Cardinal: 0, Fixed: 0, Mutable: 0 }
@@ -1096,6 +1099,12 @@ export async function exportChartToPDF(
           })
         }
       })
+    }
+
+    const relocation = currentRelocation(chart)
+    if (options.includeRelocation && relocation) {
+      pdf.addPage()
+      yPos = renderInterpretation(pdf, relocationExportText(relocation), 25).y
     }
 
     const totalPages = pdf.getNumberOfPages()

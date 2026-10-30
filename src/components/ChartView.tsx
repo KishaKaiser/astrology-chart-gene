@@ -24,6 +24,8 @@ import { toast } from 'sonner'
 import logoImage from '@/assets/images/logo.jpg'
 import { llm, llmPrompt } from "@/lib/llm"
 import { InterpretationModelSelector, readInterpretationModel } from './InterpretationModelSelector'
+import { RelocationAnalysis } from './RelocationAnalysis'
+import { currentRelocation, relocationFacts } from '@/lib/relocation'
 import { INTERPRETATION_TITLES, parseInterpretationSections, missingInterpretationSections, generateInterpretationSections } from '@/lib/interpretation-sections'
 
 interface ChartViewProps {
@@ -86,6 +88,7 @@ export function ChartView({ chart, onBack, onEdit, onUpdateChart }: ChartViewPro
 
 
   const getSectionPromptData = (sectionNumber: number) => {
+    const relocation = currentRelocation(chart)
     const sun = chart.planets.find(p => p.name === 'Sun')
     const moon = chart.planets.find(p => p.name === 'Moon')
     const mercury = chart.planets.find(p => p.name === 'Mercury')
@@ -262,9 +265,26 @@ Write the complete section. Be thorough and insightful.`,
 ${chartData}
 
 ## 1. PRACTICAL GUIDANCE & INTEGRATION
-Write a simple, friendly introduction in everyday language, about 200-300 words. Speak directly to ${chart.name}. Use short sentences and short paragraphs. Avoid technical terms such as modalities, aspects, shadow work, karmic patterns, or "integrating energies". If a chart detail is essential, explain what it means in ordinary life rather than listing planets and houses.
+Write a simple, friendly chart summary in everyday language, about 300-450 words. Speak directly to ${chart.name}. Use short sentences and short paragraphs. Avoid technical terms such as modalities, aspects, shadow work, karmic patterns, or "integrating energies". Explain chart details as everyday strengths, needs, and preferences rather than listing planets and houses.
 
-Start with a brief description of this person's main strengths and needs. Then offer three small, realistic actions they can try in daily life, with concrete examples for relationships, work, or looking after themselves. Finish with gentle encouragement. Present these as helpful reflections, not fixed predictions or diagnoses. This is the first section, so do not refer to earlier sections or call it a final conclusion.
+Additional chart context for work and home:
+2nd house: ${chart.houses.find(h => h.number === 2)?.sign || 'Unknown'}.
+4th house: ${chart.houses.find(h => h.number === 4)?.sign || 'Unknown'}; planets here: ${chart.planets.filter(p => p.house === 4).map(p => p.name).join(', ') || 'none'}.
+6th house: ${chart.houses.find(h => h.number === 6)?.sign || 'Unknown'}.
+10th house / Midheaven: ${mcSign}.
+
+Relocation evidence:
+${relocation ? relocationFacts(relocation) : 'No relocated charts have been calculated for this birth data.'}
+
+Use these three short subsections:
+### Your chart at a glance
+Summarize the person's main strengths, emotional needs, relationship style, and one growth opportunity, drawing together the Sun, Moon, rising sign, and major chart themes.
+### Careers and jobs to explore
+Suggest 3-5 specific job roles or career areas that may suit the chart, with a short plain-language reason for each. Consider the Midheaven, work and income houses, Mercury, Mars, Jupiter, and Saturn. Include the working conditions they may prefer, such as independence, teamwork, creativity, or structure. These are possibilities to explore alongside their skills, interests, and circumstances, not guaranteed success or a single destined career.
+### Places and living environments that may suit you
+${relocation ? 'Use the supplied relocated-chart evidence to name which of the compared places may better support career, home life, or relationships, with a short reason and tradeoff. Compare only the supplied destinations; do not claim a worldwide best location. Do not invent planetary lines or factual city qualities. If the evidence is mixed, say so.' : 'Describe 2-3 kinds of places or communities that may fit their needs for home, security, pace of life, and social connection, using the Moon, 4th house, and overall chart themes. No relocated charts have been provided: do not invent favorable planetary lines or specific best cities. Briefly suggest comparing candidate cities in the Relocation tab for location-specific guidance.'} Mention practical considerations such as work, budget, and support network. Treat location suitability as an astrological interpretation rather than a guarantee.
+
+Finish with one small next step and gentle encouragement. Present this as helpful reflection, not fixed predictions or diagnoses. This is the first section, so do not refer to earlier sections or call it a final conclusion.
 
 End with exactly:
 With warmth and best wishes,
@@ -471,6 +491,7 @@ Use The Psychic Link as the signature, never a placeholder such as [Your Name].`
             Horoscopes
           </TabsTrigger>
           <TabsTrigger value="timeline" className="whitespace-nowrap">Life Events</TabsTrigger>
+          <TabsTrigger value="relocation" className="whitespace-nowrap">Relocation</TabsTrigger>
           <TabsTrigger value="transits" disabled={!showTransits} className="whitespace-nowrap">Current Transits</TabsTrigger>
           <TabsTrigger value="transit-aspects" disabled={!showTransits} className="whitespace-nowrap">Transit Aspects</TabsTrigger>
           <TabsTrigger value="transit-interpretation" className="whitespace-nowrap">
@@ -1062,6 +1083,10 @@ Use The Psychic Link as the signature, never a placeholder such as [Your Name].`
 
         <TabsContent value="timeline">
           <LifeEventsTimeline chart={chart} />
+        </TabsContent>
+
+        <TabsContent value="relocation">
+          <RelocationAnalysis key={chart.id} chart={chart} />
         </TabsContent>
 
         <TabsContent value="transits">
