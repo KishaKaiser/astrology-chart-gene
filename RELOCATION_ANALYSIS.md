@@ -65,8 +65,9 @@ Choose a domestic country and Overall balance, Career, Home, or Relationships,
 then **Find my top 10 places**. The best five cities within the chosen country
 and the best five outside it are combined and sorted by the same raw score,
 highest first. Domestic and International labels appear in the saved list and
-export. The birth location country suffix supplies a default when recognized;
-otherwise the user chooses it explicitly. Country and priority edits do not
+export. The user selects the current home/domestic country explicitly; the birthplace
+is not assumed to be the current residence. An optional current-home city
+provides a separate chart comparison reference without changing birth data. Country and priority edits do not
 change an existing saved report until a new search runs. Ranking works locally without Ollama; the optional narrative still
 uses Ollama. A new search replaces the saved comparison. Manual recalculation
 removes ranking metadata. Results, reasons and tradeoffs are included in export
@@ -74,7 +75,9 @@ and supplied to section 1 when regenerated. Existing manual reports still work.
 
 The bundled 7,166-city list comes from Natural Earth's 1:10m populated places:
 https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/ne_10m_populated_places.geojson
-Downloaded 2026-10-30; English city/region/country names and city-center coordinates only.
+Downloaded 2026-10-30; City/region/country names, city-center coordinates, historical POP_MAX
+metropolitan population estimates, administrative-capital role and WORLDCITY flag.
+Population/role metadata refreshed 2026-10-31 from the same public-domain source.
 Entries outside the latitude limit and repeated full place names are excluded.
 Coordinates are public domain: https://www.naturalearthdata.com/about/terms-of-use/
 The importer excludes latitudes outside the supported open interval (-66, 66).
@@ -94,7 +97,8 @@ international results, with no additional continent quota. Countries with fewer
 than five supported candidates produce an explanatory error and can still use
 manual comparisons; results are never silently padded or duplicated.
 
-New searches use method `domestic-international-v1` with the same scoring weights.
+Earlier searches used method `domestic-international-v1`; new searches use
+`practical-v1`, described below.
 Saved `worldwide-v1` five-place reports remain readable and are not rewritten.
 The selected country is persisted with each new ranking. Manual comparisons
 now accept up to ten places and clear automatic ranking metadata.
@@ -102,3 +106,50 @@ now accept up to ten places and clear automatic ranking metadata.
 This heuristic does not evaluate local safety, immigration eligibility, cost,
 employment, climate, or the entire natal aspect pattern. It uses recalculated
 natal planetary positions at the fixed birth instant and relocated angles/houses.
+
+## Practical ranking (practical-v1)
+
+Final score = 0.60 × Astrology + 0.25 × Urban-access estimate +
+0.10 × Regional importance + 0.05 × Population. All components are 0–100.
+The 25% term is explicitly a **livability proxy**, not a measured livability index.
+There is no current hospital, school, transport-route, safety, housing, job or
+cost-of-living dataset in this offline implementation. Neither UI nor AI should
+claim those facilities are verified.
+
+- Astrology: `50 + 50 * tanh(rawAstrologyScore / 12)`, using the prior raw
+  astrology rules. Fixed normalization avoids changing a city's score just by
+  adding/removing candidate cities or choosing a different domestic country.
+- Urban access: 70% proximity to the closest same-country urban center with
+  POP_MAX >= 250,000, fading linearly from 100 at 0 km to 0 at 200 km; 30% number
+  of other same-country centers with >= 50,000 people within 100 km (full credit
+  at four). Distances are straight-line; ferries, borders, terrain and road
+  connectivity are not assessed. A qualifying large city is its own urban hub.
+- Regional importance: 100 for a national capital or world-city flag, 75 for an
+  administrative regional capital, 25 otherwise. This is administrative role,
+  not the dataset's map-label importance, which can favor remote settlements.
+- Population: logarithmic scaling from 10,000 (0) to 5,000,000 (100), clamped.
+  Natural Earth POP_MAX can describe a metro area, is historical, and must not
+  be presented as a current municipal census count. Shared inputs mean these
+  components are not statistically independent.
+
+Filters run BEFORE scoring: default cities >= 100,000 people, plus towns >=
+25,000 within 50 km of a same-country 250,000-person hub (the user's preference
+is to allow both). Every candidate must also be within 100 km of such a hub.
+Thresholds, an optional maximum population, smaller-place toggle and domestic
+region exclusions are editable. Missing population excludes a city. Unknown
+region names produce an error rather than silently ignoring an exclusion.
+No exclusion for Alaska is imposed automatically; users can exclude Alaska by
+name, while sizeable urban centers there can otherwise qualify. These filters
+reduce isolation but do not prove service availability.
+
+The best five qualifying domestic and five qualifying international places
+are sorted together by final score. Insufficient candidates produce an error;
+filters are never relaxed silently. New reports persist filters, components,
+urban-access inputs and optional current-home chart reference. Old reports stay
+readable and are flagged in the UI until a new search applies the formula.
+Birthplace is always the natal reference and is never a distance ranking bonus.
+Current home only changes comparison context, not the birth instant or ranking.
+UI, export, and AI context include the weighting and proxy limitations.
+
+Data field definitions and population methodology:
+https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-populated-places/

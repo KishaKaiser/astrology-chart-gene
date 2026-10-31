@@ -126,9 +126,8 @@ for (const country of ['United States of America', 'United Kingdom', 'Australia'
   assert.equal(combined.destinations.filter(d => d.place.country === country).length,5)
   assert.equal(combined.destinations.filter(d => d.place.country !== country).length,5)
   assert.equal(new Set(combined.destinations.map(d=>d.place.name)).size,10)
-  const countryByName = new Map(RELOCATION_CITIES.map(p=>[p.name,p.country]))
-  const expected = [...exhaustive.filter(d=>countryByName.get(d.name)===country).slice(0,5), ...exhaustive.filter(d=>countryByName.get(d.name)!==country).slice(0,5)].sort((a,b)=>b.score-a.score || a.name.localeCompare(b.name,'en'))
-  assert.deepEqual(combined.destinations.map(d=>d.place.name),expected.map(d=>d.name),'five best per category, then sorted together')
+  assert.equal(combined.search.method,'practical-v1')
+  assert.ok(combined.destinations.every(d=>d.place.population>=25000 && d.ranking.components && d.ranking.score>=0 && d.ranking.score<=100))
   assert.ok(combined.destinations.every((d,i,all)=>i===0 || all[i-1].ranking.score>=d.ranking.score))
   assert.equal(currentRelocation(JSON.parse(JSON.stringify({...chart,relocationAnalysis:combined}))).search.domesticCountry,country)
   assert.ok(relocationFacts(combined).includes(`10. ${combined.destinations[9].place.name}`))
@@ -145,5 +144,46 @@ assert.equal(defaultDomesticCountry({...chart,location:'London, United Kingdom'}
 assert.equal(defaultDomesticCountry(chart),'','do not guess a country from incomplete location text')
 assert.throws(()=>findCombinedRelocationPlaces(chart,'balanced',''),/Choose the country/)
 const smallCountry = RELOCATION_CITIES.find(p=>RELOCATION_CITIES.filter(q=>q.country===p.country).length<5).country
-assert.throws(()=>findCombinedRelocationPlaces(chart,'balanced',smallCountry),/Five domestic suggestions are not available/)
+assert.throws(()=>findCombinedRelocationPlaces(chart,'balanced',smallCountry),/Five of each are needed/)
 console.log('PASS: five domestic plus five international, globally sorted 1–10, selectable country, insufficient coverage, manual comparison, saved metadata, prompts and PDF bounds')
+
+const practicalBundle = await build({entryPoints:['src/lib/relocation-practical.ts'],bundle:true,write:false,format:'esm',platform:'node'})
+const {practicalCandidates,weightedRanking,urbanAccess,DEFAULT_RELOCATION_FILTERS:defaults,distanceKm} = await import(`data:text/javascript;base64,${Buffer.from(practicalBundle.outputFiles[0].text).toString('base64')}`)
+const hub={name:'Hub',country:'Test',region:'Central',latitude:0,longitude:0,population:500000,regionalRole:'regional'}
+const suburb={...hub,name:'Nearby town',longitude:0.2,population:30000,regionalRole:'other'}
+const village={...suburb,name:'Village',population:2000}
+const remote={...suburb,name:'Remote town',longitude:10,population:40000}
+const unknown={...hub,name:'Missing population',population:undefined}
+const sample=[hub,suburb,village,remote,unknown]
+assert.deepEqual(practicalCandidates(sample,'Test',defaults).map(p=>p.name),['Hub','Nearby town'])
+assert.deepEqual(practicalCandidates(sample,'Test',{...defaults,includeNearbyTowns:false}).map(p=>p.name),['Hub'])
+assert.equal(practicalCandidates(sample,'Test',{...defaults,excludedRegions:['Central']}).length,0)
+assert.throws(()=>practicalCandidates(sample,'Test',{...defaults,excludedRegions:['Typo']}),/not found/)
+assert.throws(()=>practicalCandidates(sample,'Test',{...defaults,minimumPopulation:NaN}),/Check the population/)
+assert.throws(()=>practicalCandidates(sample,'Test',{...defaults,maximumPopulation:50000}),/Check the population/)
+assert.ok(distanceKm(hub,suburb)>20 && distanceKm(hub,suburb)<25)
+assert.equal(urbanAccess(suburb,[{...hub,country:'Other'},suburb]).nearestHubKm,Infinity,'foreign hub cannot satisfy domestic urban access')
+const scored=weightedRanking(hub,{score:0,reasons:[],tradeoffs:[]},sample)
+assert.equal(scored.components.astrology,50)
+assert.equal(scored.components.regionalImportance,75)
+assert.equal(scored.score,.6*scored.components.astrology+.25*scored.components.livability+.1*scored.components.regionalImportance+.05*scored.components.population)
+assert.ok(weightedRanking(hub,{score:10,reasons:[],tradeoffs:[]},sample).score>scored.score)
+const candidates=practicalCandidates(RELOCATION_CITIES,'United States of America',defaults)
+const oracle=[]
+for(let i=0;i<candidates.length;i+=10) for(const item of calculateRelocation(chart,candidates.slice(i,i+10)).destinations) oracle.push({...item,ranking:weightedRanking(item.place,scoreRelocation(item,'balanced'),RELOCATION_CITIES)})
+const sort=(a,b)=>b.ranking.score-a.ranking.score || a.place.name.localeCompare(b.place.name,'en') || a.place.latitude-b.place.latitude || a.place.longitude-b.place.longitude
+oracle.sort(sort)
+const expected=[...oracle.filter(d=>d.place.country==='United States of America').slice(0,5),...oracle.filter(d=>d.place.country!=='United States of America').slice(0,5)].sort(sort)
+const practical=findCombinedRelocationPlaces(chart,'balanced','United States of America',defaults)
+assert.deepEqual(practical.destinations.map(d=>d.place.name),expected.map(d=>d.place.name))
+const home={name:'Current home',latitude:33.75,longitude:-84.39}
+const withHome=findCombinedRelocationPlaces(chart,'balanced','United States of America',defaults,home)
+assert.deepEqual(withHome.destinations,practical.destinations,'current home is a reference, not a birth-data change or geographic ranking bias')
+assert.deepEqual(withHome.natal,practical.natal)
+assert.equal(withHome.currentResidence.place.name,home.name)
+assert.ok(relocationFacts(withHome).includes('Current residence comparison: Current home'))
+assert.ok(relocationExportText(withHome).includes('60% astrology'))
+const noAlaska=findCombinedRelocationPlaces(chart,'balanced','United States of America',{...defaults,excludedRegions:['Alaska']})
+assert.ok(noAlaska.destinations.every(d=>d.place.country!=='United States of America'||d.place.region!=='Alaska'))
+assert.equal(JSON.parse(JSON.stringify(withHome)).search.filters.includeNearbyTowns,true)
+console.log('PASS: weighted formula, normalized components, city + nearby-town filters, remote/missing-data exclusions, region exclusions, independent weighted top-ten oracle and current-home reference')
