@@ -24,7 +24,7 @@ function blocksFrom(text: string): Block[] {
       flush(); blocks.push({ text: 'The Psychic Link', kind: 'signature', level: 0 })
     } else if (heading || boldHeading) {
       flush()
-      const title = heading ? heading[2] : boldHeading![1]
+      const title = (heading ? heading[2] : boldHeading![1]).replace(/\*\*|__/g, '')
       blocks.push({ text: title, kind: 'heading', level: heading ? heading[1].length : 3 })
     } else if (!line) flush()
     else paragraph.push(line.replace(/\*\*/g, '').replace(/^[-•]\s*/, '• '))

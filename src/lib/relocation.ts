@@ -162,6 +162,8 @@ export function relocationPrompt(report: RelocationAnalysis, name: string, focus
 }
 
 export function relocationExportText(report: RelocationAnalysis): string {
-  const places = [report.natal, ...report.destinations].map((item, i) => `## ${i === 0 ? 'Birthplace baseline' : 'Relocated chart'}: ${item.place.name}\nCoordinates: ${item.place.latitude}, ${item.place.longitude}\nAscendant: ${zodiacPosition(item.ascendant)}\nMidheaven: ${zodiacPosition(item.midheaven)}\nDescendant: ${zodiacPosition(item.descendant)}\nIC: ${zodiacPosition(item.ic)}\n\n${item.planets.map(p => `${p.name}: ${zodiacPosition(p.longitude)}, whole-sign house ${p.house}`).join('\n')}\n\nAngle contacts within 5 degrees: ${item.angularContacts.map(c => `${c.planet} near ${c.angle} (${c.orb.toFixed(2)} degrees)`).join('; ') || 'none'}.`)
-  return `## RELOCATION ANALYSIS\n${relocationRankingText(report)}\n\nBirth instant (UTC): ${report.birthUTC}\nTropical zodiac and whole-sign houses, calculated consistently for all places at the same birth instant. This comparison is independent of the original chart's house system. It is not a world astrocartography map. Location suitability is interpretive, not a guarantee.\n\n${places.join('\n\n')}${report.interpretation ? `\n\n## RELOCATION COMPARISON\n${report.interpretation}` : ''}`
+  const summary = report.search
+    ? relocationRankingText(report)
+    : report.destinations.map((item, i) => `${i + 1}. ${item.place.name}`).join('\n')
+  return `## RELOCATION ANALYSIS\n${summary}${report.interpretation ? `\n\n### Relocation comparison\n${report.interpretation}` : '\n\nGenerate a plain-language comparison in the Relocation tab for a fuller interpretation.'}`
 }

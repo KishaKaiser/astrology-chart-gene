@@ -48,3 +48,13 @@ assert.equal(parse(withOpening).length, 9)
 assert.ok(parse(withOpening)[0].content.endsWith('The Psychic Link'))
 assert.deepEqual(parse(withOpening).slice(1), parse(partialOld))
 console.log('PASS: interruption after eight sections, per-section saves, missing-only resume, isolated regeneration, failure preservation, ordering, signature, and legacy text')
+
+const duplicateMars = '## 6. ACTION & DESIRE: MARS\n### **5. ACTION & DESIRE: MARS**\n\nMars body stays.'
+const duplicateSaturn = '## 8. DISCIPLINE & LESSONS: SATURN\n### Section 7. Discipline & Lessons: Saturn\n\n### Saturn in Leo House 6\n\nSaturn body stays.'
+assert.equal(parse(duplicateMars)[0].content, 'Mars body stays.')
+assert.equal(parse(duplicateSaturn)[0].content, '### Saturn in Leo House 6\n\nSaturn body stays.')
+for (const heading of ['### **5. ACTION & DESIRE: MARS**', '**Section 5. Action & Desire: Mars**', 'Section 5 Action & Desire: Mars']) {
+  assert.equal(parse(upsert('',6,heading+'\nMars body stays.'))[0].content,'Mars body stays.')
+}
+assert.equal(normalize(normalize(duplicateMars)),normalize(duplicateMars))
+console.log('PASS: screenshot duplicate titles removed from existing and new sections; meaningful subheadings preserved')

@@ -14,11 +14,19 @@ export const INTERPRETATION_TITLES = [
   'SOUL PURPOSE & SPIRITUAL PATH',
 ]
 
+function withoutRepeatedTitle(content: string, title: string): string {
+  const normalize = (line: string) => line.trim().replace(/^#{1,6}\s*/, '').replace(/\*\*|__/g, '')
+    .replace(/^(?:Section\s+)?\d+[.):\s-]*\s*/i, '').trim().replace(/:$/, '').toUpperCase()
+  const lines = content.trim().split('\n')
+  while (lines.length && (!lines[0].trim() || normalize(lines[0]) === normalize(title))) lines.shift()
+  return lines.join('\n').trim()
+}
+
 export function parseInterpretationSections(text: string) {
   return Array.from(text.matchAll(/^##\s*(\d+)\.\s*([^\n]+)\n([\s\S]*?)(?=^##\s*\d+\.|$(?![\s\S]))/gm), match => {
     const title = match[2].trim()
     const index = INTERPRETATION_TITLES.findIndex(known => known === title.toUpperCase())
-    return { number: index < 0 ? Number(match[1]) : index + 1, title: index < 0 ? title : INTERPRETATION_TITLES[index], content: match[3].trim() }
+    return { number: index < 0 ? Number(match[1]) : index + 1, title: index < 0 ? title : INTERPRETATION_TITLES[index], content: withoutRepeatedTitle(match[3], title) }
   }).sort((a, b) => a.number - b.number)
 }
 
@@ -42,6 +50,7 @@ export function upsertInterpretationSection(text: string, number: number, respon
   let content = response
     .replace(/^\s*#{1,4}\s+\d+\.\s*[^\n]*\n?/, '')
     .replace(/^\s*\*\*\d+\.\s*[^*]+\*\*\n?/, '').trim()
+  content = withoutRepeatedTitle(content, title)
   if (!content) throw new Error('The AI returned an empty section. Please try again.')
   if (number === 1) content = content.replace(/\[\s*your name\s*\]/gi, 'The Psychic Link')
   const sections = new Map(parseInterpretationSections(text).map(section => [section.number, section]))
