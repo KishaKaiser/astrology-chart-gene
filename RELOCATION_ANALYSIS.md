@@ -10,7 +10,9 @@ Changing the candidate list does not replace the saved report until recalculated
 Regenerate interpretation section 1 to incorporate the calculated destinations.
 The prompt compares only those places, with reasons and tradeoffs, instead of
 claiming to find the best place worldwide. Export Options includes **Relocation
-analysis** for the calculations and saved narrative. Reports whose birth data
+analysis** for the ranked suggestions and saved narrative. Individual birthplace
+and destination chart-data pages are omitted from PDF exports; the detailed
+calculations remain available in the Relocation tab. Reports whose birth data
 no longer matches are excluded from section 1 and export until recalculated.
 
 ## Calculation method

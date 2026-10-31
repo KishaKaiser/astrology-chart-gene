@@ -63,7 +63,8 @@ const { renderInterpretation } = await import(`data:text/javascript;base64,${Buf
 const pdf = new jsPDF()
 const pdfReport = { ...report, destinations: report.destinations.slice(0, 2), interpretation: 'Layout sample: compare the calculated house placements and angle contacts above. This text is for export testing, not a personalized recommendation.' }
 const layout = renderInterpretation(pdf, relocationExportText(pdfReport), 25)
-assert.equal(pdf.getNumberOfPages(), 5, 'report introduction, birthplace, two places, and comparison each begin on their own page')
+assert.equal(pdf.getNumberOfPages(), 1, 'analysis-only export excludes separate birthplace and destination chart pages')
+assert.ok(!exported.includes('Birthplace baseline') && !exported.includes('Coordinates:') && !exported.includes('whole-sign house'))
 assert.ok(layout.placements.every(line => line.y >= 25 && line.y < 273))
 assert.equal(currentRelocation(JSON.parse(JSON.stringify(saved))).birthUTC, report.birthUTC, 'saved report survives serialization')
 if (process.argv[2]) {

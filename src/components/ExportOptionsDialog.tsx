@@ -635,7 +635,7 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
               <Checkbox id="includeRelocation" checked={Boolean(options.includeRelocation)} onCheckedChange={() => toggleOption('includeRelocation')} disabled={!hasRelocation} />
               <Label htmlFor="includeRelocation" className={!hasRelocation ? 'opacity-50' : ''}>
                 <div className="font-medium text-white">Relocation analysis</div>
-                <div className="text-xs text-muted-foreground">{hasRelocation ? 'Selected places, calculated angles and houses, and any saved comparison' : 'Calculate places in the chart’s Relocation tab first'}</div>
+                <div className="text-xs text-muted-foreground">{hasRelocation ? 'Suggested places and saved analysis, without individual relocation charts' : 'Calculate places in the chart’s Relocation tab first'}</div>
               </Label>
             </div>
             
