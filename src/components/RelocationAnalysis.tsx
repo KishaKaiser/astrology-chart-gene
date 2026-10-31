@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ChartData } from '@/lib/astrology-types'
 import { useKV } from '@/hooks/use-kv'
-import { calculateRelocation, findTopRelocationPlaces, type RelocationPriority, currentRelocation, relocationPrompt, relocationSourceKey, validateRelocationPlace, zodiacPosition, type RelocationAnalysis as Report, type RelocationPlace } from '@/lib/relocation'
+import { calculateRelocation, findCombinedRelocationPlaces, RELOCATION_COUNTRIES, defaultDomesticCountry, relocationCategory, type RelocationPriority, currentRelocation, relocationPrompt, relocationSourceKey, validateRelocationPlace, zodiacPosition, type RelocationAnalysis as Report, type RelocationPlace } from '@/lib/relocation'
 import { LocationSearch } from './LocationSearch'
 import { InterpretationModelSelector, readInterpretationModel } from './InterpretationModelSelector'
 import { Button } from './ui/button'
@@ -18,6 +18,7 @@ export function RelocationAnalysis({ chart }: { chart: ChartData }) {
   const [latitude, setLatitude] = useState('')
   const [longitude, setLongitude] = useState('')
   const [priority, setPriority] = useState<RelocationPriority>(report?.search?.priority ?? 'balanced')
+  const [domesticCountry, setDomesticCountry] = useState(report?.search?.domesticCountry || defaultDomesticCountry(chart))
   const [focus, setFocus] = useState('Career, home life, and relationships')
   const [model, setModel] = useState(readInterpretationModel)
   const [lastModel, setLastModel] = useState('')
@@ -35,7 +36,7 @@ export function RelocationAnalysis({ chart }: { chart: ChartData }) {
   }
   const addPlace = () => {
     try {
-      if (places.length >= 5) throw new Error('Compare up to five places at a time.')
+      if (places.length >= 10) throw new Error('Compare up to ten places at a time.')
       if (!latitude.trim() || !longitude.trim()) throw new Error('Select a search result or enter latitude and longitude.')
       const place = { name: name.trim(), latitude: Number(latitude), longitude: Number(longitude) }
       validateRelocationPlace(place)
@@ -49,11 +50,11 @@ export function RelocationAnalysis({ chart }: { chart: ChartData }) {
   }
   const findPlaces = () => {
     try {
-      const next = findTopRelocationPlaces(chart, priority)
+      const next = findCombinedRelocationPlaces(chart, priority, domesticCountry)
       persist(next)
       setPlaces(next.destinations.map(item => item.place))
       setError('')
-      toast.success('Top five places calculated. Check shared-library save status.')
+      toast.success('Ten places ranked together. Check shared-library save status.')
     } catch (e) { setError(e instanceof Error ? e.message : 'Could not find suggested places') }
   }
   const interpret = async () => {
@@ -71,16 +72,22 @@ export function RelocationAnalysis({ chart }: { chart: ChartData }) {
   const changed = report && JSON.stringify(places) !== JSON.stringify(report.destinations.map(d => d.place))
   return <div className="space-y-5 rounded-lg border border-border bg-card p-5 text-foreground">
     <h2 className="text-xl font-semibold">Relocation analysis</h2>
-    <p className="text-sm text-muted-foreground">Compare up to five places at your original birth moment. This independent tropical, whole-sign comparison recalculates positions consistently and leaves your natal chart unchanged. Find your top five from a worldwide city list, including international destinations, or compare your own choices. Accurate birth time matters.</p>
+    <p className="text-sm text-muted-foreground">Compare up to ten places at your original birth moment. This independent tropical, whole-sign comparison recalculates positions consistently and leaves your natal chart unchanged. Find five domestic and five international places, ranked together from 1–10, or compare your own choices. Accurate birth time matters.</p>
     {chart.relocationAnalysis && !report && <p role="alert" className="text-amber-300">The saved comparison uses different birth details. Recalculate it before using it in a reading or PDF.</p>}
     <fieldset disabled={busy} className="space-y-3 rounded border p-4">
-      <h3 className="font-semibold">Find your top 5 places to live</h3>
+      <h3 className="font-semibold">Find your top 10 places to live</h3>
+      <Label htmlFor="relocation-country">Domestic country</Label>
+      <select id="relocation-country" className="block w-full rounded border border-input bg-background p-2 text-foreground" value={domesticCountry} onChange={e => setDomesticCountry(e.target.value)}>
+        <option value="">Choose your domestic country</option>
+        {RELOCATION_COUNTRIES.map(country => <option key={country} value={country}>{country}</option>)}
+      </select>
+      <p className="text-sm text-muted-foreground">Choose the country you consider home. Five suggestions will be within this country and five outside it, then all ten will be sorted by the same chart score, best first.</p>
       <Label htmlFor="relocation-priority">Ranking priority</Label>
       <select id="relocation-priority" className="block w-full rounded border border-input bg-background p-2 text-foreground" value={priority} onChange={e => setPriority(e.target.value as RelocationPriority)}>
         <option value="balanced">Overall balance</option><option value="career">Career and work</option><option value="home">Home and emotional comfort</option><option value="relationships">Relationships and connection</option>
       </select>
       <p className="text-sm text-muted-foreground">Search a built-in worldwide city list using your birth chart. Results replace the saved comparison below. No AI or internet connection is needed for the ranking.</p>
-      <Button onClick={findPlaces}>Find my top 5 worldwide</Button>
+      <Button onClick={findPlaces} disabled={!domesticCountry}>Find my top 10 places</Button>
     </fieldset>
     <fieldset disabled={busy} className="space-y-3">
       <h3 className="font-semibold">Or compare your own places</h3>
@@ -92,7 +99,7 @@ export function RelocationAnalysis({ chart }: { chart: ChartData }) {
         <div><Label htmlFor="relocation-lat">Latitude (north + / south −)</Label><Input id="relocation-lat" type="number" step="any" value={latitude} onChange={e => setLatitude(e.target.value)} /></div>
         <div><Label htmlFor="relocation-lon">Longitude (east + / west −)</Label><Input id="relocation-lon" type="number" step="any" value={longitude} onChange={e => setLongitude(e.target.value)} /></div>
       </div>
-      <Button onClick={addPlace} disabled={places.length >= 5}>Add place</Button>
+      <Button onClick={addPlace} disabled={places.length >= 10}>Add place</Button>
       {places.map((place, index) => <div key={`${place.latitude}:${place.longitude}`} className="flex items-center justify-between gap-3 rounded border p-3"><span>{place.name} ({place.latitude.toFixed(4)}, {place.longitude.toFixed(4)})</span><Button variant="outline" size="sm" onClick={() => setPlaces(current => current.filter((_, i) => i !== index))}>Remove</Button></div>)}
       <Button onClick={calculate} disabled={!places.length}>{report ? 'Recalculate selected places' : 'Calculate selected places'}</Button>
     </fieldset>
@@ -100,10 +107,11 @@ export function RelocationAnalysis({ chart }: { chart: ChartData }) {
     {changed && <p className="text-amber-300 text-sm">The list has changed. Recalculate to replace the saved comparison below.</p>}
     {report && <>
       {report.search && <section className="space-y-3">
-        <h3 className="text-lg font-semibold">Your top 5 suggested places</h3>
-        <p className="text-sm text-muted-foreground">Top five of {report.search.candidateCount} worldwide cities for {report.search.priority === 'balanced' ? 'overall balance' : report.search.priority}. These are chart-based suggestions within this city list, not a measured quality-of-life ranking. Changing the priority requires running the search again.</p>
+        <h3 className="text-lg font-semibold">Your top {report.destinations.length} suggested places</h3>
+        <p className="text-sm text-muted-foreground">{report.search.domesticCountry ? `Five domestic (${report.search.domesticCountry}) and five international places, combined best first, from` : 'Top five from'} {report.search.candidateCount} worldwide cities for {report.search.priority === 'balanced' ? 'overall balance' : report.search.priority}. These are chart-based suggestions within this city list, not a measured quality-of-life ranking. Changing the country or priority requires running the search again. Previously saved five-place reports remain unchanged until you run the new search.</p>
         <ol className="space-y-3">{report.destinations.map((item, i) => <li key={item.place.name} className="rounded border p-4">
           <h4 className="font-semibold">{i + 1}. {item.place.name}</h4>
+          {report.search?.domesticCountry && <p className="text-sm text-muted-foreground">{relocationCategory(report, item.place)}</p>}
           <ul className="mt-2 list-disc pl-5 text-sm">{item.ranking?.reasons.map(reason => <li key={reason}>{reason}</li>)}</ul>
           <p className="mt-2 text-sm text-muted-foreground">Tradeoffs: {item.ranking?.tradeoffs.join(' ') || 'No close challenging angular factors in this method. This does not mean the location is free of difficulties.'}</p>
         </li>)}</ol>
