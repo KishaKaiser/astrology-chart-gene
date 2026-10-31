@@ -6,7 +6,7 @@ import { RELOCATION_CITIES } from './relocation-cities'
 export type RelocationPriority = 'balanced' | 'career' | 'home' | 'relationships'
 export interface PlaceRanking { score: number; reasons: string[]; tradeoffs: string[] }
 
-export interface RelocationPlace { name: string; latitude: number; longitude: number }
+export interface RelocationPlace { name: string; latitude: number; longitude: number; country?: string }
 export interface RelocatedChart {
   ranking?: PlaceRanking
   place: RelocationPlace
@@ -18,7 +18,7 @@ export interface RelocatedChart {
   angularContacts: Array<{ planet: string; angle: 'Ascendant' | 'Midheaven' | 'Descendant' | 'IC'; orb: number }>
 }
 export interface RelocationAnalysis {
-  search?: { method: 'worldwide-v1'; priority: RelocationPriority; candidateCount: number }
+  search?: { method: 'worldwide-v1' | 'domestic-international-v1'; priority: RelocationPriority; candidateCount: number; domesticCountry?: string }
   version: 1
   sourceKey: string
   birthUTC: string
@@ -62,7 +62,7 @@ export function relocationAngles(date: Date, place: RelocationPlace) {
 }
 export const wholeSignHouse = (longitude: number, ascendant: number) => (Math.floor(normalize(longitude) / 30) - Math.floor(normalize(ascendant) / 30) + 12) % 12 + 1
 export function calculateRelocation(chart: ChartData, places: RelocationPlace[]): RelocationAnalysis {
-  if (!places.length || places.length > 5) throw new Error('Compare between one and five places.')
+  if (!places.length || places.length > 10) throw new Error('Compare between one and ten places.')
   return calculateCandidates(chart, places)
 }
 function calculateCandidates(chart: ChartData, places: RelocationPlace[]): RelocationAnalysis {
@@ -126,16 +126,39 @@ export function findTopRelocationPlaces(chart: ChartData, priority: RelocationPr
   report.search = { method: 'worldwide-v1', priority, candidateCount: RELOCATION_CITIES.length }
   return report
 }
+export const RELOCATION_COUNTRIES = [...new Set(RELOCATION_CITIES.map(place => place.country!).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'en'))
+export function defaultDomesticCountry(chart: ChartData): string {
+  const suffix = chart.location.split(',').at(-1)?.trim().toLowerCase()
+  const aliases: Record<string, string> = { usa: 'United States of America', us: 'United States of America', 'united states': 'United States of America', uk: 'United Kingdom' }
+  return RELOCATION_COUNTRIES.find(country => country.toLowerCase() === suffix) || aliases[suffix || ''] || ''
+}
+export function findCombinedRelocationPlaces(chart: ChartData, priority: RelocationPriority, domesticCountry: string): RelocationAnalysis {
+  if (!RELOCATION_COUNTRIES.includes(domesticCountry)) throw new Error('Choose the country to use for domestic places.')
+  if (!['balanced', 'career', 'home', 'relationships'].includes(priority)) throw new Error('Choose a supported relocation priority.')
+  const domestic = RELOCATION_CITIES.filter(place => place.country === domesticCountry)
+  if (domestic.length < 5) throw new Error(`The city list contains only ${domestic.length} supported places in ${domesticCountry}. Five domestic suggestions are not available. You can compare places manually instead.`)
+  const report = calculateCandidates(chart, RELOCATION_CITIES)
+  const ranked = report.destinations.map(item => ({ ...item, ranking: scoreRelocation(item, priority) }))
+  const compare = (a: typeof ranked[number], b: typeof ranked[number]) => b.ranking.score - a.ranking.score || a.place.name.localeCompare(b.place.name, 'en') || a.place.latitude - b.place.latitude || a.place.longitude - b.place.longitude
+  ranked.sort(compare)
+  report.destinations = [...ranked.filter(item => item.place.country === domesticCountry).slice(0, 5), ...ranked.filter(item => item.place.country !== domesticCountry).slice(0, 5)].sort(compare)
+  report.search = { method: 'domestic-international-v1', priority, candidateCount: RELOCATION_CITIES.length, domesticCountry }
+  return report
+}
+export function relocationCategory(report: RelocationAnalysis, place: RelocationPlace): string {
+  return report.search?.domesticCountry ? (place.country === report.search.domesticCountry ? 'Domestic' : 'International') : ''
+}
 export function relocationRankingText(report: RelocationAnalysis): string {
   if (!report.search) return ''
-  return `Top five of ${report.search.candidateCount} worldwide candidate cities, priority: ${report.search.priority}. Ranked by an interpretive chart heuristic, not a scientific livability measure or an exhaustive search of every place. Angular factors use a 12° range; highlighted close contacts elsewhere use 5°.\n${report.destinations.map((item, i) => `${i + 1}. ${item.place.name}\n${item.ranking?.reasons.join(' ') || 'Limited supportive signals in this scoring method.'}\nTradeoffs: ${item.ranking?.tradeoffs.join(' ') || 'No close challenging angular factors in this scoring method; this does not imply a difficulty-free location.'}`).join('\n\n')}`
+  const selection = report.search.domesticCountry ? `Five domestic places in ${report.search.domesticCountry} and five international places, combined in descending chart-score order` : 'Top five'
+  return `${selection} from ${report.search.candidateCount} worldwide candidate cities, priority: ${report.search.priority}. Ranked by an interpretive chart heuristic, not a scientific livability measure or an exhaustive search of every place. Angular factors use a 12° range; highlighted close contacts elsewhere use 5°.\n${report.destinations.map((item, i) => `${i + 1}. ${item.place.name}${relocationCategory(report, item.place) ? ` (${relocationCategory(report, item.place)})` : ''}\n${item.ranking?.reasons.join(' ') || 'Limited supportive signals in this scoring method.'}\nTradeoffs: ${item.ranking?.tradeoffs.join(' ') || 'No close challenging angular factors in this scoring method; this does not imply a difficulty-free location.'}`).join('\n\n')}`
 }
 export function relocationFacts(report: RelocationAnalysis): string {
   const describe = (item: RelocatedChart) => `${item.place.name} (${item.place.latitude}, ${item.place.longitude}): Ascendant ${zodiacPosition(item.ascendant)}, Midheaven ${zodiacPosition(item.midheaven)}, IC ${zodiacPosition(item.ic)}. Whole-sign houses: ${item.planets.map(p => `${p.name} H${p.house}`).join(', ')}. Ecliptic conjunctions within 5° of an angle: ${item.angularContacts.map(c => `${c.planet} at ${c.angle}, orb ${c.orb.toFixed(2)}°`).join('; ') || 'none'}.`
   return `${relocationRankingText(report)}\nRelocated chart comparison at the SAME birth instant: ${report.birthUTC}. Tropical zodiac, whole-sign houses; geocentric planetary positions recalculated consistently for this comparison. Planetary longitudes stay fixed across locations. This is not a world astrocartography map or a city quality-of-life assessment.\nBirthplace baseline: ${describe(report.natal)}\n${report.destinations.map(describe).join('\n')}`
 }
 export function relocationPrompt(report: RelocationAnalysis, name: string, focus: string) {
-  return `Write a plain-language relocation comparison for ${name}. Focus: ${focus || 'Career, home life, and relationships'}.\n${relocationFacts(report)}\nCompare ONLY the selected destinations with each other and the birthplace. Explain career themes using the Midheaven, 10th and 6th houses; home themes using the IC, Moon and 4th house; relationship themes using the Descendant and 7th house. Mention strengths and tradeoffs, including challenging themes where relevant. Name which of the compared places may better support each priority, with a clear reason tied to the supplied placements. If the evidence is mixed, say so rather than declaring a winner. Do not invent planetary lines, distances to lines, additional places, jobs available, living costs, climate, or factual city qualities. Astrological suitability is interpretive, not a guarantee or instruction to move. Include practical next steps such as checking jobs, budget, and support networks. Return 500-700 words of ordinary text with short paragraphs and unnumbered subheadings, not JSON. Do not add a signature.`
+  return `Write a plain-language relocation comparison for ${name}. Focus: ${focus || 'Career, home life, and relationships'}.\n${relocationFacts(report)}\nCompare ONLY the selected destinations with each other and the birthplace. When a ranking is supplied, keep its order and domestic/international labels; briefly cover every listed destination. Do not rerank the list or replace places. Explain career themes using the Midheaven, 10th and 6th houses; home themes using the IC, Moon and 4th house; relationship themes using the Descendant and 7th house. Mention strengths and tradeoffs, including challenging themes where relevant. Name which of the compared places may better support each priority, with a clear reason tied to the supplied placements. If the evidence is mixed, say so rather than declaring a winner. Do not invent planetary lines, distances to lines, additional places, jobs available, living costs, climate, or factual city qualities. Astrological suitability is interpretive, not a guarantee or instruction to move. Include practical next steps such as checking jobs, budget, and support networks. Return 500-700 words of ordinary text with short paragraphs and unnumbered subheadings, not JSON. Do not add a signature.`
 }
 
 export function relocationExportText(report: RelocationAnalysis): string {

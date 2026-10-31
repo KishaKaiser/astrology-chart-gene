@@ -4,7 +4,7 @@ import { jsPDF } from 'jspdf'
 import { writeFile } from 'node:fs/promises'
 import { EquatorFromVector, RotateVector, Rotation_ECT_EQD, VectorFromSphere, Observer, Horizon, SiderealTime } from 'astronomy-engine'
 const bundle = await build({ entryPoints: ['src/lib/relocation.ts'], bundle: true, write: false, format: 'esm', platform: 'node' })
-const { findTopRelocationPlaces, scoreRelocation, calculateRelocation, currentRelocation, relocationAngles, angularDistance, wholeSignHouse, relocationFacts, relocationPrompt, relocationExportText } = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`)
+const { findCombinedRelocationPlaces, defaultDomesticCountry, relocationCategory, findTopRelocationPlaces, scoreRelocation, calculateRelocation, currentRelocation, relocationAngles, angularDistance, wholeSignHouse, relocationFacts, relocationPrompt, relocationExportText } = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`)
 const chart = { id:'fixture', name:'Sample', date:'1998-08-04', time:'12:00', timezone:'America/New_York', latitude:40.7128, longitude:-74.006, location:'New York', planets:[], houses:[], aspects:[], createdAt:0, updatedAt:0 }
 const places = [{ name:'London', latitude:51.5074, longitude:-0.1278 }, { name:'Sydney', latitude:-33.8688, longitude:151.2093 }, { name:'New York', latitude:40.7128, longitude:-74.006 }]
 const before = JSON.stringify(chart)
@@ -33,8 +33,8 @@ assert.notEqual(report.destinations[0].ascendant, report.destinations[1].ascenda
 assert.equal(wholeSignHouse(359, 0), 12)
 assert.equal(wholeSignHouse(0, 359), 2)
 assert.equal(wholeSignHouse(15, 29), 1)
-assert.throws(() => calculateRelocation(chart, []), /one and five/)
-assert.throws(() => calculateRelocation(chart, Array(6).fill(places[0])), /one and five/)
+assert.throws(() => calculateRelocation(chart, []), /one and ten/)
+assert.throws(() => calculateRelocation(chart, Array(11).fill(places[0])), /one and ten/)
 assert.throws(() => relocationAngles(new Date(), {name:'Invalid',latitude:NaN,longitude:0}), /latitude/)
 assert.throws(() => relocationAngles(new Date(), {name:'Polar',latitude:70,longitude:0}), /Polar/)
 assert.throws(() => calculateRelocation(chart, [{name:'Bad',latitude:0,longitude:181}]), /Longitude/)
@@ -89,8 +89,8 @@ assert.equal(top.search.candidateCount, RELOCATION_CITIES.length)
 assert.equal(top.search.priority, 'balanced')
 assert.deepEqual(findTopRelocationPlaces(chart).destinations, top.destinations)
 const exhaustive = []
-for (let i=0;i<RELOCATION_CITIES.length;i+=5) {
-  for (const item of calculateRelocation(chart, RELOCATION_CITIES.slice(i,i+5)).destinations) exhaustive.push({ name:item.place.name, score:scoreRelocation(item,'balanced').score })
+for (let i=0;i<RELOCATION_CITIES.length;i+=10) {
+  for (const item of calculateRelocation(chart, RELOCATION_CITIES.slice(i,i+10)).destinations) exhaustive.push({ name:item.place.name, score:scoreRelocation(item,'balanced').score })
 }
 exhaustive.sort((a,b) => b.score-a.score || a.name.localeCompare(b.name,'en'))
 assert.deepEqual(top.destinations.map(d => d.place.name), exhaustive.slice(0,5).map(d => d.name))
@@ -103,7 +103,7 @@ assert.notDeepEqual(findTopRelocationPlaces({...chart,time:'00:00'}).destination
 assert.notDeepEqual(findTopRelocationPlaces(chart,'home').destinations.map(d => d.place.name), findTopRelocationPlaces(chart,'career').destinations.map(d => d.place.name))
 assert.equal(calculateRelocation(chart,places).search, undefined)
 assert.equal(currentRelocation({...chart,relocationAnalysis:JSON.parse(JSON.stringify(top))}).search.method,'worldwide-v1')
-assert.ok(relocationFacts(top).includes('Top five of'))
+assert.ok(relocationFacts(top).includes('Top five from'))
 assert.ok(relocationExportText(top).includes(top.destinations[0].ranking.reasons[0]))
 const synthetic = {...report.natal, ascendant:0, midheaven:90, ic:270, descendant:180, planets:[{name:'Venus',longitude:90,house:10}]}
 assert.equal(scoreRelocation(synthetic,'balanced').score, 4.75)
@@ -118,3 +118,31 @@ const rankedLayout = renderInterpretation(rankedPDF, relocationExportText(top), 
 assert.ok(rankedLayout.placements.every(line => line.y >= 25 && line.y < 273), 'ranked report stays above the footer')
 for (const destination of top.destinations) assert.ok(rankedLayout.placements.some(line => line.text.includes(destination.place.name)))
 console.log('PASS: top-five PDF report includes every destination and respects page boundaries')
+
+for (const country of ['United States of America', 'United Kingdom', 'Australia']) {
+  const combined = findCombinedRelocationPlaces(chart, 'balanced', country)
+  assert.equal(combined.destinations.length,10)
+  assert.equal(combined.destinations.filter(d => d.place.country === country).length,5)
+  assert.equal(combined.destinations.filter(d => d.place.country !== country).length,5)
+  assert.equal(new Set(combined.destinations.map(d=>d.place.name)).size,10)
+  const countryByName = new Map(RELOCATION_CITIES.map(p=>[p.name,p.country]))
+  const expected = [...exhaustive.filter(d=>countryByName.get(d.name)===country).slice(0,5), ...exhaustive.filter(d=>countryByName.get(d.name)!==country).slice(0,5)].sort((a,b)=>b.score-a.score || a.name.localeCompare(b.name,'en'))
+  assert.deepEqual(combined.destinations.map(d=>d.place.name),expected.map(d=>d.name),'five best per category, then sorted together')
+  assert.ok(combined.destinations.every((d,i,all)=>i===0 || all[i-1].ranking.score>=d.ranking.score))
+  assert.equal(currentRelocation(JSON.parse(JSON.stringify({...chart,relocationAnalysis:combined}))).search.domesticCountry,country)
+  assert.ok(relocationFacts(combined).includes(`10. ${combined.destinations[9].place.name}`))
+  assert.ok(relocationPrompt(combined,chart.name,'').includes('keep its order'))
+  assert.equal(relocationCategory(combined,combined.destinations.find(d=>d.place.country===country).place),'Domestic')
+  assert.equal(calculateRelocation(chart,combined.destinations.map(d=>d.place)).destinations.length,10)
+  const combinedPDF = new jsPDF()
+  const combinedLayout = renderInterpretation(combinedPDF, relocationExportText(combined),25)
+  assert.ok(combinedLayout.placements.every(line=>line.y>=25 && line.y<273))
+  for (const d of combined.destinations) assert.ok(relocationExportText(combined).includes(d.place.name))
+}
+assert.equal(defaultDomesticCountry({...chart,location:'New York, USA'}),'United States of America')
+assert.equal(defaultDomesticCountry({...chart,location:'London, United Kingdom'}),'United Kingdom')
+assert.equal(defaultDomesticCountry(chart),'','do not guess a country from incomplete location text')
+assert.throws(()=>findCombinedRelocationPlaces(chart,'balanced',''),/Choose the country/)
+const smallCountry = RELOCATION_CITIES.find(p=>RELOCATION_CITIES.filter(q=>q.country===p.country).length<5).country
+assert.throws(()=>findCombinedRelocationPlaces(chart,'balanced',smallCountry),/Five domestic suggestions are not available/)
+console.log('PASS: five domestic plus five international, globally sorted 1–10, selectable country, insufficient coverage, manual comparison, saved metadata, prompts and PDF bounds')

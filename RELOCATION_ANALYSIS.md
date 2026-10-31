@@ -1,6 +1,6 @@
 # Relocation comparison
 
-Open a chart's **Relocation** tab, select or enter up to five cities/coordinates,
+Open a chart's **Relocation** tab, select or enter up to ten cities/coordinates,
 then choose **Calculate selected places**. Calculations run locally; manual
 coordinate entry works without a geocoding connection. City search reuses the
 existing OpenStreetMap search. The optional **Generate plain-language comparison**
@@ -57,17 +57,23 @@ unchanged planetary longitudes, stale-data detection, and report facts.
 Redeploy the astrology frontend, preserving its storage folder. No additional
 API, database migration, or backend environment variable is needed.
 
-## Worldwide top five
+## Domestic and international top ten
 
-Choose Overall balance, Career, Home, or Relationships, then **Find my top 5
-worldwide**. Ranking works locally without Ollama; the optional narrative still
+Choose a domestic country and Overall balance, Career, Home, or Relationships,
+then **Find my top 10 places**. The best five cities within the chosen country
+and the best five outside it are combined and sorted by the same raw score,
+highest first. Domestic and International labels appear in the saved list and
+export. The birth location country suffix supplies a default when recognized;
+otherwise the user chooses it explicitly. Country and priority edits do not
+change an existing saved report until a new search runs. Ranking works locally without Ollama; the optional narrative still
 uses Ollama. A new search replaces the saved comparison. Manual recalculation
 removes ranking metadata. Results, reasons and tradeoffs are included in export
 and supplied to section 1 when regenerated. Existing manual reports still work.
 
-The bundled 243-city list comes from Natural Earth's 1:110m populated places:
-https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/ne_110m_populated_places.geojson
-Downloaded 2026-10-30; English city/country names and city-center coordinates only.
+The bundled 7,166-city list comes from Natural Earth's 1:10m populated places:
+https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/ne_10m_populated_places.geojson
+Downloaded 2026-10-30; English city/region/country names and city-center coordinates only.
+Entries outside the latitude limit and repeated full place names are excluded.
 Coordinates are public domain: https://www.naturalearthdata.com/about/terms-of-use/
 The importer excludes latitudes outside the supported open interval (-66, 66).
 This is a fixed worldwide sample, not every city or a current livability dataset.
@@ -81,8 +87,15 @@ planets receive +0.75 for relevant houses: career 2/6/10, home 4,
 relationships 5/7/11. Balanced includes all three groups. Raw scores are sorted
 descending with a stable English-name tie break. Scores are internal comparative
 weights, not probabilities. The top three positive and two negative factors are
-shown. All cities compete on the same basis; international coverage does not
-force a result from each continent or country.
+shown. All cities use the same score. The quota ensures exactly five domestic and five
+international results, with no additional continent quota. Countries with fewer
+than five supported candidates produce an explanatory error and can still use
+manual comparisons; results are never silently padded or duplicated.
+
+New searches use method `domestic-international-v1` with the same scoring weights.
+Saved `worldwide-v1` five-place reports remain readable and are not rewritten.
+The selected country is persisted with each new ranking. Manual comparisons
+now accept up to ten places and clear automatic ranking metadata.
 
 This heuristic does not evaluate local safety, immigration eligibility, cost,
 employment, climate, or the entire natal aspect pattern. It uses recalculated
