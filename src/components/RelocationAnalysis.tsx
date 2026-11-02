@@ -1,7 +1,8 @@
+import { CAREER_THEMES, ENVIRONMENT_LABELS, DEFAULT_RELOCATION_PREFERENCES, sectionOnePreferences, type RelocationPreferences } from '@/lib/relocation-preferences'
 import { useEffect, useRef, useState } from 'react'
 import type { ChartData } from '@/lib/astrology-types'
 import { useKV } from '@/hooks/use-kv'
-import { calculateRelocation, findCombinedRelocationPlaces, RELOCATION_COUNTRIES, DEFAULT_RELOCATION_FILTERS, type RelocationFilters, relocationCategory, type RelocationPriority, currentRelocation, relocationPrompt, relocationSourceKey, validateRelocationPlace, zodiacPosition, type RelocationAnalysis as Report, type RelocationPlace } from '@/lib/relocation'
+import { calculateRelocation, findDomesticRelocationPlaces, RELOCATION_COUNTRIES, DEFAULT_RELOCATION_FILTERS, type RelocationFilters, relocationCategory, type RelocationPriority, currentRelocation, relocationPrompt, relocationSourceKey, validateRelocationPlace, zodiacPosition, type RelocationAnalysis as Report, type RelocationPlace } from '@/lib/relocation'
 import { LocationSearch } from './LocationSearch'
 import { InterpretationModelSelector, readInterpretationModel } from './InterpretationModelSelector'
 import { Button } from './ui/button'
@@ -20,6 +21,7 @@ export function RelocationAnalysis({ chart }: { chart: ChartData }) {
   const [priority, setPriority] = useState<RelocationPriority>(report?.search?.priority ?? 'balanced')
   const [domesticCountry, setDomesticCountry] = useState(report?.search?.domesticCountry || '')
   const [filters, setFilters] = useState<RelocationFilters>(report?.search?.filters ?? DEFAULT_RELOCATION_FILTERS)
+  const [preferences, setPreferences] = useState<RelocationPreferences>(report?.search?.preferences ?? { ...DEFAULT_RELOCATION_PREFERENCES, ...sectionOnePreferences(chart.interpretation || '') })
   const [currentHome, setCurrentHome] = useState<RelocationPlace | undefined>(report?.currentResidence?.place)
   const [focus, setFocus] = useState('Career, home life, and relationships')
   const [model, setModel] = useState(readInterpretationModel)
@@ -52,11 +54,11 @@ export function RelocationAnalysis({ chart }: { chart: ChartData }) {
   }
   const findPlaces = () => {
     try {
-      const next = findCombinedRelocationPlaces(chart, priority, domesticCountry, filters, currentHome)
+      const next = findDomesticRelocationPlaces(chart, priority, domesticCountry, filters, currentHome, preferences)
       persist(next)
       setPlaces(next.destinations.map(item => item.place))
       setError('')
-      toast.success('Ten places ranked together. Check shared-library save status.')
+      toast.success(`${next.destinations.length} domestic places ranked. Check shared-library save status.`)
     } catch (e) { setError(e instanceof Error ? e.message : 'Could not find suggested places') }
   }
   const interpret = async () => {
@@ -72,11 +74,11 @@ export function RelocationAnalysis({ chart }: { chart: ChartData }) {
     finally { lock.current = false; setBusy(false) }
   }
   const changed = report && JSON.stringify(places) !== JSON.stringify(report.destinations.map(d => d.place))
-  const settingsChanged = report?.search && (report.search.method !== 'practical-v1' || report.search.priority !== priority || report.search.domesticCountry !== domesticCountry || JSON.stringify(report.search.filters) !== JSON.stringify(filters) || JSON.stringify(report.currentResidence?.place) !== JSON.stringify(currentHome))
+  const settingsChanged = report?.search && (report.search.method !== 'domestic-preferences-v1' || JSON.stringify(report.search.preferences) !== JSON.stringify(preferences) || report.search.priority !== priority || report.search.domesticCountry !== domesticCountry || JSON.stringify(report.search.filters) !== JSON.stringify(filters) || JSON.stringify(report.currentResidence?.place) !== JSON.stringify(currentHome))
   const comparisonBase = report?.currentResidence ?? report?.natal
   return <div className="space-y-5 rounded-lg border border-border bg-card p-5 text-foreground">
     <h2 className="text-xl font-semibold">Relocation analysis</h2>
-    <p className="text-sm text-muted-foreground">Compare up to ten places at your original birth moment. This independent tropical, whole-sign comparison recalculates positions consistently and leaves your natal chart unchanged. Find five domestic and five international places, ranked together from 1–10, or compare your own choices. Accurate birth time matters.</p>
+    <p className="text-sm text-muted-foreground">Compare up to ten places at your original birth moment. This independent tropical, whole-sign comparison recalculates positions consistently and leaves your natal chart unchanged. Find up to ten domestic places based on your career and living-environment preferences, ranked best first, or compare your own choices. Accurate birth time matters.</p>
     {chart.relocationAnalysis && !report && <p role="alert" className="text-amber-300">The saved comparison uses different birth details. Recalculate it before using it in a reading or PDF.</p>}
     <fieldset disabled={busy} className="space-y-3 rounded border p-4">
       <h3 className="font-semibold">Find your top 10 places to live</h3>
@@ -89,7 +91,28 @@ export function RelocationAnalysis({ chart }: { chart: ChartData }) {
         <option value="">Choose your domestic country</option>
         {RELOCATION_COUNTRIES.map(country => <option key={country} value={country}>{country}</option>)}
       </select>
-      <p className="text-sm text-muted-foreground">Choose the country you consider home. Five suggestions will be within this country and five outside it, then all ten will be sorted by the same weighted score, best first.</p>
+      <p className="text-sm text-muted-foreground">Choose the country you consider home. All suggestions will be within this country, sorted by the weighted score, best first. If fewer than ten places qualify, only those matches are shown.</p>
+      <div className="space-y-3 rounded border p-4">
+        <h3 className="font-semibold">Use your section 1 recommendations</h3>
+        <Button variant="outline" onClick={() => {
+          const notes = sectionOnePreferences(chart.interpretation || '')
+          if (!notes.careerNotes && !notes.environmentNotes) { setError('Section 1 recommendations were not found. Generate section 1 or enter your preferences below.'); return }
+          setPreferences(current => ({...current,...notes})); setError('')
+        }}>Copy recommendations from section 1</Button>
+        <Label htmlFor="relocation-career-notes">Careers &amp; Jobs To Explore</Label>
+        <textarea id="relocation-career-notes" className="block w-full rounded border border-input bg-background p-2 text-foreground" rows={4} maxLength={6000} value={preferences.careerNotes} onChange={e => setPreferences({...preferences,careerNotes:e.target.value})} />
+        <Label htmlFor="relocation-career-theme">Career theme to prioritize</Label>
+        <select id="relocation-career-theme" className="block w-full rounded border border-input bg-background p-2 text-foreground" value={preferences.careerTheme} onChange={e => setPreferences({...preferences,careerTheme:e.target.value as RelocationPreferences['careerTheme']})}>
+          {Object.entries(CAREER_THEMES).map(([key,theme]) => <option key={key} value={key}>{theme.label}</option>)}
+        </select>
+        <Label htmlFor="relocation-environment-notes">Places &amp; Living Environments That May Suit You</Label>
+        <textarea id="relocation-environment-notes" className="block w-full rounded border border-input bg-background p-2 text-foreground" rows={4} maxLength={6000} value={preferences.environmentNotes} onChange={e => setPreferences({...preferences,environmentNotes:e.target.value})} />
+        <Label htmlFor="relocation-environment">Living environment to include</Label>
+        <select id="relocation-environment" className="block w-full rounded border border-input bg-background p-2 text-foreground" value={preferences.environment} onChange={e => setPreferences({...preferences,environment:e.target.value as RelocationPreferences['environment']})}>
+          {Object.entries(ENVIRONMENT_LABELS).map(([key,label]) => <option key={key} value={key}>{label}</option>)}
+        </select>
+        <p className="text-sm text-muted-foreground">Choose the theme and environment that fit your recommendations. The career theme affects the astrology portion of the score; the environment filters population size and uses the urban-access limits below. Notes guide the optional written comparison. This does not verify local careers, climate, amenities or job openings.</p>
+      </div>
       <Label htmlFor="relocation-priority">Ranking priority</Label>
       <select id="relocation-priority" className="block w-full rounded border border-input bg-background p-2 text-foreground" value={priority} onChange={e => setPriority(e.target.value as RelocationPriority)}>
         <option value="balanced">Overall balance</option><option value="career">Career and work</option><option value="home">Home and emotional comfort</option><option value="relationships">Relationships and connection</option>
@@ -108,7 +131,7 @@ export function RelocationAnalysis({ chart }: { chart: ChartData }) {
       <Input id="relocation-exclude" placeholder="For example: Alaska, Hawaii" value={filters.excludedRegions.join(',')} onChange={e => setFilters({...filters, excludedRegions: e.target.value.split(',')})} />
       <p className="text-sm text-muted-foreground">Use full region names. Major city means an estimated population of at least 250,000. Distances are straight-line within the same country, not travel distances. Population estimates may describe metropolitan areas and are not current census counts.</p>
       <p className="text-sm text-muted-foreground">Search a built-in worldwide city list using your birth chart. Results replace the saved comparison below. No AI or internet connection is needed for the ranking.</p>
-      <Button onClick={findPlaces} disabled={!domesticCountry}>Find my top 10 places</Button>
+      <Button onClick={findPlaces} disabled={!domesticCountry}>Find my top domestic places</Button>
     </fieldset>
     <fieldset disabled={busy} className="space-y-3">
       <h3 className="font-semibold">Or compare your own places</h3>
@@ -125,12 +148,12 @@ export function RelocationAnalysis({ chart }: { chart: ChartData }) {
       <Button onClick={calculate} disabled={!places.length}>{report ? 'Recalculate selected places' : 'Calculate selected places'}</Button>
     </fieldset>
     {error && <p role="alert" className="text-red-300">{error}</p>}
-    {settingsChanged && <p className="text-amber-300 text-sm">The saved results use earlier settings or the older astrology-only formula. Run Find my top 10 places to apply the practical filters and weighted score.</p>}
+    {settingsChanged && <p className="text-amber-300 text-sm">The saved results use earlier settings or an older search method. Run Find my top domestic places to apply your section 1 preferences and domestic-only search.</p>}
     {changed && <p className="text-amber-300 text-sm">The list has changed. Recalculate to replace the saved comparison below.</p>}
     {report && <>
       {report.search && <section className="space-y-3">
         <h3 className="text-lg font-semibold">Your top {report.destinations.length} suggested places</h3>
-        <p className="text-sm text-muted-foreground">{report.search.domesticCountry ? `Five domestic (${report.search.domesticCountry}) and five international places, combined best first, from` : 'Top five from'} {report.search.candidateCount} worldwide cities for {report.search.priority === 'balanced' ? 'overall balance' : report.search.priority}. These are chart-based suggestions within this city list, not a measured quality-of-life ranking. Changing filters, country, current home or priority requires running the search again. Previously saved five-place reports remain unchanged until you run the new search.</p>
+        <p className="text-sm text-muted-foreground">{report.search.method === 'domestic-preferences-v1' ? `Domestic matches in ${report.search.domesticCountry}, best first, from` : 'Saved results from an older search. Run a new search for domestic-only results. Candidates:'} {report.search.candidateCount} qualifying cities for {report.search.priority === 'balanced' ? 'overall balance' : report.search.priority}. These are chart-based suggestions within this city list, not a measured quality-of-life ranking. Changing filters, country, current home or priority requires running the search again. Existing reports remain unchanged until you run the new domestic search.</p>
         <ol className="space-y-3">{report.destinations.map((item, i) => <li key={item.place.name} className="rounded border p-4">
           <h4 className="font-semibold">{i + 1}. {item.place.name}</h4>
           {report.search?.domesticCountry && <p className="text-sm text-muted-foreground">{relocationCategory(report, item.place)}</p>}
@@ -138,7 +161,7 @@ export function RelocationAnalysis({ chart }: { chart: ChartData }) {
           <ul className="mt-2 list-disc pl-5 text-sm">{item.ranking?.reasons.map(reason => <li key={reason}>{reason}</li>)}</ul>
           <p className="mt-2 text-sm text-muted-foreground">Tradeoffs: {item.ranking?.tradeoffs.join(' ') || 'No close challenging angular factors in this method. This does not mean the location is free of difficulties.'}</p>
         </li>)}</ol>
-        <details className="text-sm text-muted-foreground"><summary className="cursor-pointer">How the ranking works</summary><p className="mt-2">New searches use 60% astrology + 25% urban-access estimate + 10% regional importance + 5% population size, with every component on a 0–100 scale. Population and urban-access filters run before scoring. The urban-access estimate uses proximity to major cities and nearby urban centers; it is a proxy for livability, not a verified services rating. Regional importance uses capital and world-city status. Astrology uses the same birth moment at each city with whole-sign houses and angular placements. Sun, Moon, Mercury, Venus and Jupiter add supportive weight; close Mars, Saturn, Uranus, Neptune and Pluto angular placements reduce the ease score. Strength fades to zero at 12 degrees from an angle. Your chosen priority doubles its corresponding angular weight and selects relevant house bonuses. This is an interpretive method, not a scientific prediction. It does not check visas, safety, cost, climate or job availability. City coordinates: Natural Earth.</p></details>
+        <details className="text-sm text-muted-foreground"><summary className="cursor-pointer">How the ranking works</summary><p className="mt-2">New searches use 60% astrology + 25% urban-access estimate + 10% regional importance + 5% population size, with every component on a 0–100 scale. Population and urban-access filters run before scoring. The urban-access estimate uses proximity to major cities and nearby urban centers; it is a proxy for livability, not a verified services rating. Regional importance uses capital and world-city status. Astrology uses the same birth moment at each city with whole-sign houses and angular placements. Sun, Moon, Mercury, Venus and Jupiter add supportive weight; close Mars, Saturn, Uranus, Neptune and Pluto angular placements reduce the ease score. Strength fades to zero at 12 degrees from an angle. Your chosen priority doubles its corresponding angular weight and selects relevant house bonuses. The career theme adds up to four raw astrology points from its associated planets near the Midheaven and in work/income houses; the 60/25/10/5 weighting remains unchanged. This is an interpretive method, not a scientific prediction. It does not check visas, safety, cost, climate or job availability. City coordinates: Natural Earth.</p></details>
       </section>}
 
       <p className="text-sm text-muted-foreground">Birth instant: {report.birthUTC}. All locations use this same instant. Angle contacts use a 5° ecliptic conjunction orb. MC and IC are separate angles, not necessarily the whole-sign 10th/4th cusps.</p>

@@ -59,12 +59,12 @@ unchanged planetary longitudes, stale-data detection, and report facts.
 Redeploy the astrology frontend, preserving its storage folder. No additional
 API, database migration, or backend environment variable is needed.
 
-## Domestic and international top ten
+## Domestic searches and section 1 preferences
 
 Choose a domestic country and Overall balance, Career, Home, or Relationships,
-then **Find my top 10 places**. The best five cities within the chosen country
-and the best five outside it are combined and sorted by the same raw score,
-highest first. Domestic and International labels appear in the saved list and
+then **Find my top domestic places**. Only cities within the chosen country
+qualify. Up to ten matches are sorted by the same weighted score, highest first.
+Fewer than ten matches are shown honestly; no international fallback is used. Domestic and International labels appear in the saved list and
 export. The user selects the current home/domestic country explicitly; the birthplace
 is not assumed to be the current residence. An optional current-home city
 provides a separate chart comparison reference without changing birth data. Country and priority edits do not
@@ -92,13 +92,11 @@ planets receive +0.75 for relevant houses: career 2/6/10, home 4,
 relationships 5/7/11. Balanced includes all three groups. Raw scores are sorted
 descending with a stable English-name tie break. Scores are internal comparative
 weights, not probabilities. The top three positive and two negative factors are
-shown. All cities use the same score. The quota ensures exactly five domestic and five
-international results, with no additional continent quota. Countries with fewer
-than five supported candidates produce an explanatory error and can still use
-manual comparisons; results are never silently padded or duplicated.
+shown. All cities use the same score. New domestic searches return up to ten matches. Empty results produce an
+explanatory error; results are never silently padded or duplicated.
 
 Earlier searches used method `domestic-international-v1`; new searches use
-`practical-v1`, described below.
+`domestic-preferences-v1`, described below.
 Saved `worldwide-v1` five-place reports remain readable and are not rewritten.
 The selected country is persisted with each new ranking. Manual comparisons
 now accept up to ten places and clear automatic ranking metadata.
@@ -142,8 +140,8 @@ No exclusion for Alaska is imposed automatically; users can exclude Alaska by
 name, while sizeable urban centers there can otherwise qualify. These filters
 reduce isolation but do not prove service availability.
 
-The best five qualifying domestic and five qualifying international places
-are sorted together by final score. Insufficient candidates produce an error;
+Up to ten qualifying domestic places are sorted by final score. No candidates
+produces an error;
 filters are never relaxed silently. New reports persist filters, components,
 urban-access inputs and optional current-home chart reference. Old reports stay
 readable and are flagged in the UI until a new search applies the formula.
@@ -153,3 +151,40 @@ UI, export, and AI context include the weighting and proxy limitations.
 
 Data field definitions and population methodology:
 https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-populated-places/
+
+## Section 1 preference controls (domestic-preferences-v1)
+
+The Careers & Jobs To Explore and Places & Living Environments That May Suit You
+subsections of section 1 populate editable guidance fields when no preference
+snapshot exists. **Copy recommendations from section 1** explicitly refreshes
+those fields later; regenerated sections do not silently replace saved preferences.
+Absent/unrecognized headings leave fields empty and allow manual entry.
+
+Users choose a career theme and a living-environment category alongside the
+copied guidance. The notes inform the optional AI comparison, not hard candidate
+filtering. They are not treated as factual information about city industries or
+amenities. No automatic keyword inference is used to silently choose filters.
+
+Career theme affects only the astrology component of the 60/25/10/5 formula:
+communication (Mercury/Jupiter), creative (Venus/Sun), caring (Moon/Jupiter),
+leadership (Sun/Saturn), technical (Mercury/Uranus), practical (Mars/Saturn), spiritual/intuitive/psychic services (Moon/Neptune).
+For each associated planet: up to three points for proximity to the MC (linear
+fade to zero at 12 degrees), plus one for houses 2, 6 or 10. Average the two
+planet values; add that 0–4 bonus to raw astrology before normalization.
+Existing challenging angular factors remain. General adds no bonus. This is
+astrological career symbolism, not verified local employment or industry fit.
+
+Living-environment hard filters: any qualifying place, large metro >=500,000,
+mid-sized >=100,000 and <500,000, or smaller nearby place >=25,000 and <100,000.
+The existing urban-access and population settings also apply; incompatible
+choices can produce no results. Climate, coastal access, culture, actual job
+openings and services are not established by the bundled data.
+
+Selected preferences are saved with the ranking and included in prompts/exports.
+Old mixed reports remain readable, with a new-search warning. Run a new domestic
+search to replace them. Manual selected-place comparisons remain available.
+
+Sections 1 and 11 may suggest spiritual or psychic-service careers when supplied
+chart themes fit, alongside other careers. These are optional vocational interests,
+not claims of psychic abilities or guaranteed income. The matching relocation
+career theme is available explicitly and does not establish local demand.
