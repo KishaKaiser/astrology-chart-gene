@@ -4,7 +4,7 @@ import { jsPDF } from 'jspdf'
 import { writeFile } from 'node:fs/promises'
 import { EquatorFromVector, RotateVector, Rotation_ECT_EQD, VectorFromSphere, Observer, Horizon, SiderealTime } from 'astronomy-engine'
 const bundle = await build({ entryPoints: ['src/lib/relocation.ts'], bundle: true, write: false, format: 'esm', platform: 'node' })
-const { findCombinedRelocationPlaces, defaultDomesticCountry, relocationCategory, findTopRelocationPlaces, scoreRelocation, calculateRelocation, currentRelocation, relocationAngles, angularDistance, wholeSignHouse, relocationFacts, relocationPrompt, relocationExportText } = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`)
+const { findDomesticRelocationPlaces, defaultDomesticCountry, relocationCategory, findTopRelocationPlaces, scoreRelocation, calculateRelocation, currentRelocation, relocationAngles, angularDistance, wholeSignHouse, relocationFacts, relocationPrompt, relocationExportText } = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`)
 const chart = { id:'fixture', name:'Sample', date:'1998-08-04', time:'12:00', timezone:'America/New_York', latitude:40.7128, longitude:-74.006, location:'New York', planets:[], houses:[], aspects:[], createdAt:0, updatedAt:0 }
 const places = [{ name:'London', latitude:51.5074, longitude:-0.1278 }, { name:'Sydney', latitude:-33.8688, longitude:151.2093 }, { name:'New York', latitude:40.7128, longitude:-74.006 }]
 const before = JSON.stringify(chart)
@@ -121,12 +121,12 @@ for (const destination of top.destinations) assert.ok(rankedLayout.placements.so
 console.log('PASS: top-five PDF report includes every destination and respects page boundaries')
 
 for (const country of ['United States of America', 'United Kingdom', 'Australia']) {
-  const combined = findCombinedRelocationPlaces(chart, 'balanced', country)
+  const combined = findDomesticRelocationPlaces(chart, 'balanced', country)
   assert.equal(combined.destinations.length,10)
-  assert.equal(combined.destinations.filter(d => d.place.country === country).length,5)
-  assert.equal(combined.destinations.filter(d => d.place.country !== country).length,5)
+  assert.equal(combined.destinations.filter(d => d.place.country === country).length,10)
+  assert.equal(combined.destinations.filter(d => d.place.country !== country).length,0)
   assert.equal(new Set(combined.destinations.map(d=>d.place.name)).size,10)
-  assert.equal(combined.search.method,'practical-v1')
+  assert.equal(combined.search.method,'domestic-preferences-v1')
   assert.ok(combined.destinations.every(d=>d.place.population>=25000 && d.ranking.components && d.ranking.score>=0 && d.ranking.score<=100))
   assert.ok(combined.destinations.every((d,i,all)=>i===0 || all[i-1].ranking.score>=d.ranking.score))
   assert.equal(currentRelocation(JSON.parse(JSON.stringify({...chart,relocationAnalysis:combined}))).search.domesticCountry,country)
@@ -142,10 +142,9 @@ for (const country of ['United States of America', 'United Kingdom', 'Australia'
 assert.equal(defaultDomesticCountry({...chart,location:'New York, USA'}),'United States of America')
 assert.equal(defaultDomesticCountry({...chart,location:'London, United Kingdom'}),'United Kingdom')
 assert.equal(defaultDomesticCountry(chart),'','do not guess a country from incomplete location text')
-assert.throws(()=>findCombinedRelocationPlaces(chart,'balanced',''),/Choose the country/)
-const smallCountry = RELOCATION_CITIES.find(p=>RELOCATION_CITIES.filter(q=>q.country===p.country).length<5).country
-assert.throws(()=>findCombinedRelocationPlaces(chart,'balanced',smallCountry),/Five of each are needed/)
-console.log('PASS: five domestic plus five international, globally sorted 1–10, selectable country, insufficient coverage, manual comparison, saved metadata, prompts and PDF bounds')
+assert.throws(()=>findDomesticRelocationPlaces(chart,'balanced',''),/Choose the country/)
+assert.throws(()=>findDomesticRelocationPlaces(chart,'balanced','United States of America',{minimumPopulation:999999999,nearbyMinimumPopulation:999999999,includeNearbyTowns:false,nearbyDistanceKm:50,maximumHubDistanceKm:100,maximumPopulation:0,excludedRegions:[]}),/No domestic places match/)
+console.log('PASS: domestic-only results, sorted 1–10, selectable country, insufficient coverage, manual comparison, saved metadata, prompts and PDF bounds')
 
 const practicalBundle = await build({entryPoints:['src/lib/relocation-practical.ts'],bundle:true,write:false,format:'esm',platform:'node'})
 const {practicalCandidates,weightedRanking,urbanAccess,DEFAULT_RELOCATION_FILTERS:defaults,distanceKm} = await import(`data:text/javascript;base64,${Buffer.from(practicalBundle.outputFiles[0].text).toString('base64')}`)
@@ -173,17 +172,50 @@ const oracle=[]
 for(let i=0;i<candidates.length;i+=10) for(const item of calculateRelocation(chart,candidates.slice(i,i+10)).destinations) oracle.push({...item,ranking:weightedRanking(item.place,scoreRelocation(item,'balanced'),RELOCATION_CITIES)})
 const sort=(a,b)=>b.ranking.score-a.ranking.score || a.place.name.localeCompare(b.place.name,'en') || a.place.latitude-b.place.latitude || a.place.longitude-b.place.longitude
 oracle.sort(sort)
-const expected=[...oracle.filter(d=>d.place.country==='United States of America').slice(0,5),...oracle.filter(d=>d.place.country!=='United States of America').slice(0,5)].sort(sort)
-const practical=findCombinedRelocationPlaces(chart,'balanced','United States of America',defaults)
+const expected=oracle.filter(d=>d.place.country==='United States of America').slice(0,10)
+const practical=findDomesticRelocationPlaces(chart,'balanced','United States of America',defaults)
 assert.deepEqual(practical.destinations.map(d=>d.place.name),expected.map(d=>d.place.name))
 const home={name:'Current home',latitude:33.75,longitude:-84.39}
-const withHome=findCombinedRelocationPlaces(chart,'balanced','United States of America',defaults,home)
+const withHome=findDomesticRelocationPlaces(chart,'balanced','United States of America',defaults,home)
 assert.deepEqual(withHome.destinations,practical.destinations,'current home is a reference, not a birth-data change or geographic ranking bias')
 assert.deepEqual(withHome.natal,practical.natal)
 assert.equal(withHome.currentResidence.place.name,home.name)
 assert.ok(relocationFacts(withHome).includes('Current residence comparison: Current home'))
 assert.ok(relocationExportText(withHome).includes('60% astrology'))
-const noAlaska=findCombinedRelocationPlaces(chart,'balanced','United States of America',{...defaults,excludedRegions:['Alaska']})
+const noAlaska=findDomesticRelocationPlaces(chart,'balanced','United States of America',{...defaults,excludedRegions:['Alaska']})
 assert.ok(noAlaska.destinations.every(d=>d.place.country!=='United States of America'||d.place.region!=='Alaska'))
 assert.equal(JSON.parse(JSON.stringify(withHome)).search.filters.includeNearbyTowns,true)
 console.log('PASS: weighted formula, normalized components, city + nearby-town filters, remote/missing-data exclusions, region exclusions, independent weighted top-ten oracle and current-home reference')
+
+const preferencesBundle=await build({entryPoints:['src/lib/relocation-preferences.ts'],bundle:true,write:false,format:'esm',platform:'node'})
+const {sectionOnePreferences,DEFAULT_RELOCATION_PREFERENCES:prefDefaults,careerThemeBonus,matchesEnvironment}=await import(`data:text/javascript;base64,${Buffer.from(preferencesBundle.outputFiles[0].text).toString('base64')}`)
+const sectionText='## 1. PRACTICAL GUIDANCE & INTEGRATION\n### Careers & Jobs To Explore\nTeaching and writing.\n\n### Places & Living Environments That May Suit You\nA mid-sized city.\n\nWith warmth and best wishes,\nThe Psychic Link\n\n## 2. CHART OVERVIEW & DOMINANT THEMES\nNot part of preferences.'
+assert.deepEqual(sectionOnePreferences(sectionText),{careerNotes:'Teaching and writing.',environmentNotes:'A mid-sized city.'})
+assert.deepEqual(sectionOnePreferences(sectionText.replaceAll(' & ',' and ')),sectionOnePreferences(sectionText))
+assert.deepEqual(sectionOnePreferences(''),{careerNotes:'',environmentNotes:''})
+const pref={...prefDefaults,...sectionOnePreferences(sectionText),careerTheme:'communication',environment:'mid-sized'}
+const preferred=findDomesticRelocationPlaces(chart,'balanced','United States of America',defaults,home,pref)
+assert.ok(preferred.destinations.every(d=>d.place.country==='United States of America' && d.place.population>=100000 && d.place.population<500000))
+assert.ok(preferred.destinations.every(d=>d.ranking.reasons[0].includes('Teaching, writing')))
+assert.deepEqual(preferred.search.preferences,pref)
+assert.ok(relocationPrompt(preferred,chart.name,'').includes('Teaching and writing.'))
+assert.ok(relocationExportText(preferred).includes('Living-environment filter: Mid-sized'))
+assert.ok(!relocationExportText(preferred).includes('(International)'))
+const themeFixture={...report.natal,midheaven:90,planets:[{name:'Mercury',longitude:90,house:10},{name:'Jupiter',longitude:90,house:10}]}
+assert.equal(careerThemeBonus(themeFixture,'communication'),4)
+assert.equal(careerThemeBonus(themeFixture,'general'),0)
+assert.ok(!matchesEnvironment(99999,'mid-sized') && matchesEnvironment(100000,'mid-sized') && !matchesEnvironment(500000,'mid-sized'))
+assert.throws(()=>findDomesticRelocationPlaces(chart,'balanced','United States of America',defaults,home,{...pref,careerTheme:'unknown'}),/Choose valid/)
+const fewCountries=[...new Set(RELOCATION_CITIES.map(c=>c.country))]
+const fewCountry=fewCountries.find(country=>{const count=practicalCandidates(RELOCATION_CITIES,country,defaults).filter(c=>c.country===country).length;return count>0&&count<10})
+const few=findDomesticRelocationPlaces(chart,'balanced',fewCountry,defaults)
+assert.ok(few.destinations.length>0&&few.destinations.length<10)
+assert.ok(few.destinations.every(d=>d.place.country===fewCountry),'short domestic list is never filled with international cities')
+console.log('PASS: section 1 extraction, editable preference snapshots, career-theme weighting, environment boundaries, domestic-only exports and fewer-than-ten behavior')
+
+const spiritual=findDomesticRelocationPlaces(chart,'balanced','United States of America',defaults,home,{...prefDefaults,careerTheme:'spiritual'})
+assert.equal(spiritual.search.preferences.careerTheme,'spiritual')
+assert.ok(spiritual.destinations.every(d=>d.ranking.reasons[0].includes('Spiritual, intuitive and psychic services')))
+assert.ok(relocationExportText(spiritual).includes('Spiritual, intuitive and psychic services'))
+assert.ok(relocationPrompt(spiritual,chart.name,'').includes('not confirmed psychic abilities'))
+console.log('PASS: spiritual-career option persists and carries through ranking, prompt and export')
