@@ -3,7 +3,7 @@ import { Body, MakeTime, SiderealTime, e_tilt, GeoVector, Ecliptic } from 'astro
 import { birthTimeToUTC } from './birth-time'
 import { ZODIAC_SIGNS, type ChartData } from './astrology-types'
 import { RELOCATION_CITIES } from './relocation-cities'
-import { practicalCandidates, weightedRanking, type RelocationFilters, DEFAULT_RELOCATION_FILTERS } from './relocation-practical'
+import { distanceKm, practicalCandidates, weightedRanking, type RelocationFilters, DEFAULT_RELOCATION_FILTERS } from './relocation-practical'
 export { DEFAULT_RELOCATION_FILTERS } from './relocation-practical'
 export type { RelocationFilters } from './relocation-practical'
 
@@ -31,6 +31,7 @@ export interface RelocationAnalysis {
   houseSystem: 'Whole sign'
   natal: RelocatedChart
   destinations: RelocatedChart[]
+  comparisonDraft?: { focus: string; requestedModel: string; usedModel?: string; paragraphs: string[] }
   interpretation?: string
   model?: string
 }
@@ -137,11 +138,19 @@ export function defaultDomesticCountry(chart: ChartData): string {
   const aliases: Record<string, string> = { usa: 'United States of America', us: 'United States of America', 'united states': 'United States of America', uk: 'United Kingdom' }
   return RELOCATION_COUNTRIES.find(country => country.toLowerCase() === suffix) || aliases[suffix || ''] || ''
 }
+// Catalog coordinates and birth records can use different points within a city.
+function matchesBirthplace(place: RelocationPlace, chart: ChartData): boolean {
+  const birth = {name: chart.location, latitude: chart.latitude, longitude: chart.longitude}
+  const distance = distanceKm(place, birth)
+  if (distance < 0.2) return true
+  const cityName = (name: string) => name.split(',')[0].normalize('NFKD').replace(/\p{M}/gu, '').trim().toLowerCase().replace(/\s+city$/, '')
+  return distance <= 30 && cityName(place.name) === cityName(chart.location)
+}
 export function findDomesticRelocationPlaces(chart: ChartData, priority: RelocationPriority, domesticCountry: string, filters: RelocationFilters = DEFAULT_RELOCATION_FILTERS, currentHome?: RelocationPlace, preferences: RelocationPreferences = DEFAULT_RELOCATION_PREFERENCES): RelocationAnalysis {
   if (!RELOCATION_COUNTRIES.includes(domesticCountry)) throw new Error('Choose the country to use for domestic places.')
   if (!['balanced', 'career', 'home', 'relationships'].includes(priority)) throw new Error('Choose a supported relocation priority.')
   validatePreferences(preferences)
-  const candidates = practicalCandidates(RELOCATION_CITIES, domesticCountry, filters).filter(place => place.country === domesticCountry && matchesEnvironment(place.population ?? 0, preferences.environment))
+  const candidates = practicalCandidates(RELOCATION_CITIES, domesticCountry, filters).filter(place => place.country === domesticCountry && !matchesBirthplace(place, chart) && matchesEnvironment(place.population ?? 0, preferences.environment))
   if (!candidates.length) throw new Error('No domestic places match these career/living-environment and practical settings. Broaden the living-environment or population filters; international cities will not be substituted.')
   const report = calculateCandidates(chart, candidates)
   if (currentHome) report.currentResidence = calculateCandidates(chart, [currentHome]).destinations[0]
@@ -179,14 +188,55 @@ export function relocationFacts(report: RelocationAnalysis): string {
 }
 // Re-running the same search should not discard the narrative that belongs to it.
 export function retainRelocationComparison(next: RelocationAnalysis, previous?: RelocationAnalysis): RelocationAnalysis {
-  if (next.interpretation || !previous?.interpretation || next.sourceKey !== previous.sourceKey) return next
+  if (next.interpretation || next.comparisonDraft || !previous || (!previous.interpretation && !previous.comparisonDraft) || next.sourceKey !== previous.sourceKey) return next
   if (relocationFacts(previous) !== relocationFacts(next)) return next
-  return { ...next, interpretation: previous.interpretation, model: previous.model }
+  return { ...next, interpretation: previous.interpretation, model: previous.model, comparisonDraft: previous.comparisonDraft }
 }
-export function relocationPrompt(report: RelocationAnalysis, name: string, focus: string) {
-  return `Write a plain-language relocation comparison for ${name}. Focus: ${focus || 'Career, home life, and relationships'}.\n${relocationFacts(report)}\nCompare ONLY the selected destinations with each other and the supplied current residence, when present. The birthplace is a natal reference, not the current home. Do not imply proximity to the birthplace improves a score. Write for someone new to astrology. Use ordinary language about work, home and relationships. Use the score only as context. Leave out the equation, component scores, planet names, ascendants, houses, degrees and other chart terminology. When a ranking is supplied, keep its order and domestic/international labels; briefly cover every listed destination. Do not rerank the list or replace places. Connect the supplied career and living-environment guidance to chart factors where supported; never infer city amenities, industries, climate or job openings from that guidance. If the spiritual career theme is selected, discuss spiritual or psychic-service work as optional interests, not confirmed psychic abilities or evidence of local demand. Explain career themes using the Midheaven, 10th and 6th houses; home themes using the IC, Moon and 4th house; relationship themes using the Descendant and 7th house. Mention strengths and tradeoffs, including challenging themes where relevant. Name which of the compared places may better support each priority, with a clear reason tied to the supplied placements. If the evidence is mixed, say so rather than declaring a winner. Do not invent planetary lines, distances to lines, additional places, jobs available, living costs, climate, or factual city qualities. Astrological suitability is interpretive, not a guarantee or instruction to move. Include practical next steps such as checking jobs, budget, and support networks. Return 500-700 words of ordinary text with short paragraphs and unnumbered subheadings, not JSON. Do not add a signature.`
+// Keep each Ollama request small enough to finish independently and resume by city.
+export function relocationPrompt(report: RelocationAnalysis, name: string, focus: string, index = 0) {
+  const item = report.destinations[index]
+  const themes = (place: RelocatedChart) => {
+    const factors = scoreRelocation(place, report.search?.priority ?? 'balanced')
+    return [...factors.reasons.slice(0, 2), ...factors.tradeoffs.slice(0, 1)].join(' ') || 'No strong factors.'
+  }
+  const preferences = report.search?.preferences
+  const other = index ? report.destinations[0] : report.destinations[1]
+  return `Write one short plain-language paragraph (50–80 words) about ${item.place.name} for ${name}. The report will supply the city heading. Discuss this destination only. Never add the birthplace, current residence or another city as an extra destination. Use the supplied ranking and keep its order. Focus: ${focus.slice(0, 400) || 'work, home and relationships'}.\nCity themes: ${themes(item)}.\n${other ? `Comparison place: ${other.place.name}. Its themes: ${themes(other)}.` : ''}\n${report.currentResidence ? `Current-home reference themes (background only): ${themes(report.currentResidence)}.` : ''}\n${preferences ? `Career theme: ${CAREER_THEMES[preferences.careerTheme].label}. Career notes: ${preferences.careerNotes.slice(0,600)}. Living environment: ${ENVIRONMENT_LABELS[preferences.environment]}. Environment notes: ${preferences.environmentNotes.slice(0,600)}.` : ''}\nTranslate the chart themes into everyday language. Explain how this place compares in a way relevant to the focus, including a tradeoff if supported. Do not invent planetary lines, local jobs, city amenities, or other city facts. Spiritual careers are optional interests, not confirmed psychic abilities. Omit chart terminology, scores, equations, headings and signatures.`
 }
 
+export function comparisonText(report: RelocationAnalysis): string {
+  if (report.interpretation?.trim()) return report.interpretation
+  const paragraphs = report.comparisonDraft?.paragraphs ?? []
+  if (!paragraphs.length) return ''
+  return `Partial comparison (${paragraphs.length} of ${report.destinations.length} places)\n\n${formatCityParagraphs(report, paragraphs)}`
+}
+function formatCityParagraphs(report: RelocationAnalysis, paragraphs: string[]): string {
+  return paragraphs.map((text, index) => `${index + 1}. ${report.destinations[index].place.name}\n${text}`).join('\n\n')
+}
+export async function generateRelocationComparison(report: RelocationAnalysis, name: string, focus: string, requestedModel: string,
+  generate: (prompt: string) => Promise<{text: string; model?: string}>,
+  save: (next: RelocationAnalysis, previous: RelocationAnalysis) => Promise<void>, progress: (index: number) => void) {
+  const saved = report.comparisonDraft
+  const resume = saved?.focus === focus && saved.requestedModel === requestedModel
+  const paragraphs = resume ? [...saved.paragraphs] : []
+  let previous = report
+  let usedModel = resume ? saved.usedModel : undefined
+  for (let index = paragraphs.length; index < report.destinations.length; index++) {
+    progress(index)
+    const response = await generate(relocationPrompt(report, name, focus, index))
+    const text = response.text?.trim()
+    if (!text || text.length < 60) throw new Error('The AI returned an incomplete paragraph.')
+    if (usedModel && response.model && usedModel !== response.model) throw new Error('The AI service changed models. Select a specific model and try again.')
+    usedModel = response.model || usedModel
+    paragraphs.push(text)
+    const finished = paragraphs.length === report.destinations.length
+    const next = { ...previous, ...(finished
+      ? { comparisonDraft: undefined, interpretation: formatCityParagraphs(report, paragraphs), model: usedModel }
+      : { comparisonDraft: { focus, requestedModel, usedModel, paragraphs: [...paragraphs] } }) }
+    await save(next, previous)
+    previous = next
+  }
+}
 export function relocationOverview(report: RelocationAnalysis): string {
   const search = report.search
   if (!search) return 'These selected places are compared using the same birth moment.'
@@ -200,8 +250,8 @@ export function relocationOverview(report: RelocationAnalysis): string {
 
 export function relocationExportText(report: RelocationAnalysis): string {
   const sections = ['## RELOCATION ANALYSIS', relocationOverview(report)]
-  if (report.currentResidence) sections.push(`Current home for comparison: ${report.currentResidence.place.name}.`)
-  if (report.interpretation) sections.push('### Relocation comparison', report.interpretation)
+  const narrative = comparisonText(report)
+  if (narrative) sections.push('### Relocation comparison', narrative)
   for (const [index, item] of report.destinations.entries()) {
     const score = item.ranking ? ` (${item.ranking.score.toFixed(1)}${item.ranking.components ? '/100' : ''})` : ''
     sections.push(`${index + 1}. ${item.place.name}${score}`)

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useKV } from '@/hooks/use-kv'
 import { FamilyRelationshipData } from '@/lib/family-compatibility'
 import type { ChartData } from '@/lib/astrology-types'
-import { currentRelocation } from '@/lib/relocation'
+import { comparisonText, currentRelocation } from '@/lib/relocation'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -89,8 +89,10 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
   const selectedChart = charts.find(chart => chart.id === chartId)
   const relocationReport = selectedChart && currentRelocation(selectedChart)
   const hasRelocation = Boolean(relocationReport)
+  const hasComparison = Boolean(relocationReport && comparisonText(relocationReport))
   const [open, setOpen] = useState(false)
   const [options, setOptions] = useState<PDFExportOptions>(defaultPDFOptions)
+  useEffect(() => { setOptions(previous => ({...previous, includeRelocation: hasComparison})) }, [chartId, hasComparison])
   const [savedFamilyData] = useKV<Record<string, FamilyRelationshipData>>('family-dynamics', {})
   const [savedHoroscopes] = useKV<Record<string, HoroscopeReading>>('personal-horoscopes', {})
   const [savedCompatibilityReports] = useKV<Record<string, SavedCompatibilityReport>>('compatibility-reports', {})
@@ -636,7 +638,7 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
               <Checkbox id="includeRelocation" checked={Boolean(options.includeRelocation)} onCheckedChange={() => toggleOption('includeRelocation')} disabled={!hasRelocation} />
               <Label htmlFor="includeRelocation" className={!hasRelocation ? 'opacity-50' : ''}>
                 <div className="font-medium text-white">Relocation analysis</div>
-                <div className="text-xs text-muted-foreground">{hasRelocation ? (relocationReport?.interpretation ? 'Ranked places and your saved AI comparison' : 'Ranked places; no saved AI comparison for this search') : 'Calculate places in the chart’s Relocation tab first'}</div>
+                <div className="text-xs text-muted-foreground">{hasRelocation ? (hasComparison ? 'Ranked places and your saved AI comparison' : 'Ranked places; no saved AI comparison for this search') : 'Calculate places in the chart’s Relocation tab first'}</div>
               </Label>
             </div>
             

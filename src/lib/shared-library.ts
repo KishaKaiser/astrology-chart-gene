@@ -19,6 +19,19 @@ let mutationVersion = 0
 const journalKey = 'astro_shared_pending_v1'
 export const subscribeLibrary = (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener) } }
 export const getLibrarySnapshot = () => snapshot
+// Comparison generation checkpoints must reach the server before requesting the next city.
+export function waitForLibrarySave(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const check = () => {
+      if (snapshot.pending && (snapshot.saving || !snapshot.error)) return
+      unsubscribe()
+      if (snapshot.pending) reject(new Error(`The home library could not confirm the save. ${snapshot.error}`))
+      else resolve()
+    }
+    const unsubscribe = subscribeLibrary(check)
+    check()
+  })
+}
 function emit(update: Partial<typeof snapshot>) {
   snapshot = { ...snapshot, ...update, pending: pending.length }
   listeners.forEach(listener => listener())

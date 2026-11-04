@@ -3,11 +3,13 @@ import { readFile, stat } from 'node:fs/promises'
 import { resolve, extname, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { openLibrary } from './library.mjs'
+import { createOllamaClient } from './ollama.mjs'
 
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.wasm': 'application/wasm', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.woff2': 'font/woff2', '.ico': 'image/x-icon' }
-export async function createAppServer({ dataDir, distDir, allowedHosts = [] }) {
+export async function createAppServer({ dataDir, distDir, allowedHosts = [], ollamaBaseUrl = process.env.OLLAMA_BASE_URL || process.env.OLLAMA_URL || 'http://127.0.0.1:11434', ollamaModel = process.env.OLLAMA_MODEL || 'gemma3:1b' }) {
   const library = await openLibrary(dataDir)
   const root = resolve(distDir)
+  const ollama = createOllamaClient({ baseUrl: ollamaBaseUrl, defaultModel: ollamaModel })
   return createServer(async (req, res) => {
     const json = (status, data) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(data)) }
     try {
@@ -20,16 +22,20 @@ export async function createAppServer({ dataDir, distDir, allowedHosts = [] }) {
         if (req.headers['sec-fetch-site'] === 'cross-site') return json(403, { error: 'Cross-site requests are not allowed' })
         if (req.headers.origin && new URL(req.headers.origin).host !== host) return json(403, { error: 'Origin not allowed' })
         if (url.pathname === '/api/library' && req.method === 'GET') return json(200, { values: library.read() })
-        if (url.pathname !== '/api/library/changes' || req.method !== 'POST') return json(404, { error: 'Not found' })
+        if (url.pathname === '/api/ollama/models' && req.method === 'GET') return json(200, await ollama.models())
+        const chat = url.pathname === '/api/ollama/chat'
+        if ((!chat && url.pathname !== '/api/library/changes') || req.method !== 'POST') return json(404, { error: 'Not found' })
         if (!req.headers['content-type']?.startsWith('application/json')) return json(415, { error: 'JSON required' })
         const chunks = []
         let size = 0
         for await (const chunk of req) {
           size += chunk.length
+          if (chat && size > 256 * 1024) return json(413, { error: 'Ollama prompt exceeds 256 KB.' })
           if (size > 32 * 1024 * 1024) return json(413, { error: 'Library save exceeds 32 MB. Import smaller batches.' })
           chunks.push(chunk)
         }
         const request = JSON.parse(Buffer.concat(chunks).toString('utf8'))
+        if (chat) return json(200, await ollama.chat(request))
         return json(200, { values: await library.change(request) })
       }
       if (!['GET', 'HEAD'].includes(req.method)) return json(405, { error: 'Method not allowed' })
@@ -43,8 +49,8 @@ export async function createAppServer({ dataDir, distDir, allowedHosts = [] }) {
       res.writeHead(200, { 'Content-Type': types[extname(path)] ?? 'application/octet-stream', 'Cache-Control': extname(path) === '.html' ? 'no-cache' : 'public, max-age=3600', 'X-Content-Type-Options': 'nosniff' })
       res.end(req.method === 'HEAD' ? undefined : content)
     } catch (error) {
-      console.error('Library request failed:', error.message)
-      json(error.status ?? (error instanceof SyntaxError ? 400 : 500), { error: error.status === 409 ? error.message : 'The home server could not load or save the library. Check its logs and storage permissions.' })
+      console.error('Home server request failed:', error.message)
+      json(error.status ?? (error instanceof SyntaxError ? 400 : 500), { error: error.status ? error.message : error instanceof SyntaxError ? 'Invalid JSON request.' : 'The home server could not complete the request. Check its logs.' })
     }
   })
 }
