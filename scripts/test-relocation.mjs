@@ -4,7 +4,7 @@ import { jsPDF } from 'jspdf'
 import { writeFile } from 'node:fs/promises'
 import { EquatorFromVector, RotateVector, Rotation_ECT_EQD, VectorFromSphere, Observer, Horizon, SiderealTime } from 'astronomy-engine'
 const bundle = await build({ entryPoints: ['src/lib/relocation.ts'], bundle: true, write: false, format: 'esm', platform: 'node' })
-const { findDomesticRelocationPlaces, defaultDomesticCountry, relocationCategory, findTopRelocationPlaces, scoreRelocation, calculateRelocation, currentRelocation, relocationAngles, angularDistance, wholeSignHouse, relocationFacts, relocationPrompt, relocationExportText } = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`)
+const { findDomesticRelocationPlaces, defaultDomesticCountry, relocationCategory, findTopRelocationPlaces, scoreRelocation, calculateRelocation, currentRelocation, relocationAngles, angularDistance, wholeSignHouse, relocationFacts, relocationPrompt, relocationExportText, retainRelocationComparison } = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`)
 const chart = { id:'fixture', name:'Sample', date:'1998-08-04', time:'12:00', timezone:'America/New_York', latitude:40.7128, longitude:-74.006, location:'New York', planets:[], houses:[], aspects:[], createdAt:0, updatedAt:0 }
 const places = [{ name:'London', latitude:51.5074, longitude:-0.1278 }, { name:'Sydney', latitude:-33.8688, longitude:151.2093 }, { name:'New York', latitude:40.7128, longitude:-74.006 }]
 const before = JSON.stringify(chart)
@@ -105,7 +105,8 @@ assert.notDeepEqual(findTopRelocationPlaces(chart,'home').destinations.map(d => 
 assert.equal(calculateRelocation(chart,places).search, undefined)
 assert.equal(currentRelocation({...chart,relocationAnalysis:JSON.parse(JSON.stringify(top))}).search.method,'worldwide-v1')
 assert.ok(relocationFacts(top).includes('Top five from'))
-assert.ok(relocationExportText(top).includes(top.destinations[0].ranking.reasons[0]))
+assert.ok(relocationExportText(top).includes('1. '+top.destinations[0].place.name))
+assert.ok(!relocationExportText(top).includes('Generate a plain-language comparison'))
 const synthetic = {...report.natal, ascendant:0, midheaven:90, ic:270, descendant:180, planets:[{name:'Venus',longitude:90,house:10}]}
 assert.equal(scoreRelocation(synthetic,'balanced').score, 4.75)
 assert.equal(scoreRelocation(synthetic,'career').score, 8.75)
@@ -181,7 +182,7 @@ assert.deepEqual(withHome.destinations,practical.destinations,'current home is a
 assert.deepEqual(withHome.natal,practical.natal)
 assert.equal(withHome.currentResidence.place.name,home.name)
 assert.ok(relocationFacts(withHome).includes('Current residence comparison: Current home'))
-assert.ok(relocationExportText(withHome).includes('60% astrology'))
+assert.ok(!relocationExportText(withHome).includes('60% astrology'))
 const noAlaska=findDomesticRelocationPlaces(chart,'balanced','United States of America',{...defaults,excludedRegions:['Alaska']})
 assert.ok(noAlaska.destinations.every(d=>d.place.country!=='United States of America'||d.place.region!=='Alaska'))
 assert.equal(JSON.parse(JSON.stringify(withHome)).search.filters.includeNearbyTowns,true)
@@ -219,3 +220,22 @@ assert.ok(spiritual.destinations.every(d=>d.ranking.reasons[0].includes('Spiritu
 assert.ok(relocationExportText(spiritual).includes('Spiritual, intuitive and psychic services'))
 assert.ok(relocationPrompt(spiritual,chart.name,'').includes('not confirmed psychic abilities'))
 console.log('PASS: spiritual-career option persists and carries through ranking, prompt and export')
+
+const readable=relocationExportText(withHome)
+assert.equal((readable.match(/historical metro-area estimates/g)||[]).length,0)
+assert.ok(!readable.includes('Components (0–100)') && !readable.includes('Tradeoffs:') && !readable.includes('Coordinates:'))
+assert.ok(relocationFacts(withHome).includes('Components (0–100)'), 'technical facts are retained for generation')
+console.log('PASS: score-only list and no generation instructions in the exported report')
+
+const written = '## 2. Home life\nThe generated home paragraph.\n\n## 1. Work\nThe generated work paragraph.'
+const generated = {...withHome, interpretation:written, model:'example'}
+const repeated = retainRelocationComparison({...withHome,calculatedAt:withHome.calculatedAt+1},generated)
+assert.equal(repeated.interpretation,written)
+assert.equal(retainRelocationComparison(noAlaska,generated).interpretation,undefined)
+const savedReport=currentRelocation(JSON.parse(JSON.stringify({...chart,relocationAnalysis:repeated})))
+const rendered=renderInterpretation(new jsPDF(),relocationExportText(savedReport),25,'relocation').placements.map(p=>p.text).join('\n')
+assert.ok(rendered.includes('The generated home paragraph.') && rendered.includes('The generated work paragraph.'))
+assert.ok(rendered.indexOf('2. Home life')<rendered.indexOf('1. Work'))
+assert.ok(rendered.includes(savedReport.destinations[0].ranking.score.toFixed(1)+'/100'))
+assert.doesNotMatch(rendered,/Ascendant|Final score =|Generate a plain-language comparison/)
+console.log('PASS: saved AI comparison survives identical search, stays in original order and appears with city scores in the PDF renderer')

@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from 'react'
+import { getLibrarySnapshot } from '@/lib/shared-library'
 import { ChartData, TransitData, PLANET_SYMBOLS, ASPECT_TYPES, ZodiacSign, ZODIAC_SYMBOLS } from '@/lib/astrology-types'
 import { calculateCurrentTransits } from '@/lib/astrology-calc'
 import { ZODIAC_INFO, PLANETARY_DIGNITIES, getPlanetaryDignity, getDignityDescription, getDignityColor, HOUSE_INFO, getHouseCategoryDescription } from '@/lib/zodiac-info'
@@ -72,7 +73,10 @@ export function ChartView({ chart, onBack, onEdit, onUpdateChart }: ChartViewPro
     try {
       const svg = svgRef.current
       console.log('SVG element for export:', svg)
-      await exportChartToPDF(chart, svg, interpretation, options)
+      const savedCharts = getLibrarySnapshot().values['astrology-charts'] as ChartData[]
+      const latest = savedCharts.find(item => item.id === chart.id)
+      if (!latest) throw new Error('This chart is no longer in the shared library.')
+      await exportChartToPDF(latest, svg, interpretation, options)
       toast.success(
         interpretation 
           ? 'PDF with full interpretation exported successfully!' 
@@ -1044,7 +1048,7 @@ Use The Psychic Link as the signature, never a placeholder such as [Your Name].`
                 <span role="status" className="text-sm text-muted-foreground">
                   {interpretationBusy ? `Generating section ${activeSection} of 13…` : `${13 - missingSections.length} of 13 sections available`}
                 </span>
-                {interpretation && <ExportOptionsDialog onExport={handleExport} hasInterpretation={true} variant="outline" />}
+                {interpretation && <ExportOptionsDialog onExport={handleExport} hasInterpretation={true} chartId={chart.id} variant="outline" />}
               </div>
               {sectionError && (
                 <p role="alert" className="text-sm text-amber-300">

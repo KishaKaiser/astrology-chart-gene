@@ -177,13 +177,34 @@ export function relocationFacts(report: RelocationAnalysis): string {
   const describe = (item: RelocatedChart) => `${item.place.name} (${item.place.latitude}, ${item.place.longitude}): Ascendant ${zodiacPosition(item.ascendant)}, Midheaven ${zodiacPosition(item.midheaven)}, IC ${zodiacPosition(item.ic)}. Whole-sign houses: ${item.planets.map(p => `${p.name} H${p.house}`).join(', ')}. Ecliptic conjunctions within 5° of an angle: ${item.angularContacts.map(c => `${c.planet} at ${c.angle}, orb ${c.orb.toFixed(2)}°`).join('; ') || 'none'}.`
   return `${relocationRankingText(report)}\nRelocated chart comparison at the SAME birth instant: ${report.birthUTC}. Tropical zodiac, whole-sign houses; geocentric planetary positions recalculated consistently for this comparison. Planetary longitudes stay fixed across locations. This is not a world astrocartography map or a city quality-of-life assessment.\nBirthplace natal reference (not assumed current residence; no proximity ranking bonus): ${describe(report.natal)}\n${report.currentResidence ? `Current residence comparison: ${describe(report.currentResidence)}` : 'Current residence not supplied; do not assume the person still lives at the birthplace.'}\n${report.destinations.map(describe).join('\n')}`
 }
+// Re-running the same search should not discard the narrative that belongs to it.
+export function retainRelocationComparison(next: RelocationAnalysis, previous?: RelocationAnalysis): RelocationAnalysis {
+  if (next.interpretation || !previous?.interpretation || next.sourceKey !== previous.sourceKey) return next
+  if (relocationFacts(previous) !== relocationFacts(next)) return next
+  return { ...next, interpretation: previous.interpretation, model: previous.model }
+}
 export function relocationPrompt(report: RelocationAnalysis, name: string, focus: string) {
-  return `Write a plain-language relocation comparison for ${name}. Focus: ${focus || 'Career, home life, and relationships'}.\n${relocationFacts(report)}\nCompare ONLY the selected destinations with each other and the supplied current residence, when present. The birthplace is a natal reference, not the current home. Do not imply proximity to the birthplace improves a score. Explain weighted components as supplied and clearly identify the urban-access estimate as a proxy, not verified services or livability research. When a ranking is supplied, keep its order and domestic/international labels; briefly cover every listed destination. Do not rerank the list or replace places. Connect the supplied career and living-environment guidance to chart factors where supported; never infer city amenities, industries, climate or job openings from that guidance. If the spiritual career theme is selected, discuss spiritual or psychic-service work as optional interests, not confirmed psychic abilities or evidence of local demand. Explain career themes using the Midheaven, 10th and 6th houses; home themes using the IC, Moon and 4th house; relationship themes using the Descendant and 7th house. Mention strengths and tradeoffs, including challenging themes where relevant. Name which of the compared places may better support each priority, with a clear reason tied to the supplied placements. If the evidence is mixed, say so rather than declaring a winner. Do not invent planetary lines, distances to lines, additional places, jobs available, living costs, climate, or factual city qualities. Astrological suitability is interpretive, not a guarantee or instruction to move. Include practical next steps such as checking jobs, budget, and support networks. Return 500-700 words of ordinary text with short paragraphs and unnumbered subheadings, not JSON. Do not add a signature.`
+  return `Write a plain-language relocation comparison for ${name}. Focus: ${focus || 'Career, home life, and relationships'}.\n${relocationFacts(report)}\nCompare ONLY the selected destinations with each other and the supplied current residence, when present. The birthplace is a natal reference, not the current home. Do not imply proximity to the birthplace improves a score. Write for someone new to astrology. Use ordinary language about work, home and relationships. Use the score only as context. Leave out the equation, component scores, planet names, ascendants, houses, degrees and other chart terminology. When a ranking is supplied, keep its order and domestic/international labels; briefly cover every listed destination. Do not rerank the list or replace places. Connect the supplied career and living-environment guidance to chart factors where supported; never infer city amenities, industries, climate or job openings from that guidance. If the spiritual career theme is selected, discuss spiritual or psychic-service work as optional interests, not confirmed psychic abilities or evidence of local demand. Explain career themes using the Midheaven, 10th and 6th houses; home themes using the IC, Moon and 4th house; relationship themes using the Descendant and 7th house. Mention strengths and tradeoffs, including challenging themes where relevant. Name which of the compared places may better support each priority, with a clear reason tied to the supplied placements. If the evidence is mixed, say so rather than declaring a winner. Do not invent planetary lines, distances to lines, additional places, jobs available, living costs, climate, or factual city qualities. Astrological suitability is interpretive, not a guarantee or instruction to move. Include practical next steps such as checking jobs, budget, and support networks. Return 500-700 words of ordinary text with short paragraphs and unnumbered subheadings, not JSON. Do not add a signature.`
+}
+
+export function relocationOverview(report: RelocationAnalysis): string {
+  const search = report.search
+  if (!search) return 'These selected places are compared using the same birth moment.'
+  const domestic = search.method === 'domestic-preferences-v1'
+  const placeScope = domestic ? ` in ${search.domesticCountry}` : ''
+  const priority = search.priority === 'balanced' ? 'overall balance' : search.priority
+  const intro = `${report.destinations.length} places ranked for ${priority} from ${search.candidateCount} candidates${placeScope}.`
+  const prefs = search.preferences
+  return [intro, prefs && `Career focus: ${CAREER_THEMES[prefs.careerTheme].label}. Living-environment filter: ${ENVIRONMENT_LABELS[prefs.environment]}.`].filter(Boolean).join(' ')
 }
 
 export function relocationExportText(report: RelocationAnalysis): string {
-  const summary = report.search
-    ? relocationRankingText(report)
-    : report.destinations.map((item, i) => `${i + 1}. ${item.place.name}`).join('\n')
-  return `## RELOCATION ANALYSIS\n${summary}${report.interpretation ? `\n\n### Relocation comparison\n${report.interpretation}` : '\n\nGenerate a plain-language comparison in the Relocation tab for a fuller interpretation.'}`
+  const sections = ['## RELOCATION ANALYSIS', relocationOverview(report)]
+  if (report.currentResidence) sections.push(`Current home for comparison: ${report.currentResidence.place.name}.`)
+  if (report.interpretation) sections.push('### Relocation comparison', report.interpretation)
+  for (const [index, item] of report.destinations.entries()) {
+    const score = item.ranking ? ` (${item.ranking.score.toFixed(1)}${item.ranking.components ? '/100' : ''})` : ''
+    sections.push(`${index + 1}. ${item.place.name}${score}`)
+  }
+  return sections.join('\n\n')
 }

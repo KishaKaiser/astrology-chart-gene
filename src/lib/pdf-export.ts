@@ -1104,7 +1104,7 @@ export async function exportChartToPDF(
     const relocation = currentRelocation(chart)
     if (options.includeRelocation && relocation) {
       pdf.addPage()
-      yPos = renderInterpretation(pdf, relocationExportText(relocation), 25).y
+      yPos = renderInterpretation(pdf, relocationExportText(relocation), 25, 'relocation').y
     }
 
     const totalPages = pdf.getNumberOfPages()
