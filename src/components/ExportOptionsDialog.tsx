@@ -87,7 +87,8 @@ interface ImportantDaysReading {
 export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, variant = 'default', chartId }: ExportOptionsDialogProps) {
   const [charts] = useKV<ChartData[]>('astrology-charts', [])
   const selectedChart = charts.find(chart => chart.id === chartId)
-  const hasRelocation = Boolean(selectedChart && currentRelocation(selectedChart))
+  const relocationReport = selectedChart && currentRelocation(selectedChart)
+  const hasRelocation = Boolean(relocationReport)
   const [open, setOpen] = useState(false)
   const [options, setOptions] = useState<PDFExportOptions>(defaultPDFOptions)
   const [savedFamilyData] = useKV<Record<string, FamilyRelationshipData>>('family-dynamics', {})
@@ -635,7 +636,7 @@ export function ExportOptionsDialog({ onExport, hasInterpretation, disabled, var
               <Checkbox id="includeRelocation" checked={Boolean(options.includeRelocation)} onCheckedChange={() => toggleOption('includeRelocation')} disabled={!hasRelocation} />
               <Label htmlFor="includeRelocation" className={!hasRelocation ? 'opacity-50' : ''}>
                 <div className="font-medium text-white">Relocation analysis</div>
-                <div className="text-xs text-muted-foreground">{hasRelocation ? 'Suggested places and saved analysis, without individual relocation charts' : 'Calculate places in the chart’s Relocation tab first'}</div>
+                <div className="text-xs text-muted-foreground">{hasRelocation ? (relocationReport?.interpretation ? 'Ranked places and your saved AI comparison' : 'Ranked places; no saved AI comparison for this search') : 'Calculate places in the chart’s Relocation tab first'}</div>
               </Label>
             </div>
             

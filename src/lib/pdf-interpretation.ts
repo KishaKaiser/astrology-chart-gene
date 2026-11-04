@@ -16,7 +16,7 @@ function blocksFrom(text: string): Block[] {
   const blocks: Block[] = []
   let paragraph: string[] = []
   const flush = () => { if (paragraph.length) blocks.push({ text: paragraph.join('\n'), kind: 'paragraph', level: 0 }); paragraph = [] }
-  for (const raw of normalizeInterpretationOrder(text).split('\n')) {
+  for (const raw of text.split('\n')) {
     const line = raw.trim()
     const heading = line.match(/^(#{2,4})\s+(.+)$/)
     const boldHeading = line.match(/^\*\*([^*]+)\*\*$/)
@@ -33,13 +33,13 @@ function blocksFrom(text: string): Block[] {
   return blocks
 }
 
-export function renderInterpretation(pdf: jsPDF, text: string, startY = 55) {
+export function renderInterpretation(pdf: jsPDF, text: string, startY = 55, format: 'natal' | 'relocation' = 'natal') {
   const margin = 20
   const top = 25
   const bottom = pdf.internal.pageSize.getHeight() - 25
   const width = pdf.internal.pageSize.getWidth() - margin * 2
   const available = bottom - top
-  const blocks = blocksFrom(text)
+  const blocks = blocksFrom(format === 'natal' ? normalizeInterpretationOrder(text) : text)
   const style = (block: Block) => {
     const size = block.kind === 'signature' ? 23 : block.kind === 'heading' ? (block.level === 2 ? 14 : block.level === 3 ? 12 : 10) : 10
     pdf.setFont(block.kind === 'signature' ? 'Arizonia' : 'helvetica', block.kind === 'heading' ? 'bold' : 'normal')
