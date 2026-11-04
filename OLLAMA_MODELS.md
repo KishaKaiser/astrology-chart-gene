@@ -1,33 +1,37 @@
-# Choosing an interpretation model
+# Ollama on the astrology home server
 
-Open a chart's **Interpretation** tab and use **Ollama model for chart readings**.
-The menu lists installed models from the server and labels its configured default.
-The choice is saved in the browser and applies to full chart readings and individual
-section regeneration. Other AI features continue using the server default.
-**Last response used** shows the model reported by the latest generation in the
-current chart view; it does not identify the model behind previously saved readings.
+The browser calls `/api/ollama/models` and `/api/ollama/chat` on the astrology
+site. Its Node server connects directly to the configured Ollama instance using
+[the installed models API](https://docs.ollama.com/api/tags) and
+[the chat API](https://docs.ollama.com/api/chat).
 
-## Deployment
+## LinkHosting setup
 
-Deploy the accompanying `api-chatterbox` changes before the astrology frontend.
-The frontend continues using `VITE_API_BASE_URL` and `VITE_PUBLIC_API_KEY`.
-The backend uses `OLLAMA_URL` (default `http://localhost:11434`) and
-`OLLAMA_MODEL` (default `llama3.2:3b`). The server environment may override these defaults.
+Set these **runtime environment variables on `site-astrology`** and redeploy it:
 
-The updated backend provides authenticated `GET /public/models` and accepts an
-optional `model` on `POST /public/chat`. It validates explicit choices against
-Ollama's installed model list and returns the model used alongside the content.
-Requests without a model retain the existing default behavior. Ollama itself does
-not need to be exposed directly to browsers.
+```
+OLLAMA_BASE_URL=http://192.168.4.32:11434
+OLLAMA_MODEL=gemma3:1b
+```
 
-If the menu cannot load, use **Refresh models**. A missing backend update is shown
-explicitly; **Server default** remains available. If a saved model has been removed,
-select another installed model or the server default.
+Use the address reachable from the astrology container. A loopback address in
+that container refers to the container itself. `OLLAMA_URL` is also accepted
+when `OLLAMA_BASE_URL` is unset. For a local Node server on the same machine as
+Ollama, the default Ollama address is `http://127.0.0.1:11434`.
 
-Validation commands:
+`OLLAMA_MODEL` selects the default for requests without an explicit model. Set
+it to an installed tag, for example `qwen2.5:7b` to use that model by default.
+The fallback is `gemma3:1b`. On features with the model selector, an explicit
+browser choice overrides the default. The last-used label reports the actual
+model returned by Ollama. Outputs that hit the generation limit retry once and
+unfinished text is rejected.
 
-- Astrology frontend: `node scripts/test-llm.mjs` and `npm run build`
-- Chatterbox backend: `node scripts/test-public-chat.cjs` and `npx tsc --noEmit`
+After redeploying, open **Interpretation → Refresh models**. To check the direct
+connection from the running container:
 
-Protocol references: [Ollama model listing](https://docs.ollama.com/api/tags) and
-[chat generation](https://docs.ollama.com/api/chat).
+```
+sudo docker exec site-astrology node -e 'fetch("http://127.0.0.1:4173/api/ollama/models").then(async r => console.log(r.status, await r.text()))'
+```
+
+The astrology AI routes require no Chatterbox API key. Development uses the
+same Node server with the Vite proxy. Run `npm run dev:library` alongside Vite.

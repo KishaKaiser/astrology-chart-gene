@@ -9,10 +9,8 @@ import { Sparkle, ArrowsClockwise, Clock } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 
-declare const spark: {
-  llmPrompt: (strings: TemplateStringsArray, ...values: any[]) => string
-  llm: (prompt: string, model?: string, jsonMode?: boolean) => Promise<string>
-}
+import { llm, llmPrompt } from '@/lib/llm'
+import { readInterpretationModel } from './InterpretationModelSelector'
 
 interface TransitInterpretationProps {
   chart: ChartData
@@ -73,7 +71,7 @@ export function TransitInterpretation({ chart }: TransitInterpretationProps) {
         .map(a => `Transit ${a.transitPlanet} ${a.type} Natal ${a.natalPlanet} (orb: ${a.orb.toFixed(1)}°)`)
         .join(', ')
 
-      const prompt = spark.llmPrompt`You are a professional astrologer providing transit interpretations. 
+      const prompt = llmPrompt`You are a professional astrologer providing transit interpretations. 
 
 Current date: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
 
@@ -108,7 +106,7 @@ Include 3-5 of the most significant transits based on:
 
 Be encouraging but realistic. Focus on growth opportunities and practical guidance.`
 
-      const response = await spark.llm(prompt, 'gpt-4o', true)
+      const response = await llm(prompt, true, { model: readInterpretationModel() })
       const interpretationData = JSON.parse(response) as TransitInterpretationData
 
       setInterpretation(interpretationData)

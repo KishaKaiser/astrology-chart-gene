@@ -1,8 +1,8 @@
 # Shared home library
 
 This version has one library for everyone who can reach the app. It does not
-require accounts. Images, WooCommerce, and PL-CMS tabs are removed. The existing
-Chatterbox/Ollama connection still generates interpretations.
+require accounts. Images, WooCommerce, and PL-CMS tabs are removed. The astrology Node server connects directly to Ollama for readings. See
+[Ollama setup](OLLAMA_MODELS.md) for the container environment settings.
 
 ## Deploy with LinkHosting
 

@@ -1,8 +1,9 @@
+import { waitForLibrarySave } from '@/lib/shared-library'
 import { CAREER_THEMES, ENVIRONMENT_LABELS, DEFAULT_RELOCATION_PREFERENCES, sectionOnePreferences, type RelocationPreferences } from '@/lib/relocation-preferences'
 import { useEffect, useRef, useState } from 'react'
 import type { ChartData } from '@/lib/astrology-types'
 import { useKV } from '@/hooks/use-kv'
-import { calculateRelocation, findDomesticRelocationPlaces, RELOCATION_COUNTRIES, DEFAULT_RELOCATION_FILTERS, type RelocationFilters, relocationOverview, retainRelocationComparison, type RelocationPriority, currentRelocation, relocationPrompt, relocationSourceKey, validateRelocationPlace, type RelocationAnalysis as Report, type RelocationPlace } from '@/lib/relocation'
+import { calculateRelocation, findDomesticRelocationPlaces, RELOCATION_COUNTRIES, DEFAULT_RELOCATION_FILTERS, type RelocationFilters, relocationOverview, retainRelocationComparison, type RelocationPriority, currentRelocation, generateRelocationComparison, comparisonText, relocationSourceKey, validateRelocationPlace, type RelocationAnalysis as Report, type RelocationPlace } from '@/lib/relocation'
 import { LocationSearch } from './LocationSearch'
 import { InterpretationModelSelector, readInterpretationModel } from './InterpretationModelSelector'
 import { Button } from './ui/button'
@@ -23,18 +24,19 @@ export function RelocationAnalysis({ chart }: { chart: ChartData }) {
   const [filters, setFilters] = useState<RelocationFilters>(report?.search?.filters ?? DEFAULT_RELOCATION_FILTERS)
   const [preferences, setPreferences] = useState<RelocationPreferences>(report?.search?.preferences ?? { ...DEFAULT_RELOCATION_PREFERENCES, ...sectionOnePreferences(chart.interpretation || '') })
   const [currentHome, setCurrentHome] = useState<RelocationPlace | undefined>(report?.currentResidence?.place)
-  const [focus, setFocus] = useState('Career, home life, and relationships')
-  const [model, setModel] = useState(readInterpretationModel)
+  const [focus, setFocus] = useState(report?.comparisonDraft?.focus ?? 'Career, home life, and relationships')
+  const [model, setModel] = useState(() => report?.comparisonDraft?.requestedModel ?? readInterpretationModel())
   const [lastModel, setLastModel] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [progress, setProgress] = useState(0)
   const lock = useRef(false)
   useEffect(() => { setPlaces(report?.destinations.map(d => d.place) ?? []); setError('') }, [chart.id, report?.calculatedAt])
-  const persist = (next: Report, expectedCalculation?: number) => {
+  const persist = (next: Report, expected?: Report) => {
     setCharts(current => {
       const saved = current.find(item => item.id === chart.id)
       if (!saved || relocationSourceKey(saved) !== next.sourceKey) throw new Error('The birth details changed. Recalculate the comparison before saving.')
-      if (expectedCalculation !== undefined && saved.relocationAnalysis?.calculatedAt !== expectedCalculation) throw new Error('The compared places changed. Generate the comparison again using the current results.')
+      if (expected && (saved.relocationAnalysis?.calculatedAt !== expected.calculatedAt || saved.relocationAnalysis?.interpretation !== expected.interpretation || JSON.stringify(saved.relocationAnalysis?.comparisonDraft) !== JSON.stringify(expected.comparisonDraft))) throw new Error('The compared places changed. Generate the comparison again using the current results.')
       return current.map(item => item.id === chart.id ? { ...item, relocationAnalysis: retainRelocationComparison(next, currentRelocation(item)), updatedAt: Date.now() } : item)
     })
   }
@@ -65,20 +67,33 @@ export function RelocationAnalysis({ chart }: { chart: ChartData }) {
     if (!report || lock.current) return
     lock.current = true; setBusy(true); setError('')
     try {
-      let used = ''
-      const interpretation = (await llm(relocationPrompt(report, chart.name, focus), false, { model, onModelUsed: value => { used = value; setLastModel(value) } })).trim()
-      if (interpretation.length < 100) throw new Error('The AI returned an incomplete comparison. Try again.')
-      persist({ ...report, interpretation, model: used }, report.calculatedAt)
-      toast.success('Relocation comparison generated. Regenerate section 1 to include these places in the summary.')
+      await generateRelocationComparison(report, chart.name, focus, model, async prompt => {
+        let used: string | undefined
+        try {
+          const text = await llm(prompt, false, {model, onModelUsed: value => { used = value; setLastModel(value) }})
+          return {text, model: used}
+        } catch (e) {
+          if (e instanceof TypeError) throw new Error('The browser could not complete the request to the AI service. Check the astrology server’s connection to Ollama, then retry with the same model and focus.')
+          throw e
+        }
+      }, async (next, previous) => {
+        persist(next, previous)
+        await waitForLibrarySave()
+      }, setProgress)
+      toast.success('Relocation comparison saved to the home library and ready to export.')
     } catch (e) { setError(e instanceof Error ? e.message : 'Could not generate comparison') }
     finally { lock.current = false; setBusy(false) }
   }
+  const narrative = report ? comparisonText(report) : ''
+  const draft = report?.comparisonDraft
+  const resumable = draft?.requestedModel === model && draft.focus === focus
   const changed = report && JSON.stringify(places) !== JSON.stringify(report.destinations.map(d => d.place))
   const settingsChanged = report?.search && (report.search.method !== 'domestic-preferences-v1' || JSON.stringify(report.search.preferences) !== JSON.stringify(preferences) || report.search.priority !== priority || report.search.domesticCountry !== domesticCountry || JSON.stringify(report.search.filters) !== JSON.stringify(filters) || JSON.stringify(report.currentResidence?.place) !== JSON.stringify(currentHome))
   return <div className="space-y-5 rounded-lg border border-border bg-card p-5 text-foreground">
     <h2 className="text-xl font-semibold">Relocation analysis</h2>
     <p className="text-sm text-muted-foreground">Compare up to ten places at your original birth moment. Find up to ten domestic places based on your career and living-environment preferences, ranked best first, or compare your own choices. Accurate birth time matters.</p>
     {chart.relocationAnalysis && !report && <p role="alert" className="text-amber-300">The saved comparison uses different birth details. Recalculate it before using it in a reading or PDF.</p>}
+    {narrative && <section><h3 className="mb-2 text-lg font-semibold">Relocation comparison</h3><div className="whitespace-pre-wrap leading-relaxed">{narrative}</div></section>}
     <details open={!report} className="rounded border p-4"><summary className="cursor-pointer font-semibold">Search preferences</summary>
     <fieldset disabled={busy} className="mt-3 space-y-3">
       <h3 className="font-semibold">Find your top 10 places to live</h3>
@@ -133,6 +148,27 @@ export function RelocationAnalysis({ chart }: { chart: ChartData }) {
       <p className="text-sm text-muted-foreground">Search a built-in worldwide city list using your birth chart. Results replace the saved comparison below. No AI or internet connection is needed for the ranking.</p>
       <Button onClick={findPlaces} disabled={!domesticCountry}>Find my top domestic places</Button>
     </fieldset></details>
+    {error && <p role="alert" className="text-red-300">{error}</p>}
+    {settingsChanged && <p className="text-amber-300 text-sm">The saved results use earlier settings or an older search method. Run Find my top domestic places to apply your section 1 preferences and domestic-only search.</p>}
+    {changed && <p className="text-amber-300 text-sm">The list has changed. Recalculate to replace the saved comparison below.</p>}
+    {report && <>
+      {!report.search && <section><h3 className="text-lg font-semibold">Your selected places</h3>{report.destinations.map(item => <div key={item.place.name} className="mt-3"><h4 className="font-semibold">{item.place.name}</h4></div>)}</section>}
+      {report.search && <section className="space-y-3">
+        <h3 className="text-lg font-semibold">Your top {report.destinations.length} suggested places</h3>
+        <p className="text-sm text-muted-foreground">{relocationOverview(report)}</p>
+        <ol className="space-y-3">{report.destinations.map((item, i) => <li key={item.place.name} className="rounded border p-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-2"><h4 className="font-semibold">{i + 1}. {item.place.name}</h4>
+            {item.ranking && <span className="text-sm">Score {item.ranking.score.toFixed(1)}{item.ranking.components && '/100'}</span>}</div>
+        </li>)}</ol>
+      </section>}
+
+      <Label htmlFor="relocation-focus">What matters most to you?</Label>
+      <Input id="relocation-focus" value={focus} onChange={e => setFocus(e.target.value)} disabled={busy} />
+      <InterpretationModelSelector value={model} onChange={setModel} disabled={busy} lastModel={lastModel || report.model || ''} />
+      {draft && <p className="text-sm">Comparison progress: {draft.paragraphs.length} of {report.destinations.length} places. {resumable ? 'Resume to finish the remaining places.' : 'Your model or focus changed. Generate a new comparison or restore the prior settings to resume.'}</p>}
+      <Button onClick={() => void interpret()} disabled={busy || Boolean(changed) || Boolean(settingsChanged)}>{busy ? `Comparing place ${progress + 1} of ${report.destinations.length}…` : resumable ? 'Resume comparison' : 'Generate plain-language comparison'}</Button>
+      <p className="text-sm text-muted-foreground">These are astrological interpretations, not guarantees about a place. Compare real jobs, cost of living, and your support network before deciding. Regenerate section 1 after calculating places to include them in the chart summary.</p>
+    </>}
     <details className="rounded border p-4"><summary className="cursor-pointer font-semibold">Compare places manually</summary>
     <fieldset disabled={busy} className="space-y-3">
       <h3 className="font-semibold">Or compare your own places</h3>
@@ -148,26 +184,5 @@ export function RelocationAnalysis({ chart }: { chart: ChartData }) {
       {places.map((place, index) => <div key={`${place.latitude}:${place.longitude}`} className="flex items-center justify-between gap-3 rounded border p-3"><span>{place.name} ({place.latitude.toFixed(4)}, {place.longitude.toFixed(4)})</span><Button variant="outline" size="sm" onClick={() => setPlaces(current => current.filter((_, i) => i !== index))}>Remove</Button></div>)}
       <Button onClick={calculate} disabled={!places.length}>{report ? 'Recalculate selected places' : 'Calculate selected places'}</Button>
     </fieldset></details>
-    {error && <p role="alert" className="text-red-300">{error}</p>}
-    {settingsChanged && <p className="text-amber-300 text-sm">The saved results use earlier settings or an older search method. Run Find my top domestic places to apply your section 1 preferences and domestic-only search.</p>}
-    {changed && <p className="text-amber-300 text-sm">The list has changed. Recalculate to replace the saved comparison below.</p>}
-    {report && <>
-      {report.interpretation && <section><h3 className="mb-2 text-lg font-semibold">Relocation comparison</h3><div className="whitespace-pre-wrap leading-relaxed">{report.interpretation}</div></section>}
-      {!report.search && <section><h3 className="text-lg font-semibold">Your selected places</h3>{report.destinations.map(item => <div key={item.place.name} className="mt-3"><h4 className="font-semibold">{item.place.name}</h4></div>)}</section>}
-      {report.search && <section className="space-y-3">
-        <h3 className="text-lg font-semibold">Your top {report.destinations.length} suggested places</h3>
-        <p className="text-sm text-muted-foreground">{relocationOverview(report)}</p>
-        <ol className="space-y-3">{report.destinations.map((item, i) => <li key={item.place.name} className="rounded border p-4">
-          <div className="flex flex-wrap items-baseline justify-between gap-2"><h4 className="font-semibold">{i + 1}. {item.place.name}</h4>
-            {item.ranking && <span className="text-sm">Score {item.ranking.score.toFixed(1)}{item.ranking.components && '/100'}</span>}</div>
-        </li>)}</ol>
-      </section>}
-
-      <Label htmlFor="relocation-focus">What matters most to you?</Label>
-      <Input id="relocation-focus" value={focus} onChange={e => setFocus(e.target.value)} disabled={busy} />
-      <InterpretationModelSelector value={model} onChange={setModel} disabled={busy} lastModel={lastModel || report.model || ''} />
-      <Button onClick={() => void interpret()} disabled={busy || Boolean(changed) || Boolean(settingsChanged)}>{busy ? 'Comparing places…' : 'Generate plain-language comparison'}</Button>
-      <p className="text-sm text-muted-foreground">These are astrological interpretations, not guarantees about a place. Compare real jobs, cost of living, and your support network before deciding. Regenerate section 1 after calculating places to include them in the chart summary.</p>
-    </>}
   </div>
 }

@@ -4,7 +4,7 @@ import { jsPDF } from 'jspdf'
 import { writeFile } from 'node:fs/promises'
 import { EquatorFromVector, RotateVector, Rotation_ECT_EQD, VectorFromSphere, Observer, Horizon, SiderealTime } from 'astronomy-engine'
 const bundle = await build({ entryPoints: ['src/lib/relocation.ts'], bundle: true, write: false, format: 'esm', platform: 'node' })
-const { findDomesticRelocationPlaces, defaultDomesticCountry, relocationCategory, findTopRelocationPlaces, scoreRelocation, calculateRelocation, currentRelocation, relocationAngles, angularDistance, wholeSignHouse, relocationFacts, relocationPrompt, relocationExportText, retainRelocationComparison } = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`)
+const { findDomesticRelocationPlaces, defaultDomesticCountry, relocationCategory, findTopRelocationPlaces, scoreRelocation, calculateRelocation, currentRelocation, relocationAngles, angularDistance, wholeSignHouse, relocationFacts, relocationPrompt, relocationExportText, retainRelocationComparison, generateRelocationComparison, comparisonText } = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`)
 const chart = { id:'fixture', name:'Sample', date:'1998-08-04', time:'12:00', timezone:'America/New_York', latitude:40.7128, longitude:-74.006, location:'New York', planets:[], houses:[], aspects:[], createdAt:0, updatedAt:0 }
 const places = [{ name:'London', latitude:51.5074, longitude:-0.1278 }, { name:'Sydney', latitude:-33.8688, longitude:151.2093 }, { name:'New York', latitude:40.7128, longitude:-74.006 }]
 const before = JSON.stringify(chart)
@@ -55,7 +55,7 @@ try {
 const facts = relocationFacts(report)
 assert.ok(facts.includes('London') && facts.includes(report.birthUTC) && facts.includes('Whole-sign'))
 const prompt = relocationPrompt(report,chart.name,'Career')
-assert.ok(prompt.includes(facts) && prompt.includes('Do not invent planetary lines'))
+assert.ok(prompt.includes('London') && !prompt.includes(facts) && prompt.includes('Do not invent planetary lines'))
 const exported = relocationExportText({...report,interpretation:'Saved comparison'})
 assert.ok(exported.includes('London') && exported.includes('Sydney') && exported.includes('Saved comparison'))
 const pdfBundle = await build({ entryPoints: ['src/lib/pdf-interpretation.ts'], bundle: true, write: false, format: 'esm', platform: 'node', define: { 'import.meta.env.BASE_URL': '"/"' } })
@@ -239,3 +239,35 @@ assert.ok(rendered.indexOf('2. Home life')<rendered.indexOf('1. Work'))
 assert.ok(rendered.includes(savedReport.destinations[0].ranking.score.toFixed(1)+'/100'))
 assert.doesNotMatch(rendered,/Ascendant|Final score =|Generate a plain-language comparison/)
 console.log('PASS: saved AI comparison survives identical search, stays in original order and appears with city scores in the PDF renderer')
+
+let checkpoint=withHome
+const calls=[]
+const makeCityText=i=>`Generated paragraph for place ${i+1}. This paragraph compares home and work themes in ordinary language.`
+const saveCheckpoint=async (next,previous)=>{assert.deepEqual(previous,checkpoint); checkpoint=JSON.parse(JSON.stringify(next))}
+await assert.rejects(generateRelocationComparison(checkpoint,chart.name,'Work','test-model',async prompt=>{
+  const i=calls.length;calls.push(prompt);if(i===2)throw new TypeError('Failed to fetch');return {text:makeCityText(i),model:'test-model'}
+},saveCheckpoint,()=>{}),/Failed to fetch/)
+assert.equal(checkpoint.comparisonDraft.paragraphs.length,2)
+assert.ok(relocationExportText(checkpoint).includes('Partial comparison (2 of 10 places)'))
+await generateRelocationComparison(checkpoint,chart.name,'Work','test-model',async prompt=>{
+  const i=calls.length-1;assert.ok(prompt.includes(`about ${withHome.destinations[i].place.name} for`));calls.push(prompt);return {text:makeCityText(i),model:'test-model'}
+},saveCheckpoint,()=>{})
+assert.equal(checkpoint.comparisonDraft,undefined)
+assert.equal(checkpoint.model,'test-model')
+assert.ok(calls.every(prompt=>prompt.length<4000),'short prompts exclude the full ten-city report')
+const resumedPDF=renderInterpretation(new jsPDF(),relocationExportText(checkpoint),25,'relocation').placements.map(p=>p.text).join(' ')
+for(let i=0;i<10;i++) assert.ok(resumedPDF.includes(`Generated paragraph for place ${i+1}.`))
+assert.equal(comparisonText({...checkpoint,comparisonDraft:{focus:'new',requestedModel:'new',paragraphs:['partial replacement']}}),checkpoint.interpretation)
+console.log('PASS: failed request preserves partial export, restart resumes at the failed city, final PDF contains all generated paragraphs')
+
+// Using the birthplace in the calculations must never give it a recommendation slot.
+const firstPlace=practical.destinations[0].place
+const bornInWinner={...chart,location:firstPlace.name,latitude:firstPlace.latitude+0.01,longitude:firstPlace.longitude}
+const withoutBirthplace=findDomesticRelocationPlaces(bornInWinner,'balanced','United States of America',defaults,firstPlace)
+assert.equal(withoutBirthplace.destinations.length,10)
+assert.ok(!withoutBirthplace.destinations.some(d=>d.place.name===firstPlace.name))
+assert.deepEqual(withoutBirthplace.destinations.map(d=>d.place.name),oracle.filter(d=>d.place.country==='United States of America' && d.place.name!==firstPlace.name).slice(0,10).map(d=>d.place.name))
+assert.equal(withoutBirthplace.natal.place.name,firstPlace.name)
+assert.ok(!relocationPrompt(withoutBirthplace,chart.name,'').includes(firstPlace.name))
+assert.ok(!relocationExportText(withoutBirthplace).includes(firstPlace.name))
+console.log('PASS: birthplace excluded before ranking, ten replacement candidates, reference city excluded from generated city headings and PDF list')

@@ -43,6 +43,6 @@ export default defineConfig({
     allowedHosts: ['astrology.link', 'www.astrology.link']
   },
   server: {
-    proxy: { '/api/library': 'http://127.0.0.1:4173' }
+    proxy: { '/api/library': 'http://127.0.0.1:4173', '/api/ollama': 'http://127.0.0.1:4173' }
   }
 });

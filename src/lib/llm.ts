@@ -1,6 +1,3 @@
-const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "https://api.chatterbox.link"
-const API_KEY = (import.meta.env.VITE_PUBLIC_API_KEY as string | undefined) ?? ""
-
 interface ChatMessage {
   role: "user" | "assistant"
   content: string
@@ -12,13 +9,10 @@ export interface ModelList {
 }
 
 export async function listModels(signal?: AbortSignal): Promise<ModelList> {
-  const res = await fetch(`${BASE_URL}/public/models`, {
-    headers: { 'x-api-key': API_KEY },
-    signal,
-  })
+  const res = await fetch('/api/ollama/models', { signal, cache: 'no-store' })
   if (!res.ok) {
-    if (res.status === 404) throw new Error('Model selection needs the updated Chatterbox backend. Server-default generation is still available.')
-    throw new Error('Could not load Ollama models. Check the AI service and try Refresh models.')
+    const body = await res.json().catch(() => ({})) as { error?: string }
+    throw new Error(body.error || `Could not list Ollama models (HTTP ${res.status}). Check the astrology server’s OLLAMA_BASE_URL.`)
   }
   const data = await res.json() as ModelList
   if (!Array.isArray(data.models) || typeof data.defaultModel !== 'string' ||
@@ -36,11 +30,10 @@ interface LLMOptions {
 export async function llm(prompt: string, expectJson = false, options: LLMOptions = {}): Promise<string> {
   const messages: ChatMessage[] = [{ role: "user", content: prompt }]
 
-  const res = await fetch(`${BASE_URL}/public/chat`, {
+  const res = await fetch("/api/ollama/chat", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-api-key": API_KEY,
     },
     body: JSON.stringify({ messages, ...(options.model ? { model: options.model } : {}) }),
   })
@@ -52,8 +45,9 @@ export async function llm(prompt: string, expectJson = false, options: LLMOption
 
   const data = (await res.json()) as { content: string; model?: string }
   const content = data.content
-  if (options.model && !data.model) {
-    throw new Error('The AI service did not confirm the selected model. Deploy the updated Chatterbox backend first.')
+  if (typeof content !== 'string' || !content.trim()) throw new Error('Ollama returned an empty reading.')
+  if (!data.model) {
+    throw new Error('Ollama did not confirm which model generated the reading.')
   }
   if (typeof data.model === 'string') options.onModelUsed?.(data.model)
 
